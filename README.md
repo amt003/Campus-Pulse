@@ -1,10 +1,10 @@
-# CampusPulse - Semester 1 (Mini Project)
+# CampusPulse - (Mini Project)
 
 An AI-driven campus placement automation system.
 
 ## Branches
 
-- **`sem1/mini-project`** - Stable, submission-ready code
+- **`mini-project`** - Stable, submission-ready code
 - **`develop`** - Daily development branch
 
 ## Tech Stack
