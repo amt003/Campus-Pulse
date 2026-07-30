@@ -1,0 +1,379 @@
+<!-- =============================================
+     TopNavBar
+     ============================================= -->
+<nav class="nav" [class.scrolled]="headerScrolled">
+  <!-- Brand -->
+  <div class="nav-brand">
+    <div class="nav-brand-icon">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+    <span class="nav-brand-name">CampusPulse</span>
+  </div>
+
+  <!-- Desktop Nav Links -->
+  <div class="nav-links">
+    <a href="#" class="nav-link" [class.active]="activeSection === ''" (click)="scrollToSection('')">Home</a>
+    <a href="#" class="nav-link" [class.active]="activeSection === 'features'" (click)="scrollToSection('features'); $event.preventDefault()">Features</a>
+    <a href="#" class="nav-link" [class.active]="activeSection === 'how-it-works'" (click)="scrollToSection('how-it-works'); $event.preventDefault()">About</a>
+    <a href="#" class="nav-link" [class.active]="activeSection === 'roles'" (click)="scrollToSection('roles'); $event.preventDefault()">Contact</a>
+  </div>
+
+  <!-- Actions -->
+  <div class="nav-actions">
+    <button class="btn-ghost" routerLink="/login">Login</button>
+    <button class="btn-primary" routerLink="/register">Register</button>
+    <!-- Hamburger (mobile only) -->
+    <button class="hamburger" [class.open]="mobileMenuOpen" (click)="toggleMobileMenu()" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" [class.open]="mobileMenuOpen">
+  <div class="mobile-menu-inner">
+    <a class="mobile-link" (click)="scrollToSection('')">Home</a>
+    <a class="mobile-link" (click)="scrollToSection('features')">Features</a>
+    <a class="mobile-link" (click)="scrollToSection('how-it-works')">About</a>
+    <a class="mobile-link" (click)="scrollToSection('roles')">Contact</a>
+    <div class="mobile-actions">
+      <button class="btn-ghost" routerLink="/login" (click)="closeMobileMenu()">Login</button>
+      <button class="btn-primary" routerLink="/register" (click)="closeMobileMenu()">Register</button>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay -->
+@if (mobileMenuOpen) {
+  <div class="mobile-overlay" (click)="closeMobileMenu()"></div>
+}
+
+<!-- =============================================
+     Main Content
+     ============================================= -->
+<main class="main">
+
+  <!-- ===== Hero Section ===== -->
+  <section class="hero">
+    <div class="hero-gradient-overlay"></div>
+
+    <div class="hero-inner reveal is-visible">
+      <!-- Text Column -->
+      <div class="hero-text">
+        <span class="hero-badge">
+          <span class="material-symbols-outlined">rocket_launch</span>
+          AI-Powered Recruitment
+        </span>
+
+        <h1 class="hero-title">
+          Smart Placements,<br>
+          <span class="typewriter-wrap">
+            <span class="typewriter">Powered by AI</span>
+          </span>
+        </h1>
+
+        <p class="hero-subtitle">
+          The unified operating system for campus hiring. Empowering Recruiters
+          with AI-driven shortlisting and TPOs with automated placement
+          management and real-time analytics.
+        </p>
+
+        <div class="hero-cta">
+          <button class="btn-hero-primary" routerLink="/register">
+            Recruiter Registration
+          </button>
+          <button class="btn-hero-outline">
+            TPO Login
+          </button>
+        </div>
+      </div>
+
+      <!-- Visual Column -->
+      <div class="hero-visual">
+        <div class="hero-visual-bg"></div>
+        <img
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoJjdnJeMMZaG_3JgPlMwu7cDHP6gACEjUnv-YIPI4b5_81O6QHdRFHs5rSJMnGE2I1ZrDEDkYB1MJQA-bF2iHgZW3Olaa9VPQfYr8oxaxuIaLUrP9cOutM3iBOJJvc7KeSj2ZKzpdZSdQsNHLdnUTJeSjEflS3yGUb9Gl2LMB7vocmceqnQLacvCYm7lEE8T1whR3PrOJMBh5oZdz9bUreHVkHg0KgN9Nmv0QUlFQVt_X7T1YzPHo1YnModr573kVdMyzBWWHFIsJWSE"
+          alt="AI Campus Illustration"
+        />
+      </div>
+    </div>
+
+    <!-- Angled wave divider -->
+    <div class="hero-divider">
+      <svg data-name="Layer 1" preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <path class="shape-fill" d="M1200 120L0 16.48 0 0 1200 0 1200 120z"></path>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ===== Features Section ===== -->
+  <section class="features" id="features">
+    <div class="features-inner">
+      <div class="section-header reveal">
+        <h2 class="section-title">Why CampusPulse?</h2>
+        <p class="section-subtitle">
+          Next-generation tools designed to simplify the hiring lifecycle.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Card 1 -->
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <span class="material-symbols-outlined">data_object</span>
+          </div>
+          <h3 class="feature-title">Semantic AI Ranking</h3>
+          <p class="feature-desc">
+            Reduce screening time by 80% with NLP that understands technical context,
+            ensuring recruiters only interview the most qualified candidates.
+          </p>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="feature-card secondary reveal">
+          <div class="feature-icon secondary-bg">
+            <span class="material-symbols-outlined">event_busy</span>
+          </div>
+          <h3 class="feature-title">Conflict-Free Scheduling</h3>
+          <p class="feature-desc">
+            Eliminate scheduling conflicts with automated calendar sync for thousands
+            of students, ensuring a seamless interview experience for hiring teams.
+          </p>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <span class="material-symbols-outlined">account_tree</span>
+          </div>
+          <h3 class="feature-title">Multi-Stage Pipeline</h3>
+          <p class="feature-desc">
+            End-to-end visibility for TPOs to monitor placement velocity and offer
+            acceptance rates across multiple companies in real-time.
+          </p>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="feature-card secondary reveal">
+          <div class="feature-icon secondary-bg">
+            <span class="material-symbols-outlined">comment_bank</span>
+          </div>
+          <h3 class="feature-title">Explainable AI Feedback</h3>
+          <p class="feature-desc">
+            Drive higher placement success rates with AI-generated feedback that
+            helps students bridge skill gaps before the next drive.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== How It Works Section ===== -->
+  <section class="how-it-works" id="how-it-works">
+    <!-- Top wave -->
+    <div class="how-it-works-top-wave">
+      <svg data-name="Layer 1" preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1200 120L0 16.48 0 0 1200 0 1200 120z" fill="#f7f9ff"></path>
+      </svg>
+    </div>
+
+    <div class="how-it-works-inner">
+      <div class="section-header reveal">
+        <h2 class="section-title">How It Works</h2>
+      </div>
+
+      <div class="steps">
+        <!-- Connecting line (desktop) -->
+        <div class="step-line"></div>
+
+        <!-- Step 1 -->
+        <div class="step reveal">
+          <div class="step-icon" style="transform: rotate(3deg)">
+            <span class="material-symbols-outlined">person_add</span>
+          </div>
+          <h4 class="step-title">Students Apply</h4>
+          <p class="step-desc">
+            Centralized application portal for all campus drives with verified
+            digital credentials.
+          </p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step reveal">
+          <div class="step-icon secondary-icon" style="transform: rotate(-3deg)">
+            <span class="material-symbols-outlined">analytics</span>
+          </div>
+          <h4 class="step-title">AI Ranks</h4>
+          <p class="step-desc">
+            Our engine processes data to provide recruiters with a ranked list
+            based on specific job DNA.
+          </p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step reveal">
+          <div class="step-icon" style="transform: rotate(3deg)">
+            <span class="material-symbols-outlined">calendar_month</span>
+          </div>
+          <h4 class="step-title">Recruiters Schedule</h4>
+          <p class="step-desc">
+            One-click scheduling with automated invites and interview link
+            distribution.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== User Roles Section ===== -->
+  <section class="roles" id="roles">
+    <div class="roles-inner">
+      <div class="roles-grid">
+        <!-- For Students -->
+        <div class="role-card reveal">
+          <div class="role-img-wrap">
+            <div
+              class="role-img"
+              style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD0rmcyOyVBMIwwP_C8eUevcUYOoP7XwYQuo8Gt4IHNjH5VV6ByIWvRqRKQkRfYH65nyww5n_Pg3I_sJ-B-YQR-ZsmiAeAgMkLanDCof4Mnzgwytc0psw76lSusNANmeKWSMDo2yl5jtl1KuzxgDnfW0yQozlET7p-tqpeVcYIef27cPFUnyhCptiMfTtvZVx7dTU1cPWW5uVS_ziy6dFA99sfx_4GddQQf-RovlTdLJCi_u21MesI3ZYhoMi15QorHs-5w0tLrUdAK')"
+            ></div>
+            <div class="role-img-overlay"></div>
+          </div>
+          <div class="role-body">
+            <h3 class="role-title">For Students</h3>
+            <p class="role-desc">
+              Students receive direct access via institutional email. While they don't
+              use this portal to register, they benefit from real-time tracking and
+              AI-driven profile optimization.
+            </p>
+            <a href="#" class="role-link">
+              Explore Student Portal
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- For Recruiters -->
+        <div class="role-card reveal">
+          <div class="role-img-wrap">
+            <div
+              class="role-img"
+              style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC55O4rofvyk4P4M5c3aKXntUA8DJ5Yb5ypeChRJUJckOWHcRj1t4jPdDJRQfncXOecOojA_kLO-qhQcPM2TlrNl18xqh6HuC1pERXVLPEWPXsIzWsZbbhW2EL1e7YZoESbuTDXqBjmM4VX1by8G0BjM1h9SWj1nJ_65vIcl9UgIQuxuxoUckzCUlQCfwGT7YIf0Yh8cP9xEFIUDRaQZDcOl57CGsQI2VkV_ZDLDPqUBTZ6oujKnyOYyLwJdeC6QGMum1UDF7bSzjjr')"
+            ></div>
+            <div class="role-img-overlay"></div>
+          </div>
+          <div class="role-body">
+            <h3 class="role-title">For Recruiters</h3>
+            <p class="role-desc">
+              Cut shortlisting time by 70%. Identify top talent using semantic search
+              and manage end-to-end logistics seamlessly.
+            </p>
+            <a href="#" class="role-link">
+              Hiring Solutions
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- For TPOs -->
+        <div class="role-card reveal">
+          <div class="role-img-wrap">
+            <div
+              class="role-img"
+              style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCDbaSI5oSPtTYHWwW05HpJGTTLIJ46b8kD_oxj2NO2zwxNOFA3oEPDVXd4YuHfSCJYG0Os16eqwyGfE7uYOr0p0Juqct61f3TCTmJmm5RaApaKoieHcGV1BgDKWPBvw0ef47QxsqMcXySHbeA4cB2mIAxLMxDoQu7wM15ocb7xo96PogKpqESeE67fs8eqryjbupvtPNe_D3X6x9QvDXa0cDUld4B_bldJCELUHfGKWdnuT7bPNZgVfpslI_iyD6k9YUars0mAOJXq')"
+            ></div>
+            <div class="role-img-overlay"></div>
+          </div>
+          <div class="role-body">
+            <h3 class="role-title">For TPOs</h3>
+            <p class="role-desc">
+              Full transparency into every placement drive. Monitor engagement, export
+              compliance reports, and manage campus visits.
+            </p>
+            <a href="#" class="role-link">
+              Admin Dashboard
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA Section ===== -->
+  <section class="cta">
+    <div class="cta-blob-1"></div>
+    <div class="cta-blob-2"></div>
+    <div class="cta-inner reveal">
+      <h2 class="cta-title">Ready to Transform Your Campus Placements?</h2>
+      <p class="cta-subtitle">
+        Join hundreds of institutions using CampusPulse to modernize their
+        recruitment ecosystem.
+      </p>
+      <div class="cta-buttons">
+        <button class="btn-cta-white" routerLink="/register">
+          Recruiter Registration
+        </button>
+        <button class="btn-cta-glass">
+          TPO Login
+        </button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- =============================================
+     Footer
+     ============================================= -->
+<footer class="footer">
+  <div class="footer-inner">
+    <!-- Brand -->
+    <div class="footer-brand">
+      <div class="nav-brand">
+        <div class="nav-brand-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
+        <span class="nav-brand-name">CampusPulse</span>
+      </div>
+      <p>
+        Empowering the next generation of talent through intelligent
+        recruitment solutions.
+      </p>
+    </div>
+
+    <!-- Links -->
+    <div class="footer-links">
+      <a href="#" class="footer-link">Home</a>
+      <a href="#" class="footer-link" (click)="scrollToSection('features'); $event.preventDefault()">Features</a>
+      <a href="#" class="footer-link" (click)="scrollToSection('how-it-works'); $event.preventDefault()">About</a>
+      <a href="#" class="footer-link" (click)="scrollToSection('roles'); $event.preventDefault()">Contact</a>
+      <a href="#" class="footer-link">Privacy Policy</a>
+      <a href="#" class="footer-link">Terms of Service</a>
+    </div>
+
+    <!-- Social -->
+    <div class="footer-social">
+      <a href="#" class="social-btn" aria-label="Website">
+        <span class="material-symbols-outlined">public</span>
+      </a>
+      <a href="#" class="social-btn" aria-label="LinkedIn">
+        <span class="material-symbols-outlined">groups</span>
+      </a>
+      <a href="#" class="social-btn" aria-label="Email">
+        <span class="material-symbols-outlined">mail</span>
+      </a>
+    </div>
+  </div>
+
+  <hr class="footer-divider" />
+
+  <div class="footer-bottom">
+    <p>© 2026 CampusPulse. All rights reserved.</p>
+  </div>
+</footer>

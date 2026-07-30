@@ -1,0 +1,296 @@
+<!-- =============================================
+     Login Page
+     ============================================= -->
+<div class="login-root">
+
+  <!-- ===== Left Panel — Brand / Visual ===== -->
+  <aside class="login-panel-left" [style.background]="getRoleGradient()">
+    <!-- Floating particles -->
+    <div class="login-particles"></div>
+
+    <!-- Decorative blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <!-- Dot grid -->
+    <div class="dot-grid"></div>
+
+    <!-- Content -->
+    <div class="panel-content">
+      <!-- Brand -->
+      <a class="panel-brand" routerLink="/">
+        <div class="panel-brand-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+        </div>
+        <span class="panel-brand-name">CampusPulse</span>
+      </a>
+
+      <!-- Central Illustration -->
+      <div class="panel-illustration">
+        <div class="illustration-ring ring-outer"></div>
+        <div class="illustration-ring ring-middle"></div>
+        <div class="illustration-ring ring-inner"></div>
+        <div class="illustration-center">
+          <span class="material-symbols-outlined panel-center-icon">
+            @switch (selectedRole()) {
+            @case ('student') { school }
+            @case ('recruiter') { corporate_fare }
+            @case ('tpo') { admin_panel_settings }
+            }
+          </span>
+        </div>
+
+        <!-- Orbiting badges -->
+        <div class="orbit-badge orbit-badge-1">
+          <span class="material-symbols-outlined">analytics</span>
+        </div>
+        <div class="orbit-badge orbit-badge-2">
+          <span class="material-symbols-outlined">verified</span>
+        </div>
+        <div class="orbit-badge orbit-badge-3">
+          <span class="material-symbols-outlined">bolt</span>
+        </div>
+      </div>
+
+      <!-- Tagline -->
+      <div class="panel-tagline">
+        <h2 class="panel-headline">Welcome back to<br><span class="panel-headline-accent">CampusPulse</span></h2>
+        <p class="panel-sub">Your AI-powered campus placement hub. Sign in to continue your journey.</p>
+      </div>
+
+      <!-- Stats strip -->
+      <div class="panel-stats">
+        <div class="stat-pill">
+          <span class="material-symbols-outlined">groups</span>
+          <span>50k+ Students</span>
+        </div>
+        <div class="stat-pill">
+          <span class="material-symbols-outlined">business</span>
+          <span>1,200+ Recruiters</span>
+        </div>
+        <div class="stat-pill">
+          <span class="material-symbols-outlined">school</span>
+          <span>300+ Colleges</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== Right Panel — Form ===== -->
+  <main class="login-panel-right">
+    <div class="form-wrapper reveal is-visible">
+
+      <!-- Top nav -->
+      <div class="form-top-nav">
+        <a routerLink="/" class="back-link">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Back to Home</span>
+        </a>
+        <span class="form-top-nav-sep">·</span>
+      </div>
+
+      <!-- Header -->
+      <div class="form-header">
+        <h1 class="form-title">Sign In</h1>
+        <p class="form-subtitle">Select your role and enter your credentials.</p>
+      </div>
+
+      <!-- Role Selector -->
+      <div class="role-selector" role="group" aria-label="Select your role">
+        @for (role of roles; track role.id) {
+        <button class="role-btn" [class.active]="selectedRole() === role.id" (click)="selectRole(role.id)"
+          [attr.aria-pressed]="selectedRole() === role.id" [id]="'role-btn-' + role.id">
+          <span class="role-btn-icon material-symbols-outlined">{{ role.icon }}</span>
+          <span class="role-btn-label">{{ role.label }}</span>
+        </button>
+        }
+      </div>
+
+      <!-- Role description chip -->
+      <div class="role-desc-chip">
+        <span class="material-symbols-outlined">info</span>
+        <span>{{ roles[$any(selectedRole() === 'student' ? 0 : selectedRole() === 'recruiter' ? 1 : 2)].desc }}</span>
+      </div>
+
+      @if (selectedRole() === 'student') {
+        <div class="student-helper-banner" style="margin: 15px auto 20px; padding: 12px 16px; background: rgba(0, 100, 151, 0.08); border-left: 4px solid var(--secondary); border-radius: 6px; font-size: 13px; color: var(--primary); display: flex; align-items: flex-start; gap: 8px; text-align: left; line-height: 1.4; max-width: 440px;">
+          <span class="material-symbols-outlined" style="font-size: 18px; color: var(--secondary); margin-top: 1px;">info</span>
+          <span><strong>First-time Student Login:</strong> Use your registered university email to sign in. Your default password is your <strong>Roll Number</strong> (case-sensitive, e.g. <code>2021CS101</code>).</span>
+        </div>
+      }
+
+      <!-- Login Form -->
+      <form class="login-form" (ngSubmit)="onSubmit()" #loginForm="ngForm" novalidate>
+
+        <!-- Email Field -->
+        <div class="field-group">
+          <label class="field-label" for="login-email">Email Address</label>
+          <div class="field-wrap">
+            <span class="field-icon material-symbols-outlined">mail</span>
+            <input id="login-email" name="email" type="email" class="field-input"
+              [class.field-error]="email && !isEmailValid"
+              [(ngModel)]="email"
+              [placeholder]="getPlaceholderEmail()" autocomplete="email" required />
+          </div>
+          @if (email && !isEmailValid) {
+            <p class="field-error-msg" style="margin-top: 4px; color: var(--error); font-size: 12px; display: flex; align-items: center; gap: 4px;">
+              <span class="material-symbols-outlined" style="font-size: 15px;">error</span>
+              Please enter a valid email address
+            </p>
+          }
+        </div>
+
+        <!-- Password Field -->
+        <div class="field-group">
+          <div class="field-label-row">
+            <label class="field-label" for="login-password">Password</label>
+            <a href="#" class="forgot-link">Forgot password?</a>
+          </div>
+          <div class="field-wrap">
+            <span class="field-icon material-symbols-outlined">lock</span>
+            <input id="login-password" name="password" [type]="showPassword ? 'text' : 'password'" class="field-input"
+              [class.field-error]="password && !isPasswordValid"
+              [(ngModel)]="password" placeholder="Enter your password" autocomplete="current-password" required />
+            <button type="button" class="field-toggle" (click)="togglePassword()"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'" id="toggle-password-btn">
+              <span class="material-symbols-outlined">
+                {{ showPassword ? 'visibility_off' : 'visibility' }}
+              </span>
+            </button>
+          </div>
+
+          @if (password && !isPasswordValid) {
+            <p class="field-error-msg" style="margin-top: 4px; color: var(--error); font-size: 12px; display: flex; align-items: center; gap: 4px;">
+              <span class="material-symbols-outlined" style="font-size: 15px;">error</span>
+              Password must be at least 8 characters long
+            </p>
+          }
+
+          @if (password && selectedRole() !== 'student') {
+            <div class="pwd-rules-chips">
+              <span class="rule-chip" [class.rule-met]="pwdHasMinLength">
+                <span class="material-symbols-outlined">{{ pwdHasMinLength ? 'check_circle' : 'cancel' }}</span> 8+ chars
+              </span>
+              <span class="rule-chip" [class.rule-met]="pwdHasUpper">
+                <span class="material-symbols-outlined">{{ pwdHasUpper ? 'check_circle' : 'cancel' }}</span> Uppercase (A-Z)
+              </span>
+              <span class="rule-chip" [class.rule-met]="pwdHasLower">
+                <span class="material-symbols-outlined">{{ pwdHasLower ? 'check_circle' : 'cancel' }}</span> Lowercase (a-z)
+              </span>
+              <span class="rule-chip" [class.rule-met]="pwdHasNumber">
+                <span class="material-symbols-outlined">{{ pwdHasNumber ? 'check_circle' : 'cancel' }}</span> Number (0-9)
+              </span>
+              <span class="rule-chip" [class.rule-met]="pwdHasSpecial">
+                <span class="material-symbols-outlined">{{ pwdHasSpecial ? 'check_circle' : 'cancel' }}</span> Symbol (!@#$)
+              </span>
+            </div>
+          }
+        </div>
+
+        <!-- Remember me -->
+        <div class="remember-row">
+          <label class="checkbox-label" for="remember-me">
+            <input id="remember-me" type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" class="checkbox-input" />
+            <span class="checkbox-custom"></span>
+            <span>Remember me for 30 days</span>
+          </label>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="login-alert-banner">
+            <div class="alert-title-row">
+              <span class="material-symbols-outlined">error</span>
+              <span>{{ errorMessage() }}</span>
+            </div>
+
+            @if (tpoSuggestions().length > 0) {
+              <div class="tpo-suggestions-box">
+                <div class="tpo-box-head">
+                  <span class="material-symbols-outlined icon-bulb">lightbulb</span>
+                  <strong>Feedback & Required Action from TPO:</strong>
+                </div>
+                <ul class="tpo-suggestions-list">
+                  @for (s of tpoSuggestions(); track s.sentAt || s.suggestion) {
+                    <li>
+                      <span class="material-symbols-outlined bullet-icon">arrow_right</span>
+                      <span>{{ s.suggestion }}</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Submit -->
+        <button type="submit" class="btn-login" [class.loading]="isLoading"
+          [disabled]="isLoading || !isFormValid" id="login-submit-btn">
+          @if (isLoading) {
+          <span class="loader"></span>
+          <span>Signing in…</span>
+          } @else {
+          <span class="material-symbols-outlined">login</span>
+          <span>Sign In as {{ selectedRole() === 'tpo' ? 'TPO' : (selectedRole() | titlecase) }}</span>
+          }
+        </button>
+
+        <!-- Divider -->
+        <div class="or-divider">
+          <span class="or-line"></span>
+          <span class="or-text">or continue with</span>
+          <span class="or-line"></span>
+        </div>
+
+        <!-- Social login row -->
+        <div class="social-row">
+          <button type="button" class="social-login-btn" id="google-login-btn">
+            <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                fill="#4285F4" />
+              <path
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                fill="#34A853" />
+              <path
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+                fill="#FBBC05" />
+              <path
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                fill="#EA4335" />
+            </svg>
+            <span>Google</span>
+          </button>
+          <button type="button" class="social-login-btn" id="microsoft-login-btn">
+            <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11.4 2H2v9.4h9.4V2z" fill="#F25022" />
+              <path d="M22 2h-9.4v9.4H22V2z" fill="#7FBA00" />
+              <path d="M11.4 12.6H2V22h9.4v-9.4z" fill="#00A4EF" />
+              <path d="M22 12.6h-9.4V22H22v-9.4z" fill="#FFB900" />
+            </svg>
+            <span>Microsoft</span>
+          </button>
+        </div>
+
+      </form>
+
+      <!-- Footer text -->
+      <p class="form-footer-note">
+        By signing in, you agree to our
+        <a href="#" class="form-inline-link">Terms of Service</a> and
+        <a href="#" class="form-inline-link">Privacy Policy</a>.
+      </p>
+      @if (selectedRole() === 'recruiter') {
+        <p class="form-footer-note">
+          Not Registered?
+          <a routerLink="/register" class="form-inline-link">Click here to Register</a>
+        </p>
+      }
+
+    </div>
+  </main>
+
+</div>

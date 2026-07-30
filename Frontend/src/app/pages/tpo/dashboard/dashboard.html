@@ -1,0 +1,461 @@
+<div class="dashboard-root">
+
+  <!-- =============================================
+       Main Content Container
+       ============================================= -->
+  <main class="dashboard-container">
+
+    <!-- ══════════════════════════════════════════
+         2. Top Row Stats Cards (4 Cards)
+         ══════════════════════════════════════════ -->
+    <section class="stats-row">
+      <!-- Card 1: Total Students -->
+      <div class="card-stat glow-card-blue">
+        <div class="stat-body">
+          <span class="stat-title">Total Students</span>
+          <h2 class="stat-value">{{ analytics()?.totalStudents || 0 }}</h2>
+          <span class="stat-sub">Batch of 2024</span>
+        </div>
+        <div class="badge-icon icon-blue">
+          <span class="material-symbols-outlined">groups</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Placed -->
+      <div class="card-stat glow-card-green border-accent-green">
+        <div class="stat-body">
+          <span class="stat-title">Placed</span>
+          <h2 class="stat-value text-green">{{ analytics()?.totalPlaced || 0 }}</h2>
+          <span class="stat-sub text-trend">
+            <span class="material-symbols-outlined trend-icon">trending_up</span>
+            Live Placement Stats
+          </span>
+        </div>
+        <div class="badge-icon icon-green">
+          <span class="material-symbols-outlined">check_circle</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Unplaced -->
+      <div class="card-stat glow-card-red border-accent-red">
+        <div class="stat-body">
+          <span class="stat-title">Unplaced</span>
+          <h2 class="stat-value text-red">{{ analytics()?.totalUnplaced || 0 }}</h2>
+          <span class="stat-sub">Requiring assistance</span>
+        </div>
+        <div class="badge-icon icon-red">
+          <span class="material-symbols-outlined">assignment_late</span>
+        </div>
+      </div>
+
+      <!-- Card 4: Placement Rate -->
+      <div class="card-stat glow-card-teal">
+        <div class="stat-body">
+          <span class="stat-title">Placement Rate</span>
+          <h2 class="stat-value">{{ analytics()?.placementPercentage || 0 }}%</h2>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" [style.width.%]="analytics()?.placementPercentage || 0"></div>
+          </div>
+        </div>
+        <div class="badge-icon icon-teal">
+          <span class="material-symbols-outlined">insert_chart</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         3. Two-Column Grid: Funnel + Branch Stats
+         ══════════════════════════════════════════ -->
+    <section class="middle-grid">
+
+      <!-- Left Column (60%): Placement Funnel -->
+      <div class="card-panel panel-left glass-panel">
+        <div class="panel-header">
+          <div class="panel-title-wrap">
+            <div class="title-icon-badge">
+              <span class="material-symbols-outlined">filter_alt</span>
+            </div>
+            <span class="header-emoji">📊</span>
+            <h3 class="panel-title">Placement Funnel</h3>
+          </div>
+          <button class="pdf-link" (click)="downloadPDF()">
+            <span class="material-symbols-outlined">download</span>
+            Download PDF
+          </button>
+        </div>
+
+        <div class="funnel-list">
+          @for (f of funnelData(); track f.stage) {
+            <div class="funnel-item">
+              <div class="funnel-label-row">
+                <span class="funnel-stage-name">{{ f.stage }}</span>
+                <span class="funnel-stage-count">{{ f.count }}</span>
+              </div>
+              <div class="funnel-track">
+                <div
+                  class="funnel-bar"
+                  [style.width.%]="getFunnelBarWidth(f.count)"
+                  [style.background]="getFunnelBarColor(f.stage)"
+                ></div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="panel-divider"></div>
+        <p class="panel-footnote">
+          Note: Placed count includes students who successfully cleared multi-round processes across all recruiter categories.
+        </p>
+      </div>
+
+      <!-- Right Column (40%): Branch-Wise Stats -->
+      <div class="card-panel panel-right glass-panel">
+        <div class="panel-header">
+          <div class="panel-title-wrap">
+            <div class="title-icon-badge">
+              <span class="material-symbols-outlined">equalizer</span>
+            </div>
+            <span class="header-emoji">📊</span>
+            <h3 class="panel-title">Branch-Wise Stats</h3>
+          </div>
+        </div>
+
+        <div class="branch-list">
+          @for (b of branchStats(); track b.branch) {
+            <div class="branch-item">
+              <div class="branch-label-row">
+                <span class="branch-name">{{ b.branch }}</span>
+                <span class="branch-percent">{{ b.percentage }}%</span>
+              </div>
+              <div class="branch-track">
+                <div class="branch-bar" [style.width.%]="b.percentage"></div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Insight Box -->
+        <div class="insight-box">
+          <span class="material-symbols-outlined insight-icon">lightbulb</span>
+          <p class="insight-text">
+            <strong>Insight:</strong> CSE placement rate is trending higher due to increased fintech demand.
+          </p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         4. Bottom Section: Offer-Acceptance Ratio
+         ══════════════════════════════════════════ -->
+    <section class="offer-ratio-card glass-panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <div class="title-icon-badge">
+            <span class="material-symbols-outlined">confirmation_number</span>
+          </div>
+          <span class="header-emoji">📊</span>
+          <h3 class="panel-title">Offer-Acceptance Ratio</h3>
+        </div>
+      </div>
+
+      <div class="offer-ratio-grid">
+        <!-- Offers Accepted Tile -->
+        <div class="tile-accepted">
+          <div class="tile-circle-icon icon-circle-green">
+            <span class="material-symbols-outlined">check</span>
+          </div>
+          <div class="tile-content">
+            <span class="tile-label">Offers Accepted</span>
+            <h2 class="tile-number text-green">{{ offerTrends()?.accepted || 0 }}</h2>
+          </div>
+        </div>
+
+        <!-- Offers Declined Tile -->
+        <div class="tile-declined">
+          <div class="tile-circle-icon icon-circle-red">
+            <span class="material-symbols-outlined">close</span>
+          </div>
+          <div class="tile-content">
+            <span class="tile-label">Offers Declined</span>
+            <h2 class="tile-number text-red">{{ offerTrends()?.declined || 0 }}</h2>
+          </div>
+        </div>
+
+        <!-- Vertical Divider -->
+        <div class="ratio-vertical-divider"></div>
+
+        <!-- Conversion Rate Metric -->
+        <div class="conversion-metric">
+          <span class="conversion-label">CONVERSION RATE</span>
+          <div class="conversion-rate-row">
+            <span class="conversion-big-num">{{ offerTrends()?.acceptanceRate || 0 }}</span>
+            <span class="conversion-percent">%</span>
+          </div>
+          <span class="conversion-sub">Real-Time Ratio</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         5. Recruiter Approvals Table Section
+         ══════════════════════════════════════════ -->
+    @if (pendingRecruiters().length > 0 || activeTab() === 'approve') {
+      <section class="recruiter-approvals-card glass-panel">
+        <div class="panel-header">
+          <div class="panel-title-wrap">
+            <div class="title-icon-badge">
+              <span class="material-symbols-outlined">how_to_reg</span>
+            </div>
+            <h3 class="panel-title">Pending Recruiter Approvals</h3>
+          </div>
+          <div class="header-right-actions">
+            <a routerLink="/tpo/approval" class="btn-full-verification">
+              <span class="material-symbols-outlined">analytics</span>
+              <span>Full Verification & WHOIS</span>
+            </a>
+            <span class="badge-pending-count">{{ pendingRecruiters().length }} Pending</span>
+          </div>
+        </div>
+
+        @if (pendingRecruiters().length === 0) {
+          <div class="empty-table-state">
+            <span class="material-symbols-outlined empty-icon">verified_user</span>
+            <p>All recruiter registrations have been reviewed!</p>
+          </div>
+        }
+
+        @if (pendingRecruiters().length > 0) {
+          <div class="table-scroll">
+            <table class="approval-table">
+              <thead>
+                <tr>
+                  <th>Company Name</th>
+                  <th>Official Email</th>
+                  <th>Trust Score</th>
+                  <th>Domain Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (rec of paginatedRecruiters; track rec._id) {
+                  <tr>
+                    <td class="font-bold text-navy">{{ rec.companyName }}</td>
+                    <td>{{ rec.officialEmail }}</td>
+                    <td>
+                      <span class="trust-pill" [ngClass]="getTrustScoreClass(rec.trustScore)">
+                        {{ rec.trustScore || 85 }}/100
+                      </span>
+                    </td>
+                    <td>
+                      <span class="domain-tag">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        Verified Domain
+                      </span>
+                    </td>
+                    <td>
+                      <div class="table-actions">
+                        <a routerLink="/tpo/approval" class="btn-verify-sm" title="View WHOIS & GST Details">
+                          <span class="material-symbols-outlined">search</span>
+                          <span>Details</span>
+                        </a>
+                        <button
+                          class="btn-approve-sm"
+                          (click)="approveRecruiter(rec._id)"
+                          [disabled]="isApproving() === rec._id"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          class="btn-reject-sm"
+                          (click)="rejectRecruiter(rec._id)"
+                          [disabled]="isRejecting() === rec._id"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- ══════════════════════════════════════════
+         6. Approved Recruiters & Corporate Partners Section
+         ══════════════════════════════════════════ -->
+    <section class="recruiter-approvals-card glass-panel" style="margin-top: 24px;">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <div class="title-icon-badge badge-success-icon">
+            <span class="material-symbols-outlined">verified</span>
+          </div>
+          <h3 class="panel-title">Approved Recruiters & Corporate Partners</h3>
+        </div>
+        <span class="badge-approved-count">{{ approvedRecruiters().length }} Active Partners</span>
+      </div>
+
+      @if (approvedRecruiters().length === 0) {
+        <div class="empty-table-state">
+          <span class="material-symbols-outlined empty-icon">corporate_fare</span>
+          <p>No approved recruiters yet. Review pending registrations above.</p>
+        </div>
+      }
+
+      @if (approvedRecruiters().length > 0) {
+        <div class="table-scroll">
+          <table class="approval-table">
+            <thead>
+              <tr>
+                <th>Company Name</th>
+                <th>Official Email</th>
+                <th>Trust Score</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (rec of approvedRecruiters(); track rec._id) {
+                <tr>
+                  <td class="font-bold text-navy">
+                    <span class="company-name">{{ rec.companyName }}</span>
+                    @if (rec.website) {
+                      <small style="display: block; font-size: 11px; color: var(--on-surface-var); font-weight: 500;">{{ rec.website }}</small>
+                    }
+                  </td>
+                  <td>{{ rec.officialEmail }}</td>
+                  <td>
+                    <span class="trust-pill trust-high">
+                      {{ rec.trustScore || 85 }}/100
+                    </span>
+                  </td>
+                  <td>
+                    @if (rec.isApproved) {
+                      <span class="status-tag tag-success">
+                        ✅ Approved & Active
+                      </span>
+                    } @else {
+                      <span class="status-tag tag-inactive">
+                        ⛔ Deactivated
+                      </span>
+                    }
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      <button
+                        class="btn-toggle-status-sm"
+                        [class.btn-deactivate]="rec.isApproved"
+                        [class.btn-activate]="!rec.isApproved"
+                        (click)="toggleRecruiterActiveStatus(rec._id)"
+                        [disabled]="isTogglingStatus() === rec._id"
+                        [title]="rec.isApproved ? 'Deactivate recruiter (blocks login)' : 'Activate recruiter'"
+                      >
+                        <span class="material-symbols-outlined">{{ rec.isApproved ? 'block' : 'check_circle' }}</span>
+                        <span>{{ rec.isApproved ? 'Deactivate' : 'Activate' }}</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+  </main>
+
+  <!-- =============================================
+       6. Bulk Import Modal
+       ============================================= -->
+  @if (isImportModalOpen()) {
+    <div class="modal-backdrop" (click)="closeImportModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Import Student Records</h3>
+          <button class="btn-close" (click)="closeImportModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-desc">
+            Upload CSV file or paste student records to enroll batch students.
+          </p>
+
+          <div class="file-dropzone">
+            <input type="file" accept=".csv" (change)="onFileSelect($event)" id="csv-input" />
+            <label for="csv-input" class="dropzone-inner">
+              <span class="material-symbols-outlined dropzone-icon">cloud_upload</span>
+              <span>Click to select CSV File</span>
+              <small>Columns: rollNumber, name, email, cgpa, branch, passoutYear</small>
+            </label>
+          </div>
+
+          <div class="modal-or">
+            <span>OR paste JSON data</span>
+            <button class="btn-link" (click)="loadSampleJSON()">Load Sample</button>
+          </div>
+
+          <textarea
+            class="modal-textarea"
+            rows="4"
+            [ngModel]="importRawInput()"
+            (ngModelChange)="importRawInput.set($event)"
+            placeholder='[{"rollNumber": "CS24B001", "name": "Aarav", "email": "aarav@alphabet.edu", "cgpa": 9.1, "branch": "CSE", "passoutYear": 2024}]'
+          ></textarea>
+
+          @if (importErrorMsg()) {
+            <p class="error-text">{{ importErrorMsg() }}</p>
+          }
+          @if (importSuccessMsg()) {
+            <p class="success-text">{{ importSuccessMsg() }}</p>
+          }
+
+          @if (previewStudents().length > 0) {
+            <div class="preview-box">
+              <span class="preview-head">Preview ({{ previewStudents().length }} students)</span>
+              <div class="preview-scroll">
+                <table class="preview-table">
+                  <thead>
+                    <tr>
+                      <th>Roll No</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>CGPA</th>
+                      <th>Branch</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (s of previewStudents().slice(0, 5); track s.rollNumber || s.email) {
+                      <tr>
+                        <td>{{ s.rollNumber }}</td>
+                        <td>{{ s.name }}</td>
+                        <td>{{ s.email }}</td>
+                        <td>{{ s.cgpa }}</td>
+                        <td>{{ s.branch }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-cancel" (click)="closeImportModal()">Cancel</button>
+          <button
+            class="btn-import-submit"
+            [disabled]="previewStudents().length === 0 || isImporting()"
+            (click)="submitBulkImport()"
+          >
+            Confirm & Import
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

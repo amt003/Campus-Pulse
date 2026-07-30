@@ -1,0 +1,425 @@
+<div class="student-root">
+
+  <!-- ===== Header Bar ===== -->
+  <header class="rec-header">
+    <div class="header-left">
+      <div class="brand-logo">
+        <span class="material-symbols-outlined logo-icon">school</span>
+      </div>
+      <div class="brand-title">
+        <span class="brand-name">CampusPulse</span>
+        <span class="brand-sub">Student Portal</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <span class="company-badge-name">
+        {{ profile() ? profile()!.userId.name : 'Student' }}
+      </span>
+
+      <button class="btn-logout" (click)="logout()" title="Logout" id="student-logout-btn">
+        <span class="material-symbols-outlined">logout</span>
+        <span>Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== Main Content ===== -->
+  <main class="rec-main">
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading student profile details…</p>
+      </div>
+    }
+
+    @if (!isLoading()) {
+
+      <!-- ══════════════════════════════════════════════════════════
+             STATE A: INITIAL PROFILE SETUP (If profile is null/incomplete)
+             ══════════════════════════════════════════════════════════ -->
+      @if (!profile() || !profile()!.isProfileComplete) {
+        <div class="pending-approval-container">
+          <div class="pending-card" style="max-width: 520px;">
+            <div class="pending-icon-circle">
+              <span class="material-symbols-outlined pending-icon">account_circle</span>
+            </div>
+
+            <h2 class="pending-title">Complete Your Placement Profile</h2>
+            <p class="pending-subtitle">Please initialize your academic credentials to view and apply for campus drives.</p>
+
+            <form class="setup-form" (ngSubmit)="submitCreateProfile()" style="text-align: left; margin-top: 24px;">
+              <div class="form-group" style="margin-bottom: 16px;">
+                <label style="font-weight: 700; font-size: 13px; color: var(--text-dark); margin-bottom: 6px; display: block;">Roll Number</label>
+                <input type="text" [(ngModel)]="newRollNumber" name="newRollNumber" class="field-input" placeholder="e.g. 2021CS101" required
+                  style="width: 100%; height: 42px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px; font-size: 14px;" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 16px;">
+                <label style="font-weight: 700; font-size: 13px; color: var(--text-dark); margin-bottom: 6px; display: block;">Current CGPA</label>
+                <input type="number" [(ngModel)]="newCgpa" name="newCgpa" class="field-input" placeholder="e.g. 8.5" min="0" max="10" step="0.1" required
+                  style="width: 100%; height: 42px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px; font-size: 14px;" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 16px;">
+                <label style="font-weight: 700; font-size: 13px; color: var(--text-dark); margin-bottom: 6px; display: block;">Branch</label>
+                <select [(ngModel)]="newBranch" name="newBranch" class="field-input" required
+                  style="width: 100%; height: 42px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px; font-size: 14px; background: white;">
+                  @for (br of branchesList; track br) {
+                    <option [value]="br">{{ br }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 16px;">
+                <label style="font-weight: 700; font-size: 13px; color: var(--text-dark); margin-bottom: 6px; display: block;">Passout Year</label>
+                <input type="number" [(ngModel)]="newPassoutYear" name="newPassoutYear" class="field-input" placeholder="2024" required
+                  style="width: 100%; height: 42px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px; font-size: 14px;" />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 24px;">
+                <label style="font-weight: 700; font-size: 13px; color: var(--text-dark); margin-bottom: 6px; display: block;">Active Backlogs</label>
+                <input type="number" [(ngModel)]="newBacklogs" name="newBacklogs" class="field-input" placeholder="0" min="0" required
+                  style="width: 100%; height: 42px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px; font-size: 14px;" />
+              </div>
+
+              @if (formErrorMessage()) {
+                <div style="color: var(--danger); font-size: 13px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
+                  <span class="material-symbols-outlined" style="font-size: 16px;">error</span>
+                  {{ formErrorMessage() }}
+                </div>
+              }
+
+              <button type="submit" class="btn-refresh-status" style="width: 100%; background: var(--primary); color: white; border: none; height: 44px; font-size: 14px;">
+                Initialize Profile
+              </button>
+            </form>
+          </div>
+        </div>
+      }
+
+      <!-- ══════════════════════════════════════════════════════════
+             STATE B: FULL STUDENT PLACEMENT DASHBOARD
+             ══════════════════════════════════════════════════════════ -->
+      @if (profile() && profile()!.isProfileComplete) {
+        <div class="approved-dashboard">
+
+          <!-- Welcome Banner -->
+          <div class="welcome-banner">
+            <div class="welcome-text-wrap">
+              <h1 class="welcome-title">Welcome, {{ profile()!.userId.name }}! 👋</h1>
+              <p class="welcome-sub">Explore active placement opportunities, track application statuses, and manage your placement profile.</p>
+            </div>
+            <div class="student-quick-info" style="text-align: right; font-size: 13px; color: var(--text-muted); background: white; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border);">
+              <div>Roll No: <strong>{{ profile()!.rollNumber }}</strong></div>
+              <div>CGPA: <strong>{{ profile()!.cgpa }}</strong> · Branch: <strong>{{ profile()!.branch }}</strong></div>
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <section class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon icon-blue">
+                <span class="material-symbols-outlined">send</span>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">Total Applied</span>
+                <h3 class="stat-value">{{ totalApplied() }}</h3>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon icon-green">
+                <span class="material-symbols-outlined">celebration</span>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">Offers Received</span>
+                <h3 class="stat-value text-green">{{ totalOffers() }}</h3>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon icon-amber">
+                <span class="material-symbols-outlined">hourglass_top</span>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">Pending Review</span>
+                <h3 class="stat-value text-amber">{{ pendingApprovals() }}</h3>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon icon-teal">
+                <span class="material-symbols-outlined">payments</span>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">Max CTC Applied</span>
+                <h3 class="stat-value">{{ maxPackageApplied() ? getCTCInLpa(maxPackageApplied()) : '—' }}</h3>
+              </div>
+            </div>
+          </section>
+
+          <!-- Dashboard Tabs & Details Area -->
+          <section class="drives-section" style="margin-top: 24px;">
+            <div class="section-header" style="border-bottom: 2px solid var(--border); padding-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+              <div class="tabs-list" style="display: flex; gap: 24px;">
+                <button class="tab-btn" [class.active]="activeTab() === 'drives'" (click)="switchTab('drives')">
+                  <span class="material-symbols-outlined">work_outline</span>
+                  Explore Campus Drives
+                </button>
+                <button class="tab-btn" [class.active]="activeTab() === 'applications'" (click)="switchTab('applications')">
+                  <span class="material-symbols-outlined">assignment</span>
+                  My Applications
+                </button>
+                <button class="tab-btn" [class.active]="activeTab() === 'profile'" (click)="switchTab('profile')">
+                  <span class="material-symbols-outlined">manage_accounts</span>
+                  Profile & Resume
+                </button>
+              </div>
+
+              <!-- Inline Action for drives tab -->
+              @if (activeTab() === 'drives') {
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <label class="checkbox-label" for="filter-eligible" style="font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                    <input id="filter-eligible" type="checkbox" [ngModel]="filterEligibleOnly()" (ngModelChange)="filterEligibleOnly.set($event)" class="checkbox-input" />
+                    <span class="checkbox-custom"></span>
+                    <span>Show Eligible Only</span>
+                  </label>
+                  <button class="btn-action" (click)="refreshData()" style="padding: 6px 12px; border-radius: 6px;">
+                    <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">refresh</span>
+                  </button>
+                </div>
+              }
+            </div>
+
+            <!-- TAB 1: EXPLORE JOB DRIVES -->
+            @if (activeTab() === 'drives') {
+              <div class="tab-content-panel" style="margin-top: 20px;">
+                @if (filteredDrives.length === 0) {
+                  <div class="empty-drives">
+                    <span class="material-symbols-outlined empty-icon">work_off</span>
+                    <p>No active placement drives found. Please check back later.</p>
+                  </div>
+                }
+
+                @if (filteredDrives.length > 0) {
+                  <div class="student-job-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px;">
+                    @for (d of filteredDrives; track d._id) {
+                      <div class="job-card" style="background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.02); position: relative; transition: transform 0.2s;">
+                        
+                        <!-- Header details -->
+                        <div>
+                          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <span class="job-company" style="font-weight: 700; color: var(--secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">CAMPUS RECRUITMENT</span>
+                            <span class="status-pill pill-open">OPEN</span>
+                          </div>
+                          <h3 class="job-title" style="font-size: 18px; font-weight: 800; color: var(--text-dark); margin: 0 0 8px;">{{ d.title }}</h3>
+                          <p class="job-desc" style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 16px;">{{ d.description }}</p>
+                          
+                          <!-- Job Specs -->
+                          <div class="job-specs-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 13px; border-top: 1px solid var(--border); padding-top: 12px;">
+                            <div>
+                              <span style="color: var(--text-muted); font-size: 11px; display: block;">ANNUAL CTC</span>
+                              <strong>₹{{ getCTCInLpa(d.ctc) }}</strong>
+                            </div>
+                            <div>
+                              <span style="color: var(--text-muted); font-size: 11px; display: block;">MIN CGPA</span>
+                              <strong>{{ d.minCGPA }} CGPA</strong>
+                            </div>
+                            <div>
+                              <span style="color: var(--text-muted); font-size: 11px; display: block;">MAX BACKLOGS</span>
+                              <strong [style.color]="d.maxBacklogs === 0 ? 'var(--success)' : 'var(--warning)'">{{ d.maxBacklogs === 0 ? 'No Backlogs' : d.maxBacklogs }}</strong>
+                            </div>
+                            <div>
+                              <span style="color: var(--text-muted); font-size: 11px; display: block;">DEADLINE</span>
+                              <strong>{{ d.applicationDeadline | date:'mediumDate' }}</strong>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Footer Actions / Eligibility Check -->
+                        <div style="border-top: 1px solid var(--border); padding-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+                          @if (isApplied(d._id)) {
+                            <div class="status-tag" style="background: rgba(39, 174, 96, 0.1); color: var(--success); width: 100%; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; gap: 4px;">
+                              <span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span>
+                              Applied ({{ getApplicationStatus(d._id) }})
+                            </div>
+                          } @else {
+                            @if (isEligible(d)) {
+                              <button class="btn-refresh-status" (click)="applyToDrive(d._id)"
+                                style="width: 100%; height: 38px; font-size: 13px; font-weight: 700; background: var(--primary); color: white; border: none; margin: 0;">
+                                <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle; margin-right: 4px;">send</span>
+                                Apply Now
+                              </button>
+                            } @else {
+                              <div class="status-tag" style="background: rgba(231, 76, 60, 0.08); color: var(--danger); width: 100%; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; line-height: 1.4; text-align: left; display: flex; align-items: flex-start; gap: 6px;">
+                                <span class="material-symbols-outlined" style="font-size: 16px; color: var(--danger); margin-top: 1px;">warning</span>
+                                <span>Not Eligible: {{ getEligibilityReason(d) }}</span>
+                              </div>
+                            }
+                          }
+                        </div>
+
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- TAB 2: MY APPLICATIONS LIST -->
+            @if (activeTab() === 'applications') {
+              <div class="tab-content-panel" style="margin-top: 20px;">
+                @if (applications().length === 0) {
+                  <div class="empty-drives">
+                    <span class="material-symbols-outlined empty-icon">assignment_late</span>
+                    <p>You have not submitted any applications to campus drives yet.</p>
+                  </div>
+                }
+
+                @if (applications().length > 0) {
+                  <div class="table-wrap">
+                    <table class="drives-table">
+                      <thead>
+                        <tr>
+                          <th>Job Role</th>
+                          <th>Company / Program</th>
+                          <th>Offered CTC</th>
+                          <th>Application Date</th>
+                          <th>Application Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                          @for (app of applications(); track app._id) {
+                            <tr>
+                              <td class="font-bold">{{ app.driveId.title || '—' }}</td>
+                              <td>Alphabet Campus Recruitment</td>
+                              <td>₹{{ getCTCInLpa(app.driveId.ctc || 0) }}</td>
+                              <td>{{ app.createdAt | date:'mediumDate' }}</td>
+                              <td>
+                              <span class="status-pill"
+                                [class.pill-open]="app.status === 'Applied' || app.status === 'Shortlisted'"
+                                [class.pill-closed]="app.status === 'Rejected'"
+                                style="font-weight: 700;">
+                                {{ app.status }}
+                              </span>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- TAB 3: PROFILE & RESUME -->
+            @if (activeTab() === 'profile') {
+              <div class="tab-content-panel" style="margin-top: 20px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: start;">
+                
+                <!-- Left Column: Academic Credentials Update -->
+                <div class="stat-card" style="display: block; padding: 24px;">
+                  <h3 style="font-size: 16px; font-weight: 800; color: var(--primary); margin: 0 0 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-outlined">edit_note</span>
+                    Update Academic Details
+                  </h3>
+                  
+                  <form (ngSubmit)="submitUpdateProfile()">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                      <div class="form-group">
+                        <label style="font-weight: 600; font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">CGPA</label>
+                        <input type="number" [(ngModel)]="profile()!.cgpa" name="profileCgpa" class="field-input" step="0.1" min="0" max="10" required
+                          style="width: 100%; height: 40px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px;" />
+                      </div>
+                      
+                      <div class="form-group">
+                        <label style="font-weight: 600; font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Active Backlogs</label>
+                        <input type="number" [(ngModel)]="profile()!.activeBacklogs" name="profileBacklogs" class="field-input" min="0" required
+                          style="width: 100%; height: 40px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px;" />
+                      </div>
+
+                      <div class="form-group">
+                        <label style="font-weight: 600; font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Branch</label>
+                        <select [(ngModel)]="profile()!.branch" name="profileBranch" class="field-input" required
+                          style="width: 100%; height: 40px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px; background: white;">
+                          @for (br of branchesList; track br) {
+                            <option [value]="br">{{ br }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <div class="form-group">
+                        <label style="font-weight: 600; font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Passout Year</label>
+                        <input type="number" [(ngModel)]="profile()!.passoutYear" name="profileYear" class="field-input" required
+                          style="width: 100%; height: 40px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px;" />
+                      </div>
+                    </div>
+
+                    <button type="submit" class="btn-refresh-status" style="margin-top: 20px; width: 100%; height: 40px; font-size: 13px;">
+                      Save Changes
+                    </button>
+                  </form>
+                </div>
+
+                <!-- Right Column: Resume Management -->
+                <div class="stat-card" style="display: block; padding: 24px;">
+                  <h3 style="font-size: 16px; font-weight: 800; color: var(--primary); margin: 0 0 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-outlined">cloud_upload</span>
+                    Placement Resume (PDF)
+                  </h3>
+
+                  <!-- Current Resume Status -->
+                  <div style="background: var(--surface-low); border: 1px dashed var(--secondary); border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 20px;">
+                    @if (profile()!.resumePath) {
+                      <span class="material-symbols-outlined" style="font-size: 36px; color: var(--success); margin-bottom: 8px;">check_circle</span>
+                      <p style="font-size: 13px; font-weight: 700; color: var(--text-dark); margin: 0 0 4px;">Resume Uploaded Successfully</p>
+                      <a [href]="'http://localhost:5000' + profile()!.resumePath" target="_blank" style="font-size: 12px; color: var(--secondary); font-weight: 700; text-decoration: underline;">
+                        View Current Resume (PDF)
+                      </a>
+                    } @else {
+                      <span class="material-symbols-outlined" style="font-size: 36px; color: var(--warning); margin-bottom: 8px;">warning</span>
+                      <p style="font-size: 13px; font-weight: 700; color: var(--text-dark); margin: 0 0 4px;">No Resume Uploaded</p>
+                      <p style="font-size: 11px; color: var(--text-muted); margin: 0;">You must upload a PDF resume before you can apply to drives.</p>
+                    }
+                  </div>
+
+                  <!-- Upload input -->
+                  <div class="file-upload-wrapper" style="position: relative; overflow: hidden; display: inline-block; width: 100%;">
+                    <button class="btn-refresh-status" style="width: 100%; height: 40px; margin: 0; background: white; color: var(--primary); border: 1.5px solid var(--border);" [disabled]="isUploadingResume()">
+                      <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle; margin-right: 4px;">upload_file</span>
+                      {{ isUploadingResume() ? 'Uploading...' : 'Choose PDF File' }}
+                    </button>
+                    <input type="file" (change)="onResumeFileSelected($event)" accept="application/pdf"
+                      style="position: absolute; font-size: 100px; right: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;" />
+                  </div>
+
+                  @if (uploadSuccessMsg()) {
+                    <div style="color: var(--success); font-size: 12px; font-weight: 600; margin-top: 10px; display: flex; align-items: center; gap: 4px;">
+                      <span class="material-symbols-outlined" style="font-size: 16px;">check</span>
+                      {{ uploadSuccessMsg() }}
+                    </div>
+                  }
+
+                  @if (uploadErrorMsg()) {
+                    <div style="color: var(--danger); font-size: 12px; font-weight: 600; margin-top: 10px; display: flex; align-items: center; gap: 4px;">
+                      <span class="material-symbols-outlined" style="font-size: 16px;">error</span>
+                      {{ uploadErrorMsg() }}
+                    </div>
+                  }
+                </div>
+
+              </div>
+            }
+
+          </section>
+
+        </div>
+      }
+
+    }
+
+  </main>
+
+</div>

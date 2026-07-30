@@ -1,0 +1,259 @@
+/* =============================================
+   CampusPulse — Shared TPO Layout
+   Matches the premium Login & Registration Design System
+   ============================================= */
+
+:host {
+  --primary:         #003b5a;
+  --secondary:       #006497;
+  --background:      #f7f9ff;
+  --surface:         #ffffff;
+  --surface-low:     #edf4ff;
+  --on-surface:      #091d2e;
+  --on-surface-var:  #41474e;
+  --outline:         #c1c7cf;
+  --outline-variant: rgba(193, 199, 207, 0.4);
+  --error:           #d32f2f;
+  --success:         #2e7d32;
+  --amber:           #fb8c00;
+  --teal:            #0080c0;
+  --radius-sm:       10px;
+  --radius-md:       14px;
+  --radius-lg:       20px;
+
+  display: block;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background: var(--background);
+  min-height: 100vh;
+  color: var(--on-surface);
+}
+
+.layout-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.layout-body {
+  flex: 1;
+}
+
+/* =============================================
+   1. Navbar Header (Shared)
+   ============================================= */
+.navbar-header {
+  height: 70px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(0, 59, 90, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0, 59, 90, 0.04);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+}
+
+.brand-logo-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 59, 90, 0.25);
+}
+
+.brand-logo-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.brand-bold {
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+}
+
+.brand-sub {
+  font-weight: 500;
+  color: var(--on-surface-var);
+  font-size: 15px;
+}
+
+.navbar-tabs {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.nav-tab {
+  background: none;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--on-surface-var);
+  cursor: pointer;
+  padding: 8px 4px;
+  position: relative;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.nav-tab:hover {
+  color: var(--primary);
+}
+
+.nav-tab.active {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  border-radius: 2px;
+}
+
+.nav-tab-icon {
+  font-size: 16px;
+}
+
+.tab-badge-pulse {
+  background: var(--amber);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.85; }
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.welcome-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--on-surface);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.emoji-flag { font-size: 16px; }
+
+.btn-logout-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  border: none;
+  background: rgba(211, 47, 47, 0.08);
+  color: var(--error);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-logout-pill:hover {
+  background: rgba(211, 47, 47, 0.16);
+  transform: translateY(-1px);
+}
+
+.btn-logout-pill .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* =============================================
+   2. Footer (Shared)
+   ============================================= */
+.tpo-footer {
+  background: #ffffff;
+  border-top: 1px solid rgba(0, 59, 90, 0.08);
+  padding: 20px 40px;
+  margin-top: auto;
+}
+
+.footer-container {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-brand {
+  font-weight: 800;
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.footer-divider {
+  color: var(--outline);
+}
+
+.footer-text {
+  font-size: 13px;
+  color: var(--on-surface-var);
+  font-weight: 500;
+}
+
+/* =============================================
+   3. Responsive Layout
+   ============================================= */
+@media (max-width: 768px) {
+  .navbar-header {
+    padding: 0 20px;
+  }
+  .navbar-tabs {
+    gap: 16px;
+  }
+  .nav-tab {
+    font-size: 14px;
+  }
+  .tpo-footer {
+    padding: 20px;
+  }
+  .footer-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

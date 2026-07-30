@@ -1,0 +1,328 @@
+<div class="approval-root">
+
+  <!-- ===== Top Header ===== -->
+  <header class="approval-header">
+    <div class="header-left">
+      <a routerLink="/tpo/dashboard" class="back-link">
+        <span class="material-symbols-outlined">arrow_back</span>
+        <span>Back to Dashboard</span>
+      </a>
+      <h1 class="page-title">Recruiter Approvals & Verification</h1>
+    </div>
+
+    <div class="header-right">
+      <button class="btn-refresh" (click)="loadPendingRecruiters(false)" [class.spin]="isRefreshing()">
+        <span class="material-symbols-outlined">refresh</span>
+        <span>Refresh List</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== Main Container ===== -->
+  <main class="approval-container">
+
+    @if (isLoading()) {
+      <div class="loading-box">
+        <div class="spinner"></div>
+        <p>Performing WHOIS & GSTIN verification check…</p>
+      </div>
+    }
+
+    @if (!isLoading()) {
+
+      <div class="table-card glass-panel">
+        <div class="card-header">
+          <div class="header-title-wrap">
+            <span class="material-symbols-outlined header-icon">verified_user</span>
+            <h2>Pending Recruiter Registrations</h2>
+          </div>
+          <span class="pending-count-badge">{{ pendingRecruiters().length }} Pending Review</span>
+        </div>
+
+        @if (pendingRecruiters().length === 0) {
+          <div class="empty-state">
+            <span class="material-symbols-outlined empty-icon">check_circle</span>
+            <h3>All Recruiters Reviewed</h3>
+            <p>There are currently no recruiter applications pending TPO verification.</p>
+          </div>
+        }
+
+        @if (pendingRecruiters().length > 0) {
+          <div class="table-scroll">
+            <table class="approval-table">
+              <thead>
+                <tr>
+                  <th>Company Name</th>
+                  <th>Contact Person</th>
+                  <th>Official Email</th>
+                  <th>Domain Status</th>
+                  <th>Cover Note</th>
+                  <th>Trust Score</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (rec of pendingRecruiters(); track rec._id) {
+                  <!-- Main Row -->
+                  <tr class="main-row" [class.expanded]="expandedRecruiterId() === rec._id">
+                    <td class="font-bold company-cell">
+                      <span class="company-name">{{ rec.companyName }}</span>
+                      <small class="company-site">{{ getFormattedDomain(rec) }}</small>
+                    </td>
+
+                    <td>{{ rec.userId?.name || 'Contact HR' }}</td>
+                    <td>{{ rec.officialEmail }}</td>
+
+                    <td>
+                      <span class="status-tag tag-success">🌐 Active Domain</span>
+                    </td>
+
+                    <td>
+                      <span class="status-tag tag-success">✉️ Submitted</span>
+                    </td>
+
+                    <td>
+                      <span
+                        class="trust-score-badge"
+                        [style.background]="getTrustScoreColor(getFormattedBreakdown(rec).total)"
+                      >
+                        {{ getFormattedBreakdown(rec).total }}/100
+                      </span>
+                    </td>
+
+                    <td>
+                      <div class="action-buttons">
+                        <button
+                          class="btn-action-icon btn-view"
+                          (click)="toggleExpand(rec._id)"
+                          title="View Verification Details & Letter"
+                        >
+                          <span class="material-symbols-outlined">search</span>
+                          <span>{{ expandedRecruiterId() === rec._id ? 'Hide' : 'Details' }}</span>
+                        </button>
+                        <button
+                          class="btn-action btn-approve"
+                          (click)="openApproveModal(rec)"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          class="btn-action btn-reject"
+                          (click)="openRejectModal(rec)"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Expandable Verification Details Row -->
+                  @if (expandedRecruiterId() === rec._id) {
+                    <tr class="detail-row">
+                      <td colspan="7">
+                        <div class="verification-details-container">
+                          <h4 class="details-heading">
+                            <span class="material-symbols-outlined">analytics</span>
+                            Verification & Trust Score Breakdown for {{ rec.companyName }}
+                          </h4>
+
+                          <!-- Recruiter Official Cover Note / Email Letter -->
+                          <div class="cover-letter-card">
+                            <div class="letter-header">
+                              <div class="letter-badge">
+                                <span class="material-symbols-outlined">mark_email_read</span>
+                                <span>Official Cover Note & Verification Request</span>
+                              </div>
+                              <span class="letter-date">Received: {{ rec.createdAt | date:'mediumDate' }}</span>
+                            </div>
+                            <div class="letter-meta">
+                              <div class="meta-item">
+                                <span class="meta-label">From:</span>
+                                <strong>{{ rec.userId?.name || 'Recruiter Contact' }}</strong>
+                                <span class="meta-email">&lt;{{ rec.officialEmail }}&gt;</span>
+                              </div>
+                              <div class="meta-item">
+                                <span class="meta-label">Company:</span>
+                                <strong>{{ rec.companyName }}</strong>
+                                @if (rec.website) {
+                                  <a [href]="rec.website" target="_blank" class="meta-link">({{ rec.website }})</a>
+                                }
+                              </div>
+                              <div class="meta-item">
+                                <span class="meta-label">Phone:</span>
+                                <span>{{ rec.userId?.phone || 'N/A' }}</span>
+                              </div>
+                            </div>
+                            <div class="letter-body">
+                              <p class="letter-text">{{ rec.coverNote || 'Dear TPO, We request campus recruitment access for onboarding students at ' + rec.companyName + '.' }}</p>
+                            </div>
+                          </div>
+
+                          <div class="details-grid-two-col">
+                            <!-- WHOIS Data -->
+                            <div class="detail-card">
+                              <div class="card-head">
+                                <span class="material-symbols-outlined card-icon">language</span>
+                                <h5>WHOIS Domain Verification</h5>
+                              </div>
+                              <div class="detail-list">
+                                <div class="detail-item">
+                                  <span>Domain Name:</span>
+                                  <strong>{{ getFormattedDomain(rec) }}</strong>
+                                </div>
+                                <div class="detail-item">
+                                  <span>Domain Age:</span>
+                                  <strong>{{ getFormattedDomainAge(rec) }}</strong>
+                                </div>
+                                <div class="detail-item">
+                                  <span>Domain Registrar:</span>
+                                  <span>{{ getFormattedRegistrar(rec) }}</span>
+                                </div>
+                                <div class="detail-item">
+                                  <span>Registrant Region:</span>
+                                  <span>US / IN</span>
+                                </div>
+                              </div>
+
+                              <div class="verification-actions-block" style="margin-top: 12px;">
+                                <a [href]="getWhoisLookupUrl(rec)" target="_blank" rel="noopener noreferrer" class="btn-portal btn-whois" title="Verify WHOIS Creation Date on DomainTools">
+                                  <span class="material-symbols-outlined">open_in_new</span>
+                                  <span>Verify Domain on DomainTools WHOIS</span>
+                                </a>
+                              </div>
+                            </div>
+
+                            <!-- Trust Score Breakdown (50% Domain + 50% Email Match) -->
+                            <div class="detail-card card-score-breakdown">
+                              <div class="card-head">
+                                <span class="material-symbols-outlined card-icon">equalizer</span>
+                                <h5>Trust Score Breakdown</h5>
+                              </div>
+                              <div class="score-bars">
+                                <div class="score-line">
+                                  <span>Domain Age & Active Status:</span>
+                                  <strong>{{ getFormattedBreakdown(rec).domainAge }}/50</strong>
+                                </div>
+                                <div class="score-line">
+                                  <span>Email & Domain Match:</span>
+                                  <strong>{{ getFormattedBreakdown(rec).emailMatch }}/50</strong>
+                                </div>
+                                <div class="score-line-total">
+                                  <span>Total Trust Score:</span>
+                                  <span class="total-score-val" [style.color]="getTrustScoreColor(getFormattedBreakdown(rec).total)">{{ getFormattedBreakdown(rec).total }}/100</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- TPO Feedback & Suggestions to Company -->
+                          <div class="suggestion-box">
+                            <div class="suggestion-header">
+                              <span class="material-symbols-outlined icon-rate">rate_review</span>
+                              <h5>TPO Feedback & Suggestions to {{ rec.companyName }}</h5>
+                            </div>
+                            <div class="suggestion-body">
+                              <textarea
+                                class="suggestion-textarea"
+                                rows="3"
+                                [ngModel]="suggestionInputs()[rec._id] || ''"
+                                (ngModelChange)="updateSuggestionInput(rec._id, $event)"
+                                placeholder="Write official feedback or suggestions for {{ rec.companyName }} (e.g., Please provide secondary HR contact number, or upload revised GSTIN certificate)..."
+                              ></textarea>
+
+                              <div class="suggestion-actions">
+                                @if (suggestionSuccessMsg()[rec._id]) {
+                                  <div class="suggestion-toast">
+                                    <span class="material-symbols-outlined">check_circle</span>
+                                    <span>{{ suggestionSuccessMsg()[rec._id] }}</span>
+                                  </div>
+                                }
+                                <button
+                                  class="btn-send-suggestion"
+                                  [disabled]="!suggestionInputs()[rec._id]?.trim() || isSendingSuggestion() === rec._id"
+                                  (click)="sendSuggestion(rec._id)"
+                                >
+                                  <span class="material-symbols-outlined">send</span>
+                                  <span>Send Suggestion</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                        </div>
+                      </td>
+                    </tr>
+                  }
+
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+    }
+
+  </main>
+
+  <!-- Approve Confirmation Modal -->
+  @if (isApproveModalOpen()) {
+    <div class="modal-backdrop" (click)="closeApproveModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header header-approve">
+          <h3>Approve Recruiter</h3>
+          <button class="btn-close" (click)="closeApproveModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>
+            Are you sure you want to approve <strong>{{ selectedRecruiter()?.companyName }}</strong>?
+          </p>
+          <p class="modal-sub">
+            This will activate their account and grant them access to post placement drives.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" (click)="closeApproveModal()">Cancel</button>
+          <button
+            class="btn-confirm-approve"
+            (click)="confirmApprove()"
+            [disabled]="isProcessing()"
+          >
+            Confirm Approval
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Reject Confirmation Modal -->
+  @if (isRejectModalOpen()) {
+    <div class="modal-backdrop" (click)="closeRejectModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header header-reject">
+          <h3>Reject Recruiter Application</h3>
+          <button class="btn-close" (click)="closeRejectModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>
+            Are you sure you want to reject <strong>{{ selectedRecruiter()?.companyName }}</strong>?
+          </p>
+          <p class="modal-sub text-danger">
+            This action will delete the company application record.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" (click)="closeRejectModal()">Cancel</button>
+          <button
+            class="btn-confirm-reject"
+            (click)="confirmReject()"
+            [disabled]="isProcessing()"
+          >
+            Confirm Rejection
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

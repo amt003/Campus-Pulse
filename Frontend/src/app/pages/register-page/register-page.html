@@ -1,0 +1,372 @@
+<div class="reg-root">
+
+  <!-- ===== Left Panel — Brand / Visual ===== -->
+  <aside class="reg-panel-left">
+    <div class="reg-particles"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="dot-grid"></div>
+
+    <div class="panel-content">
+
+      <!-- Brand -->
+      <a class="panel-brand" routerLink="/">
+        <div class="panel-brand-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          </svg>
+        </div>
+        <span class="panel-brand-name">CampusPulse</span>
+      </a>
+
+      <!-- Central Visual -->
+      <div class="panel-visual">
+        <!-- Building icon with rings -->
+        <div class="visual-rings">
+          <div class="visual-ring ring-a"></div>
+          <div class="visual-ring ring-b"></div>
+          <div class="visual-center">
+            <span class="material-symbols-outlined">corporate_fare</span>
+          </div>
+        </div>
+
+        <!-- Orbit badges -->
+        <div class="orbit-badge badge-1">
+          <span class="material-symbols-outlined">school</span>
+        </div>
+        <div class="orbit-badge badge-2">
+          <span class="material-symbols-outlined">analytics</span>
+        </div>
+        <div class="orbit-badge badge-3">
+          <span class="material-symbols-outlined">verified</span>
+        </div>
+        <div class="orbit-badge badge-4">
+          <span class="material-symbols-outlined">bolt</span>
+        </div>
+      </div>
+
+      <!-- Tagline -->
+      <div class="panel-tagline">
+        <h2 class="panel-headline">
+          Find Top Talent<br>
+          <span class="panel-headline-accent">From India's Best</span>
+        </h2>
+        <p class="panel-sub">
+          Join 1,200+ recruiters already hiring from 300+ premium institutions
+          through CampusPulse's AI-driven placement platform.
+        </p>
+      </div>
+
+      <!-- Benefit chips -->
+      <div class="benefit-list">
+        <div class="benefit-item">
+          <span class="material-symbols-outlined">check_circle</span>
+          <span>AI-ranked candidate shortlists</span>
+        </div>
+        <div class="benefit-item">
+          <span class="material-symbols-outlined">check_circle</span>
+          <span>One-click interview scheduling</span>
+        </div>
+        <div class="benefit-item">
+          <span class="material-symbols-outlined">check_circle</span>
+          <span>Access to verified student profiles</span>
+        </div>
+        <div class="benefit-item">
+          <span class="material-symbols-outlined">check_circle</span>
+          <span>Real-time placement analytics</span>
+        </div>
+      </div>
+
+
+    </div>
+  </aside>
+
+  <!-- ===== Right Panel — Form ===== -->
+  <main class="reg-panel-right">
+    <div class="form-wrapper">
+
+      <!-- Top nav -->
+      <div class="form-top-nav">
+        <a routerLink="/" class="back-link">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Back to Home</span>
+        </a>
+        <span class="form-top-nav-sep">·</span>
+
+      </div>
+
+      <!-- Success State -->
+      @if (submitSuccess) {
+      <div class="success-state">
+        <div class="success-icon-wrap">
+          <span class="material-symbols-outlined success-icon">check_circle</span>
+        </div>
+        <h2 class="pending-title">Registration Submitted Successfully!</h2>
+        <p class="pending-subtitle">Your company registration is awaiting TPO approval.</p>
+        <p class="success-desc">
+          Your company profile for <strong>{{ companyName }}</strong> has been submitted. Your cover note & WHOIS domain details are currently under review by the Training & Placement Officer (TPO).
+        </p>
+        <div class="notice-box" style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #004d73; background: #e6f4fa; padding: 14px 18px; border-radius: 8px; border-left: 4px solid #006497; margin-bottom: 24px; text-align: left;">
+          <span class="material-symbols-outlined" style="font-size: 20px; color: #006497; margin-top: 2px;">info</span>
+          <span><strong>Next Step:</strong> Once the TPO reviews and approves your application, you will be able to log in to your Recruiter Dashboard and post placement drives.</span>
+        </div>
+        <div class="success-actions">
+          <a routerLink="/login" class="btn-submit" id="reg-go-login" style="padding: 0 32px;">
+            <span class="material-symbols-outlined">login</span>
+            <span>Go to Login</span>
+          </a>
+          <a routerLink="/" class="btn-back" id="reg-go-home">
+            <span class="material-symbols-outlined">home</span>
+            <span>Return to Home</span>
+          </a>
+        </div>
+      </div>
+      }
+
+      <!-- Form -->
+      @if (!submitSuccess) {
+      <!-- Header -->
+      <div class="form-header">
+        <div class="form-role-chip">
+          <span class="material-symbols-outlined">corporate_fare</span>
+          <span>Recruiter Registration</span>
+        </div>
+        <h1 class="form-title">Register Your Company</h1>
+        <p class="form-subtitle">Access the next generation of industry professionals</p>
+
+        @if (errorMessage) {
+        <div class="alert-error-box">
+          <span class="material-symbols-outlined">error</span>
+          <span>{{ errorMessage }}</span>
+        </div>
+        }
+      </div>
+
+      <form class="reg-form" (ngSubmit)="onSubmit()" novalidate>
+
+        <!-- Company Name (full width) -->
+        <div class="field-group field-full">
+          <label class="field-label" for="reg-company-name">
+            Company Name <span class="req">*</span>
+          </label>
+          <div class="field-wrap">
+            <span class="field-icon material-symbols-outlined">business</span>
+            <input id="reg-company-name" name="companyName" type="text" class="field-input" [(ngModel)]="companyName"
+              placeholder="e.g., Google India" autocomplete="organization" required />
+          </div>
+        </div>
+
+        <!-- Official Email (full width) -->
+        <div class="field-group field-full">
+          <label class="field-label" for="reg-official-email">
+            Official Email <span class="req">*</span>
+          </label>
+          <div class="field-wrap">
+            <span class="field-icon material-symbols-outlined">mail</span>
+            <input id="reg-official-email" name="officialEmail" type="email" class="field-input"
+              [class.field-error]="officialEmail && !emailValid" [(ngModel)]="officialEmail"
+              placeholder="hr@company.com" autocomplete="email" required />
+          </div>
+          @if (officialEmail && !emailValid) {
+          <p class="field-error-msg">
+            <span class="material-symbols-outlined">error</span>
+            Please enter a valid email address
+          </p>
+          }
+        </div>
+
+        <!-- Website Field -->
+        <div class="field-group field-full">
+          <label class="field-label" for="reg-website">Company Website URL</label>
+          <div class="field-wrap">
+            <span class="field-icon material-symbols-outlined">language</span>
+            <input id="reg-website" name="website" type="url" class="field-input"
+              [class.field-error]="website && !websiteValid" [(ngModel)]="website" placeholder="https://company.com"
+              autocomplete="url" />
+          </div>
+          @if (website && !websiteValid) {
+            <p class="field-error-msg">
+              <span class="material-symbols-outlined">error</span>
+              Invalid Website URL (e.g. https://company.com)
+            </p>
+          }
+        </div>
+
+        <!-- Cover Note / Introduction Letter Field -->
+        <div class="field-group field-full">
+          <label class="field-label" for="reg-cover-note">
+            Cover Note / Introduction Letter to TPO <span class="req">*</span>
+          </label>
+          <div class="field-wrap textarea-wrap">
+            <span class="field-icon material-symbols-outlined icon-top">description</span>
+            <textarea id="reg-cover-note" name="coverNote" class="field-input field-textarea"
+              [class.field-error]="coverNote && coverNote.trim().length < 20"
+              [class.field-success]="coverNote.trim().length >= 20"
+              [(ngModel)]="coverNote" rows="4"
+              placeholder="Subject: Request for Campus Recruitment Partner Approval&#10;&#10;Dear Training & Placement Officer,&#10;&#10;We are pleased to introduce [Company Name] for campus recruitment drives at your institution. Our hiring team is looking to recruit final-year candidates for engineering and analytical roles..." required></textarea>
+          </div>
+          @if (coverNote && coverNote.trim().length < 20) {
+            <p class="field-error-msg">
+              <span class="material-symbols-outlined">error</span>
+              Please enter at least 20 characters for your cover note/letter to the TPO.
+            </p>
+          } @else if (coverNote.trim().length >= 20) {
+            <p class="field-success-msg">
+              <span class="material-symbols-outlined">check_circle</span>
+              Cover note ready for TPO verification review
+            </p>
+          }
+        </div>
+
+        <!-- Contact Person Name + Phone Number -->
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="reg-contact">
+              Contact Person Name <span class="req">*</span>
+            </label>
+            <div class="field-wrap">
+              <span class="field-icon material-symbols-outlined">person</span>
+              <input id="reg-contact" name="contactPerson" type="text" class="field-input" [(ngModel)]="contactPerson"
+                placeholder="John Doe" autocomplete="name" required />
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="reg-phone">
+              Phone Number <span class="req">*</span>
+            </label>
+            <div class="field-wrap">
+              <span class="field-icon material-symbols-outlined">phone</span>
+              <input id="reg-phone" name="phoneNumber" type="tel" class="field-input"
+                [class.field-error]="phoneNumber && !phoneValid" [(ngModel)]="phoneNumber" placeholder="+91 98765 43210"
+                autocomplete="tel" required />
+            </div>
+            @if (phoneNumber && !phoneValid) {
+            <p class="field-error-msg">
+              <span class="material-symbols-outlined">error</span>
+              Please enter a valid phone number starting with + and country code (e.g. +919876543210)
+            </p>
+            }
+          </div>
+        </div>
+
+        <!-- Password + Confirm Password -->
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="reg-password">
+              Password <span class="req">*</span>
+            </label>
+            <div class="field-wrap">
+              <span class="field-icon material-symbols-outlined">lock</span>
+              <input id="reg-password" name="password" [type]="showPassword ? 'text' : 'password'" class="field-input"
+                [(ngModel)]="password" placeholder="Min. 8 characters" autocomplete="new-password" required />
+              <button type="button" class="field-toggle" (click)="showPassword = !showPassword"
+                [attr.aria-label]="showPassword ? 'Hide' : 'Show'" id="reg-toggle-pwd">
+                <span class="material-symbols-outlined">
+                  {{ showPassword ? 'visibility_off' : 'visibility' }}
+                </span>
+              </button>
+            </div>
+            @if (password.length > 0) {
+            <div class="pwd-rules-chips">
+              <span class="rule-chip" [class.rule-met]="passwordHasMinLength">8+ chars</span>
+              <span class="rule-chip" [class.rule-met]="passwordHasUpper">Uppercase</span>
+              <span class="rule-chip" [class.rule-met]="passwordHasNumber">Number</span>
+              <span class="rule-chip" [class.rule-met]="passwordHasSpecial">Special</span>
+            </div>
+            }
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="reg-confirm-pwd">
+              Confirm Password <span class="req">*</span>
+            </label>
+            <div class="field-wrap">
+              <span class="field-icon material-symbols-outlined">lock_reset</span>
+              <input id="reg-confirm-pwd" name="confirmPassword" [type]="showConfirmPassword ? 'text' : 'password'"
+                class="field-input" [class.field-error]="confirmPassword && !passwordsMatch"
+                [class.field-success]="confirmPassword && passwordsMatch && password.length >= 8"
+                [(ngModel)]="confirmPassword" placeholder="Re-enter password" autocomplete="new-password" required />
+              <button type="button" class="field-toggle" (click)="showConfirmPassword = !showConfirmPassword"
+                [attr.aria-label]="showConfirmPassword ? 'Hide' : 'Show'" id="reg-toggle-cpwd">
+                <span class="material-symbols-outlined">
+                  {{ showConfirmPassword ? 'visibility_off' : 'visibility' }}
+                </span>
+              </button>
+            </div>
+            @if (confirmPassword && !passwordsMatch) {
+            <p class="field-error-msg">
+              <span class="material-symbols-outlined">error</span>
+              Passwords do not match
+            </p>
+            }
+          </div>
+        </div>
+
+        <!-- Password strength meter (shown only when typing) -->
+        @if (password.length > 0) {
+        <div class="strength-block">
+          <div class="strength-meter">
+            <div class="strength-bars">
+              @for (bar of [1, 2, 3, 4]; track bar) {
+              <div class="strength-bar" [class.filled]="passwordStrength >= bar"
+                [style.background]="passwordStrength >= bar ? strengthColor : ''"></div>
+              }
+            </div>
+            <span class="strength-label" [style.color]="strengthColor">
+              {{ strengthLabel }}
+            </span>
+          </div>
+          <ul class="strength-hints">
+            <li [class.met]="password.length >= 8">At least 8 characters</li>
+            <li [class.met]="/[A-Z]/.test(password)">One uppercase letter</li>
+            <li [class.met]="/[0-9]/.test(password)">One number</li>
+            <li [class.met]="/[^A-Za-z0-9]/.test(password)">One special character</li>
+          </ul>
+        </div>
+        }
+
+        <!-- Terms -->
+        <div class="terms-wrap">
+          <label class="checkbox-label" for="reg-terms">
+            <input id="reg-terms" type="checkbox" name="agreeTerms" [(ngModel)]="agreeTerms" class="checkbox-input" />
+            <span class="checkbox-custom"></span>
+            <span>
+              I agree to CampusPulse's
+              <a href="#" class="form-inline-link">Terms of Service</a>,
+              <a href="#" class="form-inline-link">Privacy Policy</a>, and
+              <a href="#" class="form-inline-link">Recruiter Guidelines</a>
+            </span>
+          </label>
+        </div>
+
+
+        @if (errorMessage) {
+          <div class="alert-error-box" style="margin-bottom: 16px;">
+            <span class="material-symbols-outlined">error</span>
+            <span>{{ errorMessage }}</span>
+            <a routerLink="/login" class="form-inline-link" style="margin-left: 8px; font-weight: 700; text-decoration: underline;">Sign In Here &rarr;</a>
+          </div>
+        }
+
+        <!-- Submit -->
+        <button type="button" (click)="onSubmit()" class="btn-submit" [class.loading]="isLoading" [disabled]="isLoading" id="reg-submit-btn">
+          <span class="material-symbols-outlined">how_to_reg</span>
+          <span>Register Company</span>
+        </button>
+
+        <!-- Sign-in redirect -->
+        <p class="form-footer-note">
+          Already registered?
+          <a routerLink="/login" class="form-inline-link">Sign in to your account</a>
+        </p>
+
+
+
+      </form>
+      }
+
+    </div>
+  </main>
+
+</div>

@@ -1,0 +1,95 @@
+<div class="layout-root">
+
+  <!-- =============================================
+       1. Top Navbar Header
+       ============================================= -->
+  <header class="navbar-header">
+    <div class="navbar-brand">
+      <div class="brand-logo-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+      <span class="brand-bold">CampusPulse</span>
+      <span class="brand-sub">Alphabet Campus</span>
+    </div>
+
+    <nav class="navbar-tabs">
+      <a
+        routerLink="/tpo/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="nav-tab"
+        id="layout-nav-dashboard"
+      >
+        Dashboard
+      </a>
+      <a
+        routerLink="/tpo/students"
+        routerLinkActive="active"
+        class="nav-tab"
+        id="layout-nav-students"
+      >
+        <span class="material-symbols-outlined nav-tab-icon">school</span>
+        Students
+      </a>
+      <a
+        routerLink="/tpo/dashboard"
+        [queryParams]="{ import: 'true' }"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="nav-tab"
+        id="layout-nav-import"
+      >
+        Import
+      </a>
+      <a
+        routerLink="/tpo/approval"
+        routerLinkActive="active"
+        class="nav-tab"
+        id="layout-nav-approve"
+      >
+        Approve Recruiters
+        @if (pendingCount() > 0) {
+          <span class="tab-badge-pulse">{{ pendingCount() }}</span>
+        }
+      </a>
+    </nav>
+
+    <div class="navbar-right">
+      <span class="welcome-text">
+        Welcome, {{ currentUser()?.name || 'TPO Officer' }}!
+        <span class="emoji-flag">📊</span>
+      </span>
+
+      <button class="btn-logout-pill" (click)="logout()" title="Logout" id="layout-logout-btn">
+        <span class="material-symbols-outlined">logout</span>
+        <span>Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =============================================
+       2. Child Route Page Content
+       ============================================= -->
+  <div class="layout-body">
+    <router-outlet></router-outlet>
+  </div>
+
+  <!-- =============================================
+       3. Shared Footer Component
+       ============================================= -->
+  <footer class="tpo-footer">
+    <div class="footer-container">
+      <div class="footer-left">
+        <span class="footer-brand">CampusPulse</span>
+        <span class="footer-divider">|</span>
+        <span class="footer-text">Training & Placement Office Command Center</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-text">© 2026 Alphabet Campus. All rights reserved.</span>
+      </div>
+    </div>
+  </footer>
+
+</div>

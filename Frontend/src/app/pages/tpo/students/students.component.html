@@ -1,0 +1,392 @@
+<div class="dashboard-root" style="display:block;">
+
+  <!-- =============================================
+       Main Content Container
+       ============================================= -->
+  <main class="dashboard-container">
+
+    <!-- ══════════════════════════════════════════
+         Page Header Card
+         ══════════════════════════════════════════ -->
+    <div class="page-header-card">
+      <div class="page-header-left">
+        <div class="page-header-icon-badge">
+          <span class="material-symbols-outlined">school</span>
+        </div>
+        <div>
+          <h1 class="page-header-title">Student Registry</h1>
+          <p class="page-header-sub">
+            @if (isLoading()) {
+              Loading students…
+            } @else {
+              {{ totalStudents() }} student{{ totalStudents() !== 1 ? 's' : '' }} in the database
+              @if (activeFiltersCount > 0) {
+                <span class="filter-active-badge">{{ activeFiltersCount }} filter{{ activeFiltersCount > 1 ? 's' : '' }} active</span>
+              }
+            }
+          </p>
+        </div>
+      </div>
+      <button class="btn-export" (click)="exportCSV()" [disabled]="students().length === 0" id="students-export-csv">
+        <span class="material-symbols-outlined">download</span>
+        Export CSV
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         Stats Row — 4 Cards (same as dashboard)
+         ══════════════════════════════════════════ -->
+    <section class="stats-row">
+      <div class="card-stat glow-card-blue">
+        <div class="stat-body">
+          <span class="stat-title">Total Students</span>
+          <h2 class="stat-value">{{ totalStudents() }}</h2>
+          <span class="stat-sub">In the database</span>
+        </div>
+        <div class="badge-icon icon-blue">
+          <span class="material-symbols-outlined">groups</span>
+        </div>
+      </div>
+
+      <div class="card-stat glow-card-green">
+        <div class="stat-body">
+          <span class="stat-title">No Backlogs</span>
+          <h2 class="stat-value text-green">{{ noBacklogsCount }}</h2>
+          <span class="stat-sub">Clean academic record</span>
+        </div>
+        <div class="badge-icon icon-green">
+          <span class="material-symbols-outlined">check_circle</span>
+        </div>
+      </div>
+
+      <div class="card-stat glow-card-amber">
+        <div class="stat-body">
+          <span class="stat-title">High Achievers</span>
+          <h2 class="stat-value text-amber">{{ highCgpaCount }}</h2>
+          <span class="stat-sub">CGPA ≥ 8.5</span>
+        </div>
+        <div class="badge-icon icon-amber">
+          <span class="material-symbols-outlined">star</span>
+        </div>
+      </div>
+
+      <div class="card-stat glow-card-teal">
+        <div class="stat-body">
+          <span class="stat-title">Current Page</span>
+          <h2 class="stat-value">{{ students().length }}</h2>
+          <span class="stat-sub">of {{ totalStudents() }} total</span>
+        </div>
+        <div class="badge-icon icon-teal">
+          <span class="material-symbols-outlined">table_rows</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         Filter / Search Panel
+         ══════════════════════════════════════════ -->
+    <div class="glass-panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <div class="title-icon-badge">
+            <span class="material-symbols-outlined">filter_list</span>
+          </div>
+          <span class="header-emoji">🔍</span>
+          <h3 class="panel-title">Search & Filter</h3>
+        </div>
+        @if (activeFiltersCount > 0) {
+          <button class="btn-clear-all" (click)="clearFilters()" id="students-clear-filters">
+            <span class="material-symbols-outlined">filter_list_off</span>
+            Clear All ({{ activeFiltersCount }})
+          </button>
+        }
+      </div>
+
+      <div class="filter-grid">
+        <!-- Search -->
+        <div class="filter-search-wrap">
+          <span class="material-symbols-outlined filter-search-icon">search</span>
+          <input
+            id="students-search"
+            type="text"
+            class="filter-search"
+            placeholder="Search by name, roll number or email…"
+            [value]="searchQuery()"
+            (input)="onSearchInput($any($event.target).value)"
+          />
+          @if (searchQuery()) {
+            <button class="filter-clear-inline" (click)="onSearchInput('')">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          }
+        </div>
+
+        <!-- Branch -->
+        <select id="students-filter-branch" class="filter-select"
+          [ngModel]="filterBranch()" (ngModelChange)="filterBranch.set($event); applyFilters()">
+          <option value="">All Branches</option>
+          @for (b of branchOptions(); track b) {
+            <option [value]="b">{{ b }}</option>
+          }
+        </select>
+
+        <!-- Passout Year -->
+        <select id="students-filter-year" class="filter-select"
+          [ngModel]="filterYear()" (ngModelChange)="filterYear.set($event); applyFilters()">
+          <option value="">All Passout Years</option>
+          @for (y of yearOptions(); track y) {
+            <option [value]="y">{{ y }}</option>
+          }
+        </select>
+
+        <!-- Min CGPA -->
+        <input id="students-filter-cgpa-min" type="number" class="filter-input"
+          placeholder="Min CGPA" min="0" max="10" step="0.1"
+          [ngModel]="filterMinCgpa()" (ngModelChange)="filterMinCgpa.set($event)"
+          (change)="applyFilters()" />
+
+        <!-- Max CGPA -->
+        <input id="students-filter-cgpa-max" type="number" class="filter-input"
+          placeholder="Max CGPA" min="0" max="10" step="0.1"
+          [ngModel]="filterMaxCgpa()" (ngModelChange)="filterMaxCgpa.set($event)"
+          (change)="applyFilters()" />
+
+        <!-- Backlogs -->
+        <select id="students-filter-backlogs" class="filter-select"
+          [ngModel]="filterBacklogs()" (ngModelChange)="filterBacklogs.set($event); applyFilters()">
+          <option value="">Any Backlogs</option>
+          <option value="0">No Backlogs (0)</option>
+          <option value="1">1 Backlog</option>
+          <option value="2">2 Backlogs</option>
+        </select>
+
+        <!-- Sort -->
+        <select id="students-sort-by" class="filter-select"
+          [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event); fetchStudents(true)">
+          <option value="createdAt">Sort: Import Date</option>
+          <option value="cgpa">Sort: CGPA</option>
+          <option value="passoutYear">Sort: Passout Year</option>
+          <option value="rollNumber">Sort: Roll Number</option>
+        </select>
+
+        <select id="students-sort-order" class="filter-select"
+          [ngModel]="sortOrder()" (ngModelChange)="sortOrder.set($event); fetchStudents(true)">
+          <option value="desc">↓ Descending</option>
+          <option value="asc">↑ Ascending</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         Error
+         ══════════════════════════════════════════ -->
+    @if (errorMsg()) {
+      <div class="alert-error">
+        <span class="material-symbols-outlined">error</span>
+        {{ errorMsg() }}
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════════
+         Loading Skeleton
+         ══════════════════════════════════════════ -->
+    @if (isLoading()) {
+      <div class="table-wrap">
+        @for (i of [1,2,3,4,5,6,7,8]; track i) {
+          <div class="skeleton-table-row">
+            <div class="skeleton-cell" style="width: 90px;"></div>
+            <div class="skeleton-cell" style="width: 160px;"></div>
+            <div class="skeleton-cell" style="width: 60px;"></div>
+            <div class="skeleton-cell" style="width: 50px;"></div>
+            <div class="skeleton-cell" style="width: 55px;"></div>
+            <div class="skeleton-cell" style="width: 60px;"></div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════════
+         Empty State
+         ══════════════════════════════════════════ -->
+    @if (!isLoading() && students().length === 0 && !errorMsg()) {
+      <div class="empty-state-wrap">
+        <div class="empty-icon-badge">
+          <span class="material-symbols-outlined">person_search</span>
+        </div>
+        <h2 class="empty-title">No Students Found</h2>
+        <p class="empty-desc">
+          @if (activeFiltersCount > 0) {
+            No students match your filters. Try adjusting or clearing them.
+          } @else {
+            No students have been imported yet. Use the Import tab on the Dashboard to add students via CSV.
+          }
+        </p>
+        @if (activeFiltersCount > 0) {
+          <button class="btn-export" (click)="clearFilters()">
+            <span class="material-symbols-outlined">filter_list_off</span>
+            Clear Filters
+          </button>
+        } @else {
+          <a routerLink="/tpo/dashboard" class="btn-export">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Go to Dashboard
+          </a>
+        }
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════════
+         Students Table
+         ══════════════════════════════════════════ -->
+    @if (!isLoading() && students().length > 0) {
+      <div class="table-wrap">
+
+        <!-- Table header strip -->
+        <div class="table-header">
+          <div class="panel-title-wrap">
+            <div class="title-icon-badge">
+              <span class="material-symbols-outlined">manage_accounts</span>
+            </div>
+            <span class="header-emoji">🎓</span>
+            <h3 class="panel-title">Student List</h3>
+          </div>
+          <span style="font-size:13px; color:var(--on-surface-var); font-weight:600;">
+            Showing {{ students().length }} of {{ totalStudents() }}
+            &nbsp;·&nbsp; Click a row to expand details
+          </span>
+        </div>
+
+        <table class="students-table">
+          <thead>
+            <tr>
+              <th class="th-sortable" (click)="toggleSort('rollNumber')" id="sort-roll">
+                <div class="th-inner">
+                  Roll No.
+                  <span class="sort-icon material-symbols-outlined">
+                    {{ sortBy() === 'rollNumber' ? (sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+                  </span>
+                </div>
+              </th>
+              <th>Student</th>
+              <th class="th-sortable" (click)="toggleSort('branch')" id="sort-branch">
+                <div class="th-inner">
+                  Branch
+                  <span class="sort-icon material-symbols-outlined">
+                    {{ sortBy() === 'branch' ? (sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+                  </span>
+                </div>
+              </th>
+              <th class="th-sortable" (click)="toggleSort('cgpa')" id="sort-cgpa">
+                <div class="th-inner">
+                  CGPA
+                  <span class="sort-icon material-symbols-outlined">
+                    {{ sortBy() === 'cgpa' ? (sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+                  </span>
+                </div>
+              </th>
+              <th class="th-sortable" (click)="toggleSort('passoutYear')" id="sort-year">
+                <div class="th-inner">
+                  Year
+                  <span class="sort-icon material-symbols-outlined">
+                    {{ sortBy() === 'passoutYear' ? (sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+                  </span>
+                </div>
+              </th>
+              <th>Backlogs</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of students(); track s._id) {
+              <!-- Main Row -->
+              <tr class="student-row" [class.expanded]="expandedRow() === s._id" (click)="toggleRow(s._id)">
+                <td class="td-roll">{{ s.rollNumber }}</td>
+                <td>
+                  <div class="td-student">
+                    <div class="student-avatar">{{ (s.userId?.name || 'S')[0].toUpperCase() }}</div>
+                    <div class="student-info">
+                      <span class="student-name">{{ s.userId?.name || '—' }}</span>
+                      <span class="student-email">{{ s.userId?.email || '—' }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="branch-chip">{{ s.branch }}</span></td>
+                <td><span class="cgpa-badge {{ getCgpaClass(s.cgpa) }}">{{ s.cgpa | number:'1.1-2' }}</span></td>
+                <td class="td-year">{{ s.passoutYear }}</td>
+                <td>
+                  <span class="backlog-chip" [class.backlog-zero]="s.activeBacklogs === 0" [class.backlog-has]="s.activeBacklogs > 0">
+                    {{ s.activeBacklogs === 0 ? 'None' : s.activeBacklogs }}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-tag" [class.tag-success]="s.userId?.isActive" [class.tag-inactive]="!s.userId?.isActive">
+                    {{ s.userId?.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="td-expand">
+                  <span class="expand-chevron material-symbols-outlined">expand_more</span>
+                </td>
+              </tr>
+
+              <!-- Expanded Detail Row -->
+              @if (expandedRow() === s._id) {
+                <tr class="detail-row">
+                  <td colspan="8">
+                    <div class="detail-panel">
+                      <div class="detail-item">
+                        <span class="detail-label">📞 Phone</span>
+                        <span class="detail-value">{{ s.userId?.phone || 'Not provided' }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">🗓 Imported On</span>
+                        <span class="detail-value">{{ s.createdAt ? (s.createdAt | date:'dd MMM yyyy, hh:mm a') : '—' }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">🔑 Default Password</span>
+                        <span class="detail-value password-hint">{{ s.rollNumber }} <span class="hint-text">(roll number)</span></span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">📄 Resume</span>
+                        <span class="detail-value">{{ s.resumePath ? 'Uploaded' : 'Not uploaded yet' }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">✅ Profile Complete</span>
+                        <span class="detail-value">{{ s.isProfileComplete ? 'Yes' : 'No' }}</span>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+
+        <!-- Pagination (inside the table-wrap, matching dashboard bottom-border style) -->
+        @if (totalPages() > 1) {
+          <div class="pagination">
+            <button class="page-btn" (click)="setPage(1)" [disabled]="currentPage() === 1" title="First">
+              <span class="material-symbols-outlined">first_page</span>
+            </button>
+            <button class="page-btn" (click)="setPage(currentPage() - 1)" [disabled]="currentPage() === 1" title="Prev">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            @for (p of pageNumbers; track p) {
+              <button class="page-btn" [class.active]="p === currentPage()" (click)="setPage(p)">{{ p }}</button>
+            }
+            <button class="page-btn" (click)="setPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()" title="Next">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+            <button class="page-btn" (click)="setPage(totalPages())" [disabled]="currentPage() === totalPages()" title="Last">
+              <span class="material-symbols-outlined">last_page</span>
+            </button>
+            <span class="page-info">Page {{ currentPage() }} of {{ totalPages() }}</span>
+          </div>
+        }
+
+      </div>
+    }
+
+  </main>
+
+</div>

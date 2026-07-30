@@ -1,0 +1,471 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>CampusPulse - Smart Placements, Powered by AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0, 59, 90, 0.1);
+        }
+        .text-gradient-primary {
+            background: linear-gradient(135deg, #003b5a 0%, #006497 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .bg-grid-pattern {
+            background-image: radial-gradient(rgba(0, 59, 90, 0.1) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+        .glow-pulse {
+            animation: pulse-glow 2s infinite;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(0, 100, 151, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 100, 151, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 100, 151, 0); }
+        }
+        .nav-link {
+            position: relative;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: #006497;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        .step-connector::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -24px;
+            width: 48px;
+            height: 2px;
+            background: repeating-linear-gradient(to right, #c1c7cf 0, #c1c7cf 4px, transparent 4px, transparent 8px);
+            z-index: 1;
+        }
+        @media (max-width: 768px) {
+            .step-connector::after { display: none; }
+        }
+        .feature-card:hover {
+            box-shadow: 0 20px 40px -10px rgba(0, 59, 90, 0.1);
+            transform: translateY(-5px);
+            border-color: rgba(0, 100, 151, 0.3);
+        }
+        .angled-divider {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            overflow: hidden;
+            line-height: 0;
+            transform: rotate(180deg);
+        }
+        .angled-divider svg {
+            position: relative;
+            display: block;
+            width: calc(100% + 1.3px);
+            height: 60px;
+        }
+        .angled-divider .shape-fill {
+            fill: #f7f9ff;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#c9dcf3",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#00401e",
+                        "on-surface": "#091d2e",
+                        "inverse-surface": "#203243",
+                        "surface-container-low": "#edf4ff",
+                        "primary-container": "#1a5276",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#c1c7cf",
+                        "on-primary-fixed-variant": "#0e4b6e",
+                        "surface-container-high": "#d9eaff",
+                        "background": "#f7f9ff",
+                        "surface": "#f7f9ff",
+                        "secondary-container": "#77c2ff",
+                        "secondary": "#006497",
+                        "surface-container-highest": "#d1e4fb",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#d1e4fb",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#001e30",
+                        "on-primary-container": "#94c5ee",
+                        "on-secondary-fixed": "#001e31",
+                        "on-tertiary-fixed": "#00210c",
+                        "surface-tint": "#2f6388",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#005228",
+                        "outline": "#72787f",
+                        "inverse-primary": "#9bccf6",
+                        "on-secondary-fixed-variant": "#004b73",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#e8f2ff",
+                        "secondary-fixed": "#cce5ff",
+                        "on-tertiary-container": "#58d683",
+                        "primary-fixed": "#cbe6ff",
+                        "surface-container": "#e3efff",
+                        "tertiary-fixed": "#7efba4",
+                        "on-surface-variant": "#41474e",
+                        "primary-fixed-dim": "#9bccf6",
+                        "tertiary-container": "#005a2c",
+                        "on-secondary-container": "#004f79",
+                        "on-background": "#091d2e",
+                        "secondary-fixed-dim": "#92ccff",
+                        "surface-bright": "#f7f9ff",
+                        "tertiary-fixed-dim": "#61de8a",
+                        "primary": "#003b5a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "12px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "2xl": "120px",
+                        "xl": "80px",
+                        "sm": "16px",
+                        "xs": "8px",
+                        "lg": "48px",
+                        "md": "24px"
+                    },
+                    "fontFamily": {
+                        "card-title": ["Inter"],
+                        "small-text": ["Inter"],
+                        "hero-headline": ["Inter"],
+                        "hero-subheadline": ["Inter"],
+                        "section-heading": ["Inter"],
+                        "label-bold": ["Inter"],
+                        "body-text": ["Inter"],
+                        "hero-headline-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "card-title": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "small-text": ["14px", {"lineHeight": "1.4", "fontWeight": "400"}],
+                        "hero-headline": ["56px", {"lineHeight": "1.1", "letterSpacing": "-0.03em", "fontWeight": "800"}],
+                        "hero-subheadline": ["20px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "section-heading": ["36px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-bold": ["14px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "body-text": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "hero-headline-mobile": ["40px", {"lineHeight": "1.2", "fontWeight": "800", "letterSpacing": "-0.02em"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-text selection:bg-secondary-container">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-lg py-sm max-w-full glass-header transition-all duration-300">
+<div class="flex items-center gap-xs">
+<img alt="CampusPulse Logo" class="h-8 w-8 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLvTtgkO12ODtqYc34iKi0yZrqZbVpfKBYMv5VY7td88bedCrd3AGzTFSKG9Y-8IEN5gQ9YrdSBIsgEZl5zytu52_c2FQWUT5IeVXMJrGrfns42-sECc4LFGQIg4XXSioGu3P0zy06tMWCnqlmV6jNnBwIXWLearqPOlLphMON9RIU5tEyrl1q19csHmi4cBp4g5gUB8PCNRpWMWnKFliJfeVk2_h-B-imvAhbxpAV4KMFWtS3DjeZplj92q">
+<span class="text-card-title font-card-title text-primary">CampusPulse</span>
+</div>
+<!-- Desktop Nav -->
+<div class="hidden md:flex items-center gap-lg">
+<a class="nav-link font-label-bold text-label-bold text-primary pb-1 transition-colors" href="#">Home</a>
+<a class="nav-link font-label-bold text-label-bold text-on-surface-variant hover:text-primary pb-1 transition-colors" href="#">Features</a>
+<a class="nav-link font-label-bold text-label-bold text-on-surface-variant hover:text-primary pb-1 transition-colors" href="#">About</a>
+<a class="nav-link font-label-bold text-label-bold text-on-surface-variant hover:text-primary pb-1 transition-colors" href="#">Contact</a>
+</div>
+<div class="flex items-center gap-md">
+<button class="hidden sm:block text-primary font-label-bold text-label-bold px-md py-xs rounded hover:bg-primary/5 transition-all active:scale-95">Login</button>
+<button class="bg-primary text-on-primary font-label-bold text-label-bold px-md py-xs rounded-lg shadow-md hover:shadow-lg hover:bg-primary/90 transition-all active:scale-95">Register</button>
+</div>
+</nav>
+<main class="mt-16">
+<!-- Hero Section -->
+<section class="relative min-h-screen flex items-center justify-center px-md overflow-hidden bg-grid-pattern">
+<div class="absolute inset-0 bg-gradient-to-b from-transparent to-surface-container-low pointer-events-none"></div>
+<div class="relative z-10 w-full max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-xl py-xl transition-all duration-700 opacity-100 translate-y-0">
+<div class="flex-1 text-left">
+<span class="inline-flex items-center px-4 py-1.5 rounded-full bg-white border border-primary/20 text-primary text-small-text font-label-bold mb-lg shadow-sm glow-pulse">
+<span class="material-symbols-outlined text-[18px] mr-2 text-secondary">rocket_launch</span>&nbsp;AI-Powered Recruitment
+                </span>
+<h1 class="font-hero-headline text-hero-headline-mobile md:text-hero-headline mb-md leading-tight">
+                    Smart Placements,<br>
+<span class="text-gradient-primary">Powered by AI</span>
+</h1>
+<p class="font-hero-subheadline text-hero-subheadline text-on-surface-variant mb-xl max-w-xl">The unified operating system for campus hiring. Empowering Recruiters with AI-driven shortlisting and TPOs with automated placement management and real-time analytics.</p>
+<div class="flex flex-col sm:flex-row gap-md"><button class="bg-primary text-on-primary font-label-bold text-label-bold px-xl py-md rounded-xl shadow-[0_8px_20px_rgba(0,59,90,0.2)] hover:shadow-[0_12px_24px_rgba(0,59,90,0.3)] hover:-translate-y-1 transition-all active:scale-95">Recruiter Registration</button><button class="bg-white text-primary font-label-bold text-label-bold px-xl py-md rounded-xl shadow-sm border border-outline-variant/30 hover:bg-surface-container-lowest hover:border-primary/30 transition-all active:scale-95">TPO Login</button></div>
+</div>
+<div class="flex-1 w-full flex items-center justify-center relative">
+<!-- Hero Illustration -->
+<div class="relative w-full h-full">
+  <div class="absolute inset-0 bg-gradient-to-tr from-secondary/10 to-primary/5 rounded-3xl blur-3xl z-0"></div>
+  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoJjdnJeMMZaG_3JgPlMwu7cDHP6gACEjUnv-YIPI4b5_81O6QHdRFHs5rSJMnGE2I1ZrDEDkYB1MJQA-bF2iHgZW3Olaa9VPQfYr8oxaxuIaLUrP9cOutM3iBOJJvc7KeSj2ZKzpdZSdQsNHLdnUTJeSjEflS3yGUb9Gl2LMB7vocmceqnQLacvCYm7lEE8T1whR3PrOJMBh5oZdz9bUreHVkHg0KgN9Nmv0QUlFQVt_X7T1YzPHo1YnModr573kVdMyzBWWHFIsJWSE" alt="AI Campus Illustration" class="w-full h-auto object-contain relative z-10" style="max-height: 520px;">
+</div>
+</div>
+</div>
+<div class="angled-divider transition-all duration-700 opacity-100 translate-y-0">
+<svg data-name="Layer 1" preserveAspectRatio="none" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+<path class="shape-fill" d="M1200 120L0 16.48 0 0 1200 0 1200 120z"></path>
+</svg>
+</div>
+</section>
+<!-- Features Section -->
+<section class="py-2xl bg-surface">
+<div class="max-w-7xl mx-auto px-md transition-all duration-700 opacity-100 translate-y-0">
+<div class="text-center mb-xl">
+<h2 class="font-section-heading text-section-heading text-primary mb-md">Why CampusPulse?</h2>
+<p class="text-hero-subheadline text-on-surface-variant max-w-2xl mx-auto">Next-generation tools designed to simplify the hiring lifecycle.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-md mt-10">
+<!-- Card 1 -->
+<div class="feature-card bg-white p-lg rounded-2xl shadow-sm transition-all duration-300 border border-outline-variant/20 relative overflow-hidden group lg:translate-y-8">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+<div class="w-14 h-14 bg-surface-container flex items-center justify-center rounded-xl mb-lg relative z-10">
+<span class="material-symbols-outlined text-primary text-[28px]">data_object</span>
+</div>
+<h3 class="font-card-title text-card-title text-primary mb-sm relative z-10">Semantic AI Ranking</h3>
+<p class="text-on-surface-variant text-small-text relative z-10">Reduce screening time by 80% with NLP that understands technical context, ensuring recruiters only interview the most qualified candidates.</p>
+</div>
+<!-- Card 2 -->
+<div class="feature-card bg-white p-lg rounded-2xl shadow-sm transition-all duration-300 border border-outline-variant/20 relative overflow-hidden group lg:-translate-y-4">
+<div class="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+<div class="w-14 h-14 bg-secondary-container/20 flex items-center justify-center rounded-xl mb-lg relative z-10">
+<span class="material-symbols-outlined text-secondary text-[28px]">event_busy</span>
+</div>
+<h3 class="font-card-title text-card-title text-primary mb-sm relative z-10">Conflict-Free Scheduling</h3>
+<p class="text-on-surface-variant text-small-text relative z-10">Eliminate scheduling conflicts with automated calendar sync for thousands of students, ensuring a seamless interview experience for hiring teams.</p>
+</div>
+<!-- Card 3 -->
+<div class="feature-card bg-white p-lg rounded-2xl shadow-sm transition-all duration-300 border border-outline-variant/20 relative overflow-hidden group lg:translate-y-8">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+<div class="w-14 h-14 bg-surface-container flex items-center justify-center rounded-xl mb-lg relative z-10">
+<span class="material-symbols-outlined text-primary text-[28px]">account_tree</span>
+</div>
+<h3 class="font-card-title text-card-title text-primary mb-sm relative z-10">Multi-Stage Pipeline</h3>
+<p class="text-on-surface-variant text-small-text relative z-10">End-to-end visibility for TPOs to monitor placement velocity and offer acceptance rates across multiple companies in real-time.</p>
+</div>
+<!-- Card 4 -->
+<div class="feature-card bg-white p-lg rounded-2xl shadow-sm transition-all duration-300 border border-outline-variant/20 relative overflow-hidden group lg:-translate-y-4">
+<div class="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+<div class="w-14 h-14 bg-secondary-container/20 flex items-center justify-center rounded-xl mb-lg relative z-10">
+<span class="material-symbols-outlined text-secondary text-[28px]">comment_bank</span>
+</div>
+<h3 class="font-card-title text-card-title text-primary mb-sm relative z-10">Explainable AI Feedback</h3>
+<p class="text-on-surface-variant text-small-text relative z-10">Drive higher placement success rates with AI-generated feedback that helps students bridge skill gaps before the next drive.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- How It Works -->
+<section class="py-2xl relative">
+<div class="absolute top-0 left-0 w-full overflow-hidden line-height-0">
+<svg data-name="Layer 1" preserveAspectRatio="none" style="display: block; width: calc(100% + 1.3px); height: 60px;" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+<path class="shape-fill" d="M1200 120L0 16.48 0 0 1200 0 1200 120z" fill="#f7f9ff"></path>
+</svg>
+</div>
+<div class="max-w-5xl mx-auto px-md pt-xl transition-all duration-700 opacity-100 translate-y-0">
+<div class="text-center mb-2xl">
+<h2 class="font-section-heading text-section-heading text-primary">How It Works</h2>
+</div>
+<div class="flex flex-col md:flex-row justify-between items-center gap-xl relative">
+<!-- Line connecting steps -->
+<div class="hidden md:block absolute top-10 left-1/6 right-1/6 h-0.5 bg-gradient-to-r from-primary/20 via-secondary/20 to-primary/20 z-0"></div>
+<!-- Step 1 -->
+<div class="relative z-10 flex flex-col items-center text-center max-w-[240px]">
+<div class="w-20 h-20 rounded-2xl bg-white border border-primary/10 text-primary flex items-center justify-center mb-md shadow-lg shadow-primary/5 rotate-3 hover:rotate-0 transition-transform">
+<span class="material-symbols-outlined text-[36px]">person_add</span>
+</div>
+<h4 class="font-card-title text-card-title text-primary mb-xs">Students Apply</h4>
+<p class="text-small-text text-on-surface-variant">Centralized application portal for all campus drives with verified digital credentials.</p>
+</div>
+<!-- Step 2 -->
+<div class="relative z-10 flex flex-col items-center text-center max-w-[240px]">
+<div class="w-20 h-20 rounded-2xl bg-white border border-secondary/10 text-secondary flex items-center justify-center mb-md shadow-lg shadow-secondary/5 -rotate-3 hover:rotate-0 transition-transform">
+<span class="material-symbols-outlined text-[36px]">analytics</span>
+</div>
+<h4 class="font-card-title text-card-title text-primary mb-xs">AI Ranks</h4>
+<p class="text-small-text text-on-surface-variant">Our engine processes data to provide recruiters with a ranked list based on specific job DNA.</p>
+</div>
+<!-- Step 3 -->
+<div class="relative z-10 flex flex-col items-center text-center max-w-[240px]">
+<div class="w-20 h-20 rounded-2xl bg-white border border-primary/10 text-primary flex items-center justify-center mb-md shadow-lg shadow-primary/5 rotate-3 hover:rotate-0 transition-transform">
+<span class="material-symbols-outlined text-[36px]">calendar_month</span>
+</div>
+<h4 class="font-card-title text-card-title text-primary mb-xs">Recruiters Schedule</h4>
+<p class="text-small-text text-on-surface-variant">One-click scheduling with automated invites and interview link distribution.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- User Roles -->
+<section class="py-2xl bg-surface-container-low/50">
+<div class="max-w-7xl mx-auto px-md transition-all duration-700 opacity-100 translate-y-0">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+<!-- Role: Students -->
+<div class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border border-outline-variant/10">
+<div class="h-56 overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500" data-alt="A diverse group of college students in a modern glass-walled university study lounge, using laptops and discussing career opportunities. The setting is bright, sunny, and high-tech, reflecting a professional and ambitious atmosphere. The image uses a clean corporate aesthetic with soft blue and white tones." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD0rmcyOyVBMIwwP_C8eUevcUYOoP7XwYQuo8Gt4IHNjH5VV6ByIWvRqRKQkRfYH65nyww5n_Pg3I_sJ-B-YQR-ZsmiAeAgMkLanDCof4Mnzgwytc0psw76lSusNANmeKWSMDo2yl5jtl1KuzxgDnfW0yQozlET7p-tqpeVcYIef27cPFUnyhCptiMfTtvZVx7dTU1cPWW5uVS_ziy6dFA99sfx_4GddQQf-RovlTdLJCi_u21MesI3ZYhoMi15QorHs-5w0tLrUdAK')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+</div>
+<div class="p-lg">
+<h3 class="font-section-heading text-[24px] text-primary mb-md">For Students</h3>
+<p class="text-body-text text-on-surface-variant mb-lg">Students receive direct access via institutional email. While they don't use this portal to register, they benefit from real-time tracking and AI-driven profile optimization.</p>
+<a class="inline-flex items-center text-secondary font-label-bold group-hover:text-primary transition-colors" href="#">
+                                Explore Student Portal
+                                <span class="material-symbols-outlined ml-xs group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Role: Recruiters -->
+<div class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border border-outline-variant/10">
+<div class="h-56 overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500" data-alt="A professional corporate recruiter in a sleek, minimalist office environment looking at a high-resolution dashboard showing candidate data analytics and ranking charts. The lighting is sophisticated and cool-toned, with a focus on efficiency and data-driven decision making. The overall style is modern and professional." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC55O4rofvyk4P4M5c3aKXntUA8DJ5Yb5ypeChRJUJckOWHcRj1t4jPdDJRQfncXOecOojA_kLO-qhQcPM2TlrNl18xqh6HuC1pERXVLPEWPXsIzWsZbbhW2EL1e7YZoESbuTDXqBjmM4VX1by8G0BjM1h9SWj1nJ_65vIcl9UgIQuxuxoUckzCUlQCfwGT7YIf0Yh8cP9xEFIUDRaQZDcOl57CGsQI2VkV_ZDLDPqUBTZ6oujKnyOYyLwJdeC6QGMum1UDF7bSzjjr')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+</div>
+<div class="p-lg">
+<h3 class="font-section-heading text-[24px] text-primary mb-md">For Recruiters</h3>
+<p class="text-body-text text-on-surface-variant mb-lg">Cut shortlisting time by 70%. Identify top talent using semantic search and manage end-to-end logistics seamlessly.</p>
+<a class="inline-flex items-center text-secondary font-label-bold group-hover:text-primary transition-colors" href="#">
+                                Hiring Solutions
+                                <span class="material-symbols-outlined ml-xs group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Role: TPOs -->
+<div class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border border-outline-variant/10">
+<div class="h-56 overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center group-hover:scale-105 transition-transform duration-500" data-alt="A Training and Placement Officer working in a modern academic administrative office, managing multiple digital screens that display campus-wide placement statistics and company visit calendars. The environment is organized, authoritative, and tech-forward. High-key lighting with a clean, institutional color palette." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCDbaSI5oSPtTYHWwW05HpJGTTLIJ46b8kD_oxj2NO2zwxNOFA3oEPDVXd4YuHfSCJYG0Os16eqwyGfE7uYOr0p0Juqct61f3TCTmJmm5RaApaKoieHcGV1BgDKWPBvw0ef47QxsqMcXySHbeA4cB2mIAxLMxDoQu7wM15ocb7xo96PogKpqESeE67fs8eqryjbupvtPNe_D3X6x9QvDXa0cDUld4B_bldJCELUHfGKWdnuT7bPNZgVfpslI_iyD6k9YUars0mAOJXq')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+</div>
+<div class="p-lg">
+<h3 class="font-section-heading text-[24px] text-primary mb-md">For TPOs</h3>
+<p class="text-body-text text-on-surface-variant mb-lg">Full transparency into every placement drive. Monitor engagement, export compliance reports, and manage campus visits.</p>
+<a class="inline-flex items-center text-secondary font-label-bold group-hover:text-primary transition-colors" href="#">
+                                Admin Dashboard
+                                <span class="material-symbols-outlined ml-xs group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="mx-md my-2xl rounded-3xl bg-gradient-to-br from-primary to-secondary p-xl text-on-primary text-center relative overflow-hidden shadow-2xl">
+<!-- Abstract background shapes -->
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+<div class="absolute -bottom-24 -left-24 w-96 h-96 bg-secondary-container/20 rounded-full blur-3xl"></div>
+<div class="relative z-10 transition-all duration-700 opacity-100 translate-y-0">
+<h2 class="font-section-heading text-section-heading mb-md">Ready to Transform Your Campus Placements?</h2>
+<p class="text-hero-subheadline font-hero-subheadline mb-xl max-w-2xl mx-auto opacity-90">
+                    Join hundreds of institutions using CampusPulse to modernize their recruitment ecosystem.
+                </p>
+<div class="flex flex-col sm:flex-row gap-md justify-center"><button class="bg-white text-primary font-label-bold text-label-bold px-xl py-md rounded-xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all active:scale-95">Recruiter Registration</button><button class="bg-white/10 backdrop-blur border border-white/30 text-white font-label-bold text-label-bold px-xl py-md rounded-xl hover:bg-white/20 transition-all active:scale-95">TPO Login</button></div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full pt-xl pb-lg px-lg bg-surface-container-low border-t border-outline-variant/20">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-md mb-lg">
+<div class="flex flex-col items-center md:items-start gap-xs">
+<div class="flex items-center gap-xs mb-xs">
+<img alt="CampusPulse Logo" class="h-8 w-8 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLvTtgkO12ODtqYc34iKi0yZrqZbVpfKBYMv5VY7td88bedCrd3AGzTFSKG9Y-8IEN5gQ9YrdSBIsgEZl5zytu52_c2FQWUT5IeVXMJrGrfns42-sECc4LFGQIg4XXSioGu3P0zy06tMWCnqlmV6jNnBwIXWLearqPOlLphMON9RIU5tEyrl1q19csHmi4cBp4g5gUB8PCNRpWMWnKFliJfeVk2_h-B-imvAhbxpAV4KMFWtS3DjeZplj92q">
+<span class="text-card-title font-card-title text-primary">CampusPulse</span>
+</div>
+<p class="text-body-text text-on-surface-variant text-center md:text-left text-small-text max-w-xs">
+                Empowering the next generation of talent through intelligent recruitment solutions.
+            </p>
+</div>
+<div class="flex flex-wrap justify-center gap-md">
+<a class="text-on-surface-variant hover:text-primary transition-colors text-small-text font-label-bold" href="#">Home</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-small-text font-label-bold" href="#">Features</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-small-text font-label-bold" href="#">About</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-small-text font-label-bold" href="#">Contact</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-small-text font-label-bold" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-small-text font-label-bold" href="#">Terms of Service</a>
+</div>
+<div class="flex gap-md">
+<a class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary shadow-sm hover:shadow-md hover:-translate-y-1 transition-all" href="#">
+<span class="material-symbols-outlined">public</span>
+</a>
+<a class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary shadow-sm hover:shadow-md hover:-translate-y-1 transition-all" href="#">
+<span class="material-symbols-outlined">groups</span>
+</a>
+<a class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary shadow-sm hover:shadow-md hover:-translate-y-1 transition-all" href="#">
+<span class="material-symbols-outlined">mail</span>
+</a>
+</div>
+</div>
+<div class="max-w-7xl mx-auto border-t border-outline-variant/20 pt-lg text-center">
+<p class="text-body-text text-on-surface-variant text-small-text">
+            © 2026 CampusPulse. All rights reserved.
+        </p>
+</div>
+</footer>
+<script>
+        // Simple micro-interactions for buttons
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('mousedown', () => {
+                button.classList.add('scale-95');
+            });
+            button.addEventListener('mouseup', () => {
+                button.classList.remove('scale-95');
+            });
+        });
+
+        // Intersection Observer for fade-in animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-8');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('section > div').forEach(section => {
+            if(!section.classList.contains('absolute')){
+                section.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-8');
+                observer.observe(section);
+            }
+        });
+        
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('nav');
+            if (window.scrollY > 20) {
+                header.classList.add('shadow-md');
+            } else {
+                header.classList.remove('shadow-md');
+            }
+        });
+    </script>
+
+
+
+
+
+
+
+
+
+
+</body></html>

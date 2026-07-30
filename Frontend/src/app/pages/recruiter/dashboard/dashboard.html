@@ -1,0 +1,276 @@
+<div class="recruiter-root">
+
+  <!-- ===== Header Bar ===== -->
+  <header class="rec-header">
+    <div class="header-left">
+      <div class="brand-logo">
+        <span class="material-symbols-outlined logo-icon">corporate_fare</span>
+      </div>
+      <div class="brand-title">
+        <span class="brand-name">CampusPulse</span>
+        <span class="brand-sub">Recruiter Portal</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <span class="company-badge-name">
+        {{ profile()?.companyName || 'Recruiter' }}
+      </span>
+
+      <button class="btn-logout" (click)="logout()" title="Logout">
+        <span class="material-symbols-outlined">logout</span>
+        <span>Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== Main Content Container ===== -->
+  <main class="rec-main">
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading profile details…</p>
+    </div>
+    }
+
+    @if (!isLoading()) {
+
+    <!-- ══════════════════════════════════════════════════════════
+           STATE A: PENDING APPROVAL VIEW (If isApproved === false)
+           ══════════════════════════════════════════════════════════ -->
+    @if (!profile()?.isApproved) {
+    <div class="pending-approval-container">
+      <div class="pending-card">
+        <!-- Icon -->
+        <div class="pending-icon-circle">
+          <span class="material-symbols-outlined pending-icon">hourglass_empty</span>
+        </div>
+
+        <!-- Status Badge -->
+        <div class="status-badge-pending">
+          <span class="badge-dot"></span>
+          <span>Pending Approval</span>
+        </div>
+
+        <!-- Title & Subtitle -->
+        <h2 class="pending-title">Registration Submitted Successfully!</h2>
+        <p class="pending-subtitle">Your company registration is awaiting TPO approval.</p>
+
+        <div class="company-meta-box">
+          <div class="meta-row">
+            <span class="meta-label">Company Name:</span>
+            <strong class="meta-value">{{ profile()?.companyName }}</strong>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Official Email:</span>
+            <span class="meta-value">{{ profile()?.officialEmail }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Trust Score:</span>
+            <span class="trust-score-tag">{{ profile()?.trustScore || 85 }}/100</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Automated Verification:</span>
+            <div class="verification-chips">
+              <span class="chip chip-success">Domain ✅</span>
+              <span class="chip chip-success">GST ✅</span>
+              <span class="chip chip-warning">MCA ⏳</span>
+            </div>
+          </div>
+        </div>
+
+        @if (profile()?.tpoSuggestions && profile()!.tpoSuggestions!.length > 0) {
+        <div class="rec-tpo-suggestions-card">
+          <div class="card-head-tpo">
+            <span class="material-symbols-outlined icon-light">lightbulb</span>
+            <span>TPO Suggestions & Required Actions:</span>
+          </div>
+          <ul class="rec-suggestions-list">
+            @for (s of profile()?.tpoSuggestions; track s.sentAt || s.suggestion) {
+            <li>
+              <span class="material-symbols-outlined">arrow_right</span>
+              <span>{{ s.suggestion }}</span>
+            </li>
+            }
+          </ul>
+        </div>
+        }
+
+        <!-- Details Note -->
+        <p class="pending-details">
+          You will receive an email notification once your account is approved.
+        </p>
+
+        <div class="time-estimate-box">
+          <span class="material-symbols-outlined clock-icon">schedule</span>
+          <span>Approval typically takes 1-2 business days.</span>
+        </div>
+
+        <!-- Refresh Status Button -->
+        <button class="btn-refresh-status" (click)="refreshStatus()" [disabled]="isRefreshing()">
+          <span class="material-symbols-outlined" [class.spin]="isRefreshing()">refresh</span>
+          <span>Refresh Status</span>
+        </button>
+
+      </div>
+    </div>
+    }
+
+    <!-- ══════════════════════════════════════════════════════════
+           STATE B: APPROVED RECRUITER DASHBOARD (If isApproved === true)
+           ══════════════════════════════════════════════════════════ -->
+    @if (profile()?.isApproved) {
+    <div class="approved-dashboard">
+
+      <!-- Welcome Banner -->
+      <div class="welcome-banner">
+        <div class="welcome-text-wrap">
+          <h1 class="welcome-title">Welcome, {{ profile()?.companyName }}! 🎉</h1>
+          <p class="welcome-sub">Manage your campus placement drives and shortlist top candidates from Alphabet Campus.
+          </p>
+        </div>
+        <button class="btn-create-drive" (click)="openCreateModal()">
+          <span class="material-symbols-outlined">add_circle</span>
+          <span>Create New Drive</span>
+        </button>
+      </div>
+
+      <!-- 4 Stats Cards -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon icon-blue">
+            <span class="material-symbols-outlined">work</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Active Drives</span>
+            <h3 class="stat-value">{{ activeDrivesCount() }}</h3>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-green">
+            <span class="material-symbols-outlined">description</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Total Applications</span>
+            <h3 class="stat-value">{{ totalApplicationsCount() }}</h3>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-amber">
+            <span class="material-symbols-outlined">star</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Shortlisted Candidates</span>
+            <h3 class="stat-value">{{ shortlistedCount() }}</h3>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-teal">
+            <span class="material-symbols-outlined">task_alt</span>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Offer Acceptance Rate</span>
+            <h3 class="stat-value">{{ offerAcceptanceRate() }}%</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recent Drives List Table -->
+      <section class="drives-section">
+        <div class="section-header">
+          <h2 class="section-title">Recent Placement Drives</h2>
+        </div>
+
+        @if (drives().length === 0) {
+        <div class="empty-drives">
+          <span class="material-symbols-outlined empty-icon">work_outline</span>
+          <p>No job drives posted yet. Click "Create New Drive" to get started!</p>
+        </div>
+        }
+
+        @if (drives().length > 0) {
+        <div class="table-wrap">
+          <table class="drives-table">
+            <thead>
+              <tr>
+                <th>Drive Title</th>
+                <th>Status</th>
+                <th>Applications Received</th>
+                <th>CTC</th>
+                <th>Deadline</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (d of drives(); track d._id) {
+              <tr>
+                <td class="font-bold">{{ d.title }}</td>
+                <td>
+                  <span class="status-pill" [class.pill-open]="d.status === 'Open'">
+                    {{ d.status }}
+                  </span>
+                </td>
+                <td>{{ d.applicationsCount || 0 }}</td>
+                <td>₹{{ (d.ctc / 100000).toFixed(1) }} LPA</td>
+                <td>{{ d.applicationDeadline | date:'mediumDate' }}</td>
+                <td>
+                  <div class="table-actions">
+                    <button class="btn-action">View Applications</button>
+                    <button class="btn-action">Edit</button>
+                  </div>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+      </section>
+
+    </div>
+    }
+
+    }
+
+  </main>
+
+  <!-- Create Drive Modal -->
+  @if (isCreateModalOpen()) {
+  <div class="modal-overlay" (click)="closeCreateModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Create New Placement Drive</h3>
+        <button class="btn-close" (click)="closeCreateModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Job Title / Role</label>
+          <input type="text" [(ngModel)]="newDriveTitle" placeholder="e.g. Software Engineer (SDE-1)" />
+        </div>
+        <div class="form-group">
+          <label>CTC (Annual INR)</label>
+          <input type="number" [(ngModel)]="newDriveCTC" placeholder="1200000" />
+        </div>
+        <div class="form-group">
+          <label>Minimum CGPA</label>
+          <input type="number" [(ngModel)]="newDriveMinCGPA" placeholder="7.0" step="0.1" />
+        </div>
+        <div class="form-group">
+          <label>Application Deadline</label>
+          <input type="date" [(ngModel)]="newDriveDeadline" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeCreateModal()">Cancel</button>
+        <button class="btn-submit" (click)="submitCreateDrive()">Publish Drive</button>
+      </div>
+    </div>
+  </div>
+  }
+
+</div>
