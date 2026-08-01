@@ -7,6 +7,8 @@ import { TpoDashboardComponent } from './pages/tpo/dashboard/dashboard';
 import { TpoApprovalComponent } from './pages/tpo/approval/approval.component';
 import { TpoStudentsComponent } from './pages/tpo/students/students.component';
 import { RecruiterDashboardComponent } from './pages/recruiter/dashboard/dashboard';
+import { RecruiterLayoutComponent } from './pages/recruiter/layout/layout.component';
+import { RecruiterProfileComponent } from './pages/recruiter/profile/profile';
 import { StudentDashboardComponent } from './pages/student/dashboard/dashboard';
 import { roleAuthGuard } from './guards/auth.guard';
 
@@ -49,15 +51,25 @@ export const routes: Routes = [
     ],
   },
   {
-    path: 'recruiter/dashboard',
-    component: RecruiterDashboardComponent,
+    path: 'recruiter',
+    component: RecruiterLayoutComponent,
     canActivate: [roleAuthGuard],
     data: { roles: ['recruiter'] },
-  },
-  {
-    path: 'recruiter',
-    redirectTo: 'recruiter/dashboard',
-    pathMatch: 'full',
+    children: [
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full',
+      },
+      {
+        path: 'dashboard',
+        component: RecruiterDashboardComponent,
+      },
+      {
+        path: 'profile',
+        component: RecruiterProfileComponent,
+      },
+    ],
   },
   {
     path: 'student/dashboard',

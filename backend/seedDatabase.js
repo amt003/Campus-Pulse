@@ -25,13 +25,13 @@ async function seedDatabase() {
     // 1. Create Recruiter Users & Recruiter Documents
     console.log("Creating Recruiters...");
     const recruiterData = [
-      { companyName: "Google India", officialEmail: "hr@google.com", website: "https://google.com", gstNumber: "22AAAAA0000A1Z5", isApproved: true, trustScore: 98 },
-      { companyName: "Microsoft", officialEmail: "careers@microsoft.com", website: "https://microsoft.com", gstNumber: "22BBBBB0000A1Z5", isApproved: true, trustScore: 95 },
-      { companyName: "Amazon", officialEmail: "recruiting@amazon.com", website: "https://amazon.jobs", gstNumber: "22CCCCC0000A1Z5", isApproved: true, trustScore: 92 },
-      { companyName: "Tata Consultancy Services", officialEmail: "hr@tcs.com", website: "https://tcs.com", gstNumber: "22DDDDD0000A1Z5", isApproved: true, trustScore: 88 },
-      { companyName: "FinTech Global", officialEmail: "careers@fintech.io", website: "https://fintech.io", gstNumber: "22EEEEE0000A1Z5", isApproved: false, trustScore: 78 },
-      { companyName: "NextGen Software", officialEmail: "hr@nextgen.com", website: "https://nextgen.com", gstNumber: "22FFFFF0000A1Z5", isApproved: false, trustScore: 65 },
-      { companyName: "Innovate Labs", officialEmail: "contact@innovatelabs.io", website: "https://innovatelabs.io", gstNumber: "22GGGGG0000A1Z5", isApproved: false, trustScore: 55 },
+      { companyName: "Google India", officialEmail: "hr@google.com", website: "https://google.com", isApproved: true, trustScore: 98 },
+      { companyName: "Microsoft", officialEmail: "careers@microsoft.com", website: "https://microsoft.com", isApproved: true, trustScore: 95 },
+      { companyName: "Amazon", officialEmail: "recruiting@amazon.com", website: "https://amazon.jobs", isApproved: true, trustScore: 92 },
+      { companyName: "Tata Consultancy Services", officialEmail: "hr@tcs.com", website: "https://tcs.com", isApproved: true, trustScore: 88 },
+      { companyName: "FinTech Global", officialEmail: "careers@fintech.io", website: "https://fintech.io", isApproved: false, trustScore: 78 },
+      { companyName: "NextGen Software", officialEmail: "hr@nextgen.com", website: "https://nextgen.com", isApproved: false, trustScore: 65 },
+      { companyName: "Innovate Labs", officialEmail: "contact@innovatelabs.io", website: "https://innovatelabs.io", isApproved: false, trustScore: 55 },
     ];
 
     const recruiters = [];
@@ -47,7 +47,6 @@ async function seedDatabase() {
       const rec = await Recruiter.create({
         userId: u._id,
         companyName: r.companyName,
-        gstNumber: r.gstNumber,
         website: r.website,
         officialEmail: r.officialEmail,
         isApproved: r.isApproved,

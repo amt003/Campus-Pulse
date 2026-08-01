@@ -42,9 +42,94 @@ export class LoginPage implements AfterViewInit, OnDestroy {
     { id: 'tpo', label: 'TPO', icon: 'admin_panel_settings', desc: 'Oversee campus drives' },
   ];
 
+  protected googleClientId = signal<string | null>(null);
+
   ngAfterViewInit(): void {
     this.spawnParticles();
     this.initReveal();
+    this.fetchGoogleClientId();
+  }
+
+  private fetchGoogleClientId(): void {
+    this.http.get<any>('http://localhost:5000/api/auth/google/client-id').subscribe({
+      next: (res) => {
+        if (res.clientId) {
+          this.googleClientId.set(res.clientId);
+          this.loadGoogleScript(res.clientId);
+        }
+      },
+      error: () => {
+        // Fallback silently if backend is offline or route not configured
+      }
+    });
+  }
+
+  private loadGoogleScript(clientId: string): void {
+    if (document.getElementById('google-gsi-client')) {
+      this.initializeGoogleSignIn(clientId);
+      return;
+    }
+    const script = document.createElement('script');
+    script.id = 'google-gsi-client';
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      this.initializeGoogleSignIn(clientId);
+    };
+    document.body.appendChild(script);
+  }
+
+  private initializeGoogleSignIn(clientId: string): void {
+    const google = (window as any).google;
+    if (google?.accounts?.id) {
+      google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response: any) => this.handleGoogleCredential(response),
+      });
+      google.accounts.id.renderButton(
+        document.getElementById('real-google-btn-container'),
+        { theme: 'outline', size: 'large', width: 280 }
+      );
+    }
+  }
+
+  protected handleGoogleCredential(response: any): void {
+    this.isGoogleLoggingIn = true;
+    this.errorMessage.set(null);
+
+    this.http.post<any>('http://localhost:5000/api/auth/google', {
+      token: response.credential,
+    }).subscribe({
+      next: (res) => {
+        this.isGoogleLoggingIn = false;
+        const storage = this.rememberMe ? localStorage : sessionStorage;
+        storage.setItem('token', res.token);
+        storage.setItem('user', JSON.stringify(res.user));
+
+        const role = (res.user.role || '').toLowerCase();
+        if (role === 'tpo') {
+          this.router.navigate(['/tpo/dashboard']);
+        } else if (role === 'recruiter') {
+          this.router.navigate(['/recruiter/dashboard']);
+        } else if (role === 'student') {
+          this.router.navigate(['/student/dashboard']);
+        } else {
+          this.router.navigate(['/']);
+        }
+      },
+      error: (err) => {
+        this.isGoogleLoggingIn = false;
+        const errBody = err.error || {};
+        const msg = errBody.message || 'Google Sign-In failed.';
+        this.errorMessage.set(msg);
+        if (errBody.tpoSuggestions && Array.isArray(errBody.tpoSuggestions)) {
+          this.tpoSuggestions.set(errBody.tpoSuggestions);
+        } else {
+          this.tpoSuggestions.set([]);
+        }
+      }
+    });
   }
 
   private initReveal(): void {
@@ -129,6 +214,8 @@ export class LoginPage implements AfterViewInit, OnDestroy {
       (this.selectedRole() === 'student' || this.pwdHasMinLength)
     );
   }
+
+  protected isGoogleLoggingIn = false;
 
   protected togglePassword(): void {
     this.showPassword = !this.showPassword;

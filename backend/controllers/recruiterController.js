@@ -2,6 +2,7 @@ const JobDrive = require("../models/JobDrive");
 const Application = require("../models/Application");
 const Schedule = require("../models/Schedule");
 const Recruiter = require("../models/Recruiter");
+const User = require("../models/User");
 
 const ALL_STATUSES = [
   "Applied",
@@ -43,7 +44,7 @@ const getRecruiterProfile = async (req, res) => {
         companyName: recruiter.companyName,
         officialEmail: recruiter.officialEmail,
         website: recruiter.website,
-        gstNumber: recruiter.gstNumber,
+        companyLogo: recruiter.companyLogo,
         isApproved: recruiter.isApproved,
         trustScore: recruiter.trustScore || 85,
         tpoSuggestions: recruiter.tpoSuggestions || [],
@@ -533,6 +534,77 @@ const scheduleStage = async (req, res) => {
   }
 };
 
+const updateRecruiterProfile = async (req, res) => {
+  try {
+    const { officialEmail, website, password } = req.body;
+    const recruiter = await Recruiter.findOne({ userId: req.user._id });
+    
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (officialEmail) {
+      const emailLower = officialEmail.toLowerCase().trim();
+      const existingUser = await User.findOne({ email: emailLower, _id: { $ne: req.user._id } });
+      const existingRecruiter = await Recruiter.findOne({ officialEmail: emailLower, _id: { $ne: recruiter._id } });
+      if (existingUser || existingRecruiter) {
+        return res.status(400).json({
+          success: false,
+          message: "A user or recruiter with this official email already exists",
+        });
+      }
+      recruiter.officialEmail = emailLower;
+      user.email = emailLower;
+    }
+
+    if (website !== undefined) {
+      recruiter.website = website.trim() || null;
+    }
+
+    if (req.file) {
+      recruiter.companyLogo = `/uploads/logos/${req.file.filename}`;
+    }
+
+    if (password && password.trim()) {
+      user.password = password;
+    }
+
+    await recruiter.save();
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Company profile updated successfully",
+      recruiter: {
+        id: recruiter._id,
+        companyName: recruiter.companyName,
+        officialEmail: recruiter.officialEmail,
+        website: recruiter.website,
+        companyLogo: recruiter.companyLogo,
+        isApproved: recruiter.isApproved,
+        status: recruiter.status,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update company profile",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getRecruiterProfile,
   getDriveApplications,
@@ -546,4 +618,5 @@ module.exports = {
   markGDResult,
   markInterviewResult,
   scheduleStage,
+  updateRecruiterProfile,
 };

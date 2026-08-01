@@ -310,6 +310,7 @@ const approveRecruiter = async (req, res) => {
     }
 
     recruiter.isApproved = true;
+    recruiter.status = "Approved";
     recruiter.verifiedAt = new Date();
     await recruiter.save();
 
@@ -343,14 +344,18 @@ const rejectRecruiter = async (req, res) => {
       });
     }
 
+    recruiter.isApproved = false;
+    recruiter.status = "Rejected";
+    await recruiter.save();
+
     if (recruiter.userId) {
-      await User.findByIdAndDelete(recruiter.userId);
+      await User.findByIdAndUpdate(recruiter.userId, { isActive: false });
     }
-    await Recruiter.findByIdAndDelete(recruiter._id);
 
     return res.status(200).json({
       success: true,
-      message: "Recruiter application rejected and deleted successfully",
+      message: "Recruiter application rejected successfully",
+      recruiter,
     });
   } catch (error) {
     return res.status(500).json({

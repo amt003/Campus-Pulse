@@ -1,0 +1,164 @@
+.layout-wrapper {
+  min-height: 100vh;
+  background: #F8F9FA;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.rec-header {
+  height: 70px;
+  background: #FFFFFF;
+  border-bottom: 1px solid #E5E8E8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.brand-logo {
+  width: 38px;
+  height: 38px;
+  background: #1A5276;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.brand-logo .logo-icon {
+  font-size: 24px;
+}
+
+.brand-title {
+  display: flex;
+  flex-direction: column;
+  margin-right: 16px;
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1A5276;
+}
+
+.brand-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #5D6D7E;
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  color: #5D6D7E;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.nav-tab:hover {
+  background: rgba(26, 82, 118, 0.04);
+  color: #1A5276;
+}
+
+.nav-tab .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.nav-tab.active-tab {
+  background: rgba(26, 82, 118, 0.08);
+  color: #1A5276;
+}
+
+/* Header Right */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.company-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #F4F6F7;
+  padding: 6px 16px 6px 8px;
+  border-radius: 9999px;
+  border: 1px solid #E5E8E8;
+}
+
+.company-logo-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #1A5276;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.company-mini-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: white;
+}
+
+.default-logo-icon {
+  font-size: 18px;
+}
+
+.company-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1C2833;
+}
+
+.btn-logout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #E5E8E8;
+  background: white;
+  color: #E74C3C;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-logout:hover {
+  background: rgba(231, 76, 60, 0.08);
+  border-color: rgba(231, 76, 60, 0.2);
+}
+
+.layout-main {
+  flex: 1;
+  width: 100%;
+}

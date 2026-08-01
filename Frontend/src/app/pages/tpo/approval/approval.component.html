@@ -24,7 +24,7 @@
     @if (isLoading()) {
       <div class="loading-box">
         <div class="spinner"></div>
-        <p>Performing WHOIS & GSTIN verification check…</p>
+        <p>Performing WHOIS verification check…</p>
       </div>
     }
 
@@ -227,7 +227,7 @@
                                 rows="3"
                                 [ngModel]="suggestionInputs()[rec._id] || ''"
                                 (ngModelChange)="updateSuggestionInput(rec._id, $event)"
-                                placeholder="Write official feedback or suggestions for {{ rec.companyName }} (e.g., Please provide secondary HR contact number, or upload revised GSTIN certificate)..."
+                                placeholder="Write official feedback or suggestions for {{ rec.companyName }} (e.g., Please provide secondary HR contact number, or update website URL)..."
                               ></textarea>
 
                               <div class="suggestion-actions">

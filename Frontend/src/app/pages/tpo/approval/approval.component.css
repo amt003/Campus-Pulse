@@ -485,56 +485,6 @@
   font-size: 14px;
 }
 
-.btn-gst-gov {
-  background: rgba(0, 100, 151, 0.08);
-  color: #006497;
-  border-color: rgba(0, 100, 151, 0.2);
-}
-.btn-gst-gov:hover {
-  background: #006497;
-  color: white;
-}
-
-.btn-cleartax {
-  background: rgba(39, 174, 96, 0.08);
-  color: #27AE60;
-  border-color: rgba(39, 174, 96, 0.2);
-}
-.btn-cleartax:hover {
-  background: #27AE60;
-  color: white;
-}
-
-.btn-mca-gov {
-  background: rgba(41, 128, 185, 0.08);
-  color: #2980B9;
-  border-color: rgba(41, 128, 185, 0.2);
-}
-.btn-mca-gov:hover {
-  background: #2980B9;
-  color: white;
-}
-
-.btn-zauba {
-  background: rgba(142, 68, 173, 0.08);
-  color: #8E44AD;
-  border-color: rgba(142, 68, 173, 0.2);
-}
-.btn-zauba:hover {
-  background: #8E44AD;
-  color: white;
-}
-
-.btn-tofler {
-  background: rgba(230, 126, 34, 0.08);
-  color: #E67E22;
-  border-color: rgba(230, 126, 34, 0.2);
-}
-.btn-tofler:hover {
-  background: #E67E22;
-  color: white;
-}
-
 .btn-whois {
   background: rgba(52, 73, 94, 0.08);
   color: #34495E;

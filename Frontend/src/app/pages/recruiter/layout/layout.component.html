@@ -1,0 +1,49 @@
+<div class="layout-wrapper">
+  <!-- ===== Header Bar ===== -->
+  <header class="rec-header">
+    <div class="header-left">
+      <div class="brand-logo">
+        <span class="material-symbols-outlined logo-icon">corporate_fare</span>
+      </div>
+      <div class="brand-title">
+        <span class="brand-name">CampusPulse</span>
+        <span class="brand-sub">Recruiter Portal</span>
+      </div>
+      
+      <!-- Nav Tabs -->
+      <nav class="header-nav">
+        <a routerLink="/recruiter/dashboard" routerLinkActive="active-tab" class="nav-tab">
+          <span class="material-symbols-outlined">dashboard</span>
+          <span>Dashboard</span>
+        </a>
+        <a routerLink="/recruiter/profile" routerLinkActive="active-tab" class="nav-tab">
+          <span class="material-symbols-outlined">business</span>
+          <span>Company Profile</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="header-right">
+      <div class="company-badge">
+        <div class="company-logo-circle">
+          @if (companyLogo()) {
+            <img [src]="'http://localhost:5000' + companyLogo()" alt="Logo" class="company-mini-logo" />
+          } @else {
+            <span class="material-symbols-outlined default-logo-icon">domain</span>
+          }
+        </div>
+        <span class="company-name">{{ companyName() }}</span>
+      </div>
+
+      <button class="btn-logout" (click)="logout()" title="Logout">
+        <span class="material-symbols-outlined">logout</span>
+        <span>Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== Main Page Content ===== -->
+  <main class="layout-main">
+    <router-outlet></router-outlet>
+  </main>
+</div>

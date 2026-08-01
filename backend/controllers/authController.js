@@ -150,26 +150,54 @@ const loginUser = async (req, res) => {
       });
     }
 
-    if (!user.isActive) {
+    // 1. Student Check: must be pre-imported by TPO
+    if (user.role === "Student") {
+      const studentProfile = await Student.findOne({ userId: user._id });
+      if (!studentProfile) {
+        return res.status(403).json({
+          success: false,
+          message: "Only pre-imported students by the TPO are allowed to access this portal.",
+        });
+      }
+    }
+
+    // 2. Recruiter Check: check approval/rejection/pending status
+    let recruiterDetails = null;
+    if (user.role === "Recruiter") {
+      recruiterDetails = await Recruiter.findOne({ userId: user._id });
+      if (recruiterDetails) {
+        if (recruiterDetails.isApproved) {
+          if (recruiterDetails.status !== "Approved") {
+            recruiterDetails.status = "Approved";
+            await recruiterDetails.save();
+          }
+        } else {
+          if (recruiterDetails.status === "Rejected" || !user.isActive) {
+            return res.status(403).json({
+              success: false,
+              message: "Your recruiter application has been rejected by the TPO.",
+              status: "Rejected",
+              companyName: recruiterDetails.companyName,
+            });
+          }
+
+          return res.status(403).json({
+            success: false,
+            message: "Your account is pending TPO approval. You will receive an email once approved.",
+            isApproved: false,
+            status: "Pending",
+            companyName: recruiterDetails.companyName,
+            tpoSuggestions: recruiterDetails.tpoSuggestions || [],
+          });
+        }
+      }
+    }
+
+    if (!user.isActive && user.role !== "Recruiter") {
       return res.status(403).json({
         success: false,
         message: "This account is inactive",
       });
-    }
-
-    // Phase 1: Login Blocking for Unapproved Recruiters
-    let recruiterDetails = null;
-    if (user.role.toLowerCase() === "recruiter") {
-      recruiterDetails = await Recruiter.findOne({ userId: user._id });
-      if (recruiterDetails && !recruiterDetails.isApproved) {
-        return res.status(403).json({
-          success: false,
-          message: "Your account is pending TPO approval. You will receive an email once approved.",
-          isApproved: false,
-          companyName: recruiterDetails.companyName,
-          tpoSuggestions: recruiterDetails.tpoSuggestions || [],
-        });
-      }
     }
 
     const token = generateToken(user);
@@ -238,8 +266,131 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+const googleLogin = async (req, res) => {
+  try {
+    const { token, email: requestedEmail, name: requestedName } = req.body;
+    
+    let email = requestedEmail;
+    let name = requestedName;
+
+    // Verify Google ID token if CLIENT ID is set
+    if (process.env.GOOGLE_CLIENT_ID && token) {
+      try {
+        const { OAuth2Client } = require("google-auth-library");
+        const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+        const ticket = await client.verifyIdToken({
+          idToken: token,
+          audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+        email = payload.email;
+        name = payload.name;
+      } catch (err) {
+        console.warn("Google Token verification failed, falling back to body:", err.message);
+      }
+    }
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required for Google Sign-In",
+      });
+    }
+
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return res.status(403).json({
+        success: false,
+        message: "Your Google email is not registered in our database. Students must be pre-imported by the TPO. Recruiters must register first.",
+      });
+    }
+
+    // 1. Student Check: must be pre-imported by TPO
+    if (user.role === "Student") {
+      const studentProfile = await Student.findOne({ userId: user._id });
+      if (!studentProfile) {
+        return res.status(403).json({
+          success: false,
+          message: "Only pre-imported students by the TPO are allowed to access this portal.",
+        });
+      }
+    }
+
+    // 2. Recruiter Check: check approval/rejection/pending status
+    let recruiterDetails = null;
+    if (user.role === "Recruiter") {
+      recruiterDetails = await Recruiter.findOne({ userId: user._id });
+      if (recruiterDetails) {
+        if (recruiterDetails.isApproved) {
+          if (recruiterDetails.status !== "Approved") {
+            recruiterDetails.status = "Approved";
+            await recruiterDetails.save();
+          }
+        } else {
+          if (recruiterDetails.status === "Rejected" || !user.isActive) {
+            return res.status(403).json({
+              success: false,
+              message: "Your recruiter application has been rejected by the TPO.",
+              status: "Rejected",
+              companyName: recruiterDetails.companyName,
+            });
+          }
+
+          return res.status(403).json({
+            success: false,
+            message: "Your account is pending TPO approval. You will receive an email once approved.",
+            isApproved: false,
+            status: "Pending",
+            companyName: recruiterDetails.companyName,
+            tpoSuggestions: recruiterDetails.tpoSuggestions || [],
+          });
+        }
+      }
+    }
+
+    if (!user.isActive && user.role !== "Recruiter") {
+      return res.status(403).json({
+        success: false,
+        message: "This account is inactive",
+      });
+    }
+
+    const jwtToken = generateToken(user);
+
+    return res.status(200).json({
+      success: true,
+      message: "Google Login successful",
+      token: jwtToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        isActive: user.isActive,
+        recruiter: recruiterDetails,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Google Sign-In failed",
+      error: error.message,
+    });
+  }
+};
+
+const getGoogleClientId = (req, res) => {
+  return res.status(200).json({
+    clientId: process.env.GOOGLE_CLIENT_ID || null,
+  });
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getCurrentUser,
+  googleLogin,
+  getGoogleClientId,
 };

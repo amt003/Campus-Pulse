@@ -1,0 +1,165 @@
+<div class="profile-container">
+  
+  <div class="profile-header">
+    <h2 class="profile-title">Company Profile</h2>
+    <p class="profile-subtitle">Manage and update your organization's verified profile details, credentials, and access settings.</p>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading profile details...</p>
+    </div>
+  }
+
+  @if (!isLoading()) {
+    <div class="profile-grid">
+      
+      <!-- Left Column: Logo & Branding -->
+      <div class="profile-sidebar-card">
+        <div class="logo-section">
+          <div class="logo-preview-container">
+            @if (logoPreviewUrl()) {
+              <img [src]="logoPreviewUrl()" alt="Logo Preview" class="company-logo-img" />
+            } @else if (currentLogoUrl()) {
+              <img [src]="currentLogoUrl()" alt="Current Logo" class="company-logo-img" />
+            } @else {
+              <div class="no-logo-placeholder">
+                <span class="material-symbols-outlined">domain</span>
+                <p>No Logo Uploaded</p>
+              </div>
+            }
+          </div>
+
+          <div class="upload-btn-wrapper">
+            <button class="btn-upload-file">
+              <span class="material-symbols-outlined">photo_camera</span>
+              <span>Upload New Logo</span>
+            </button>
+            <input type="file" (change)="onFileSelected($event)" accept="image/png, image/jpeg, image/jpg, image/webp" />
+          </div>
+          <p class="logo-hint">Supports PNG, JPG or WEBP. Max size: 2MB.</p>
+        </div>
+
+        <div class="info-summary-list">
+          <div class="info-summary-item">
+            <span class="info-label">Company Name</span>
+            <span class="info-value">{{ companyName() }}</span>
+          </div>
+          <div class="info-summary-item">
+            <span class="info-label">Verification Status</span>
+            <span class="status-badge-approved">
+              <span class="badge-dot-green"></span>
+              <span>Verified Account</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Profile Edit Form -->
+      <div class="profile-form-card">
+        <h3 class="form-section-title">Account & Business Details</h3>
+        
+        @if (successMessage()) {
+          <div class="alert-box alert-success">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span>{{ successMessage() }}</span>
+          </div>
+        }
+
+        @if (errorMessage()) {
+          <div class="alert-box alert-error">
+            <span class="material-symbols-outlined">error</span>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <form (ngSubmit)="onSubmit()" #profileForm="ngForm" class="profile-form">
+          <div class="form-grid">
+            
+            <div class="form-group col-span-2">
+              <label for="officialEmail">Official Contact Email</label>
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined input-icon">mail</span>
+                <input 
+                  type="email" 
+                  id="officialEmail" 
+                  name="officialEmail" 
+                  [(ngModel)]="officialEmail" 
+                  placeholder="hr@company.com" 
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-group col-span-2">
+              <label for="website">Company Website URL</label>
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined input-icon">language</span>
+                <input 
+                  type="url" 
+                  id="website" 
+                  name="website" 
+                  [(ngModel)]="website" 
+                  placeholder="https://company.com"
+                />
+              </div>
+            </div>
+
+            <div class="form-divider col-span-2">
+              <span>Security & Password (leave blank to keep current)</span>
+            </div>
+
+            <div class="form-group">
+              <label for="password">New Password</label>
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined input-icon">lock</span>
+                <input 
+                  type="password" 
+                  id="password" 
+                  name="password" 
+                  [(ngModel)]="password" 
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="confirmPassword">Confirm New Password</label>
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined input-icon">lock_reset</span>
+                <input 
+                  type="password" 
+                  id="confirmPassword" 
+                  name="confirmPassword" 
+                  [(ngModel)]="confirmPassword" 
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+          </div>
+
+          <div class="form-actions">
+            <button 
+              type="submit" 
+              class="btn-save-profile" 
+              [disabled]="isSaving()"
+            >
+              @if (isSaving()) {
+                <span class="spinner-small"></span>
+                <span>Saving Changes...</span>
+              } @else {
+                <span class="material-symbols-outlined">save</span>
+                <span>Save Profile Settings</span>
+              }
+            </button>
+          </div>
+        </form>
+
+      </div>
+
+    </div>
+  }
+
+</div>

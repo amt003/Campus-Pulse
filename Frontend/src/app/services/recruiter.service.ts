@@ -1,13 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 export interface RecruiterProfile {
   recruiterId: string;
   companyName: string;
   officialEmail: string;
   website?: string;
-  gstNumber?: string;
+  companyLogo?: string;
   isApproved: boolean;
   trustScore?: number;
   tpoSuggestions?: { suggestion: string; sentAt?: string }[];
@@ -29,6 +30,9 @@ export class RecruiterService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = 'http://localhost:5000/api/recruiter';
 
+  private profileSubject = new BehaviorSubject<RecruiterProfile | null>(null);
+  public profile$ = this.profileSubject.asObservable();
+
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     return new HttpHeaders({
@@ -40,7 +44,13 @@ export class RecruiterService {
   getProfile(): Observable<RecruiterProfileResponse> {
     return this.http.get<RecruiterProfileResponse>(`${this.apiUrl}/profile`, {
       headers: this.getAuthHeaders(),
-    });
+    }).pipe(
+      tap(res => {
+        if (res && res.data) {
+          this.profileSubject.next(res.data);
+        }
+      })
+    );
   }
 
   createDrive(data: any): Observable<any> {
@@ -59,5 +69,24 @@ export class RecruiterService {
     return this.http.get(`${this.apiUrl}/applications/${driveId}`, {
       headers: this.getAuthHeaders(),
     });
+  }
+
+  private getMultipartHeaders(): HttpHeaders {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+    return new HttpHeaders({
+      Authorization: `Bearer ${token}`,
+    });
+  }
+
+  updateProfile(formData: FormData): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/profile`, formData, {
+      headers: this.getMultipartHeaders(),
+    }).pipe(
+      tap((res: any) => {
+        if (res && res.success) {
+          this.getProfile().subscribe();
+        }
+      })
+    );
   }
 }

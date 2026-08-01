@@ -12,14 +12,17 @@ const {
   markGDResult,
   markInterviewResult,
   scheduleStage,
+  updateRecruiterProfile,
 } = require("../controllers/recruiterController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+const { uploadImage } = require("../middleware/uploadMiddleware");
 
 const router = express.Router();
 
 router.use(protect, authorizeRoles("Recruiter"));
 
 router.get("/profile", getRecruiterProfile);
+router.put("/profile", uploadImage.single("logo"), updateRecruiterProfile);
 router.post("/drive", createJobDrive);
 router.get("/drives", getRecruiterDrives);
 router.get("/drive/:id", getJobDriveById);

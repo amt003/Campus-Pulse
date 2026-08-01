@@ -1,30 +1,4 @@
 <div class="recruiter-root">
-
-  <!-- ===== Header Bar ===== -->
-  <header class="rec-header">
-    <div class="header-left">
-      <div class="brand-logo">
-        <span class="material-symbols-outlined logo-icon">corporate_fare</span>
-      </div>
-      <div class="brand-title">
-        <span class="brand-name">CampusPulse</span>
-        <span class="brand-sub">Recruiter Portal</span>
-      </div>
-    </div>
-
-    <div class="header-right">
-      <span class="company-badge-name">
-        {{ profile()?.companyName || 'Recruiter' }}
-      </span>
-
-      <button class="btn-logout" (click)="logout()" title="Logout">
-        <span class="material-symbols-outlined">logout</span>
-        <span>Logout</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- ===== Main Content Container ===== -->
   <main class="rec-main">
 
     <!-- Loading State -->
@@ -74,9 +48,7 @@
           <div class="meta-row">
             <span class="meta-label">Automated Verification:</span>
             <div class="verification-chips">
-              <span class="chip chip-success">Domain ✅</span>
-              <span class="chip chip-success">GST ✅</span>
-              <span class="chip chip-warning">MCA ⏳</span>
+              <span class="chip chip-success">Domain (WHOIS) ✅</span>
             </div>
           </div>
         </div>
@@ -124,113 +96,175 @@
     @if (profile()?.isApproved) {
     <div class="approved-dashboard">
 
-      <!-- Welcome Banner -->
-      <div class="welcome-banner">
-        <div class="welcome-text-wrap">
-          <h1 class="welcome-title">Welcome, {{ profile()?.companyName }}! 🎉</h1>
-          <p class="welcome-sub">Manage your campus placement drives and shortlist top candidates from Alphabet Campus.
-          </p>
+      @if (successMessage()) {
+        <div class="toast-success-banner">
+          <span class="material-symbols-outlined">check_circle</span>
+          <span class="toast-msg-text">{{ successMessage() }}</span>
+          <button class="toast-close-btn" (click)="successMessage.set(null)">&times;</button>
         </div>
-        <button class="btn-create-drive" (click)="openCreateModal()">
+      }
+
+      <!-- Welcome Banner -->
+      <div class="welcome-banner-creative">
+        <div class="welcome-banner-overlay"></div>
+        <div class="welcome-content">
+          <span class="welcome-tag">Recruiter Workspace</span>
+          <h1 class="welcome-title-creative">Welcome, {{ profile()?.companyName }}! 🎉</h1>
+          <p class="welcome-sub-creative">Manage your campus placement drives, coordinate schedules, and recruit top student talent.</p>
+        </div>
+        <button class="btn-create-drive-creative" (click)="openCreateModal()">
           <span class="material-symbols-outlined">add_circle</span>
           <span>Create New Drive</span>
         </button>
       </div>
 
-      <!-- 4 Stats Cards -->
-      <section class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon icon-blue">
-            <span class="material-symbols-outlined">work</span>
+      <!-- Main Layout Grid -->
+      <div class="dashboard-grid-container">
+        
+        <!-- Left Column: Active Drives List -->
+        <div class="dashboard-main-col">
+          <div class="section-card-header">
+            <h2 class="section-title-creative">Active Recruitment Drives</h2>
+            <p class="section-subtitle-creative">Track and manage student applications for active hiring pipelines</p>
           </div>
-          <div class="stat-info">
-            <span class="stat-label">Active Drives</span>
-            <h3 class="stat-value">{{ activeDrivesCount() }}</h3>
-          </div>
-        </div>
 
-        <div class="stat-card">
-          <div class="stat-icon icon-green">
-            <span class="material-symbols-outlined">description</span>
-          </div>
-          <div class="stat-info">
-            <span class="stat-label">Total Applications</span>
-            <h3 class="stat-value">{{ totalApplicationsCount() }}</h3>
-          </div>
-        </div>
+          @if (drives().length === 0) {
+            <div class="empty-drives-creative">
+              <span class="material-symbols-outlined empty-icon-creative">work_outline</span>
+              <h4>No Active Drives Yet</h4>
+              <p>Get started by creating your first placement campaign to target students.</p>
+              <button class="btn-create-drive-inline" (click)="openCreateModal()">
+                Create Drive
+              </button>
+            </div>
+          }
 
-        <div class="stat-card">
-          <div class="stat-icon icon-amber">
-            <span class="material-symbols-outlined">star</span>
-          </div>
-          <div class="stat-info">
-            <span class="stat-label">Shortlisted Candidates</span>
-            <h3 class="stat-value">{{ shortlistedCount() }}</h3>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon icon-teal">
-            <span class="material-symbols-outlined">task_alt</span>
-          </div>
-          <div class="stat-info">
-            <span class="stat-label">Offer Acceptance Rate</span>
-            <h3 class="stat-value">{{ offerAcceptanceRate() }}%</h3>
-          </div>
-        </div>
-      </section>
-
-      <!-- Recent Drives List Table -->
-      <section class="drives-section">
-        <div class="section-header">
-          <h2 class="section-title">Recent Placement Drives</h2>
-        </div>
-
-        @if (drives().length === 0) {
-        <div class="empty-drives">
-          <span class="material-symbols-outlined empty-icon">work_outline</span>
-          <p>No job drives posted yet. Click "Create New Drive" to get started!</p>
-        </div>
-        }
-
-        @if (drives().length > 0) {
-        <div class="table-wrap">
-          <table class="drives-table">
-            <thead>
-              <tr>
-                <th>Drive Title</th>
-                <th>Status</th>
-                <th>Applications Received</th>
-                <th>CTC</th>
-                <th>Deadline</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          @if (drives().length > 0) {
+            <div class="drives-list-cards">
               @for (d of drives(); track d._id) {
-              <tr>
-                <td class="font-bold">{{ d.title }}</td>
-                <td>
-                  <span class="status-pill" [class.pill-open]="d.status === 'Open'">
-                    {{ d.status }}
-                  </span>
-                </td>
-                <td>{{ d.applicationsCount || 0 }}</td>
-                <td>₹{{ (d.ctc / 100000).toFixed(1) }} LPA</td>
-                <td>{{ d.applicationDeadline | date:'mediumDate' }}</td>
-                <td>
-                  <div class="table-actions">
-                    <button class="btn-action">View Applications</button>
-                    <button class="btn-action">Edit</button>
+                <div class="drive-card-creative">
+                  <div class="drive-card-header">
+                    <div class="drive-badge-icon">
+                      <span class="material-symbols-outlined">business_center</span>
+                    </div>
+                    <div class="drive-header-title">
+                      <h4>{{ d.title }}</h4>
+                      <span class="drive-company">{{ profile()?.companyName }}</span>
+                    </div>
+                    <span class="status-pill" [class.pill-open]="d.status === 'Open'">
+                      {{ d.status }}
+                    </span>
                   </div>
-                </td>
-              </tr>
+
+                  <div class="drive-card-details">
+                    <div class="detail-item">
+                      <span class="detail-label">Applications</span>
+                      <span class="detail-val">{{ d.applicationsCount || 0 }} Candidates</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Annual Package (CTC)</span>
+                      <span class="detail-val font-accent">₹{{ (d.ctc / 100000).toFixed(1) }} LPA</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">CGPA Cutoff</span>
+                      <span class="detail-val">{{ d.minCGPA || 'None' }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Deadline</span>
+                      <span class="detail-val">{{ d.applicationDeadline | date:'mediumDate' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="drive-card-footer">
+                    <div class="progress-bar-container">
+                      <div class="progress-bar-fill" [style.width.%]="d.applicationsCount > 0 ? 100 : 0"></div>
+                    </div>
+                    <div class="drive-actions">
+                      <button class="btn-action-primary">
+                        <span>View Applications</span>
+                        <span class="material-symbols-outlined">chevron_right</span>
+                      </button>
+                      <button class="btn-action-secondary">
+                        <span class="material-symbols-outlined">edit</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               }
-            </tbody>
-          </table>
+            </div>
+          }
         </div>
-        }
-      </section>
+
+        <!-- Right Column: Performance Summary & TPO Announcements -->
+        <div class="dashboard-side-col">
+          
+          <!-- Performance Summary Card -->
+          <div class="stats-panel-card">
+            <h4 class="panel-header-title">Performance Summary</h4>
+            
+            <div class="sidebar-stat-item">
+              <div class="stat-icon-wrapper bg-blue-light">
+                <span class="material-symbols-outlined text-blue">work</span>
+              </div>
+              <div class="stat-item-info">
+                <span class="stat-item-label">Active Drives</span>
+                <span class="stat-item-value">{{ activeDrivesCount() }}</span>
+              </div>
+            </div>
+
+            <div class="sidebar-stat-item">
+              <div class="stat-icon-wrapper bg-green-light">
+                <span class="material-symbols-outlined text-green">description</span>
+              </div>
+              <div class="stat-item-info">
+                <span class="stat-item-label">Total Applications</span>
+                <span class="stat-item-value">{{ totalApplicationsCount() }}</span>
+              </div>
+            </div>
+
+            <div class="sidebar-stat-item">
+              <div class="stat-icon-wrapper bg-amber-light">
+                <span class="material-symbols-outlined text-amber">star</span>
+              </div>
+              <div class="stat-item-info">
+                <span class="stat-item-label">Shortlisted Candidates</span>
+                <span class="stat-item-value">{{ shortlistedCount() }}</span>
+              </div>
+            </div>
+
+            <div class="sidebar-stat-item">
+              <div class="stat-icon-wrapper bg-teal-light">
+                <span class="material-symbols-outlined text-teal">task_alt</span>
+              </div>
+              <div class="stat-item-info">
+                <span class="stat-item-label">Offer Acceptance</span>
+                <span class="stat-item-value">{{ offerAcceptanceRate() }}%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- TPO Announcements Card -->
+          <div class="announcements-panel-card">
+            <div class="panel-header-title-row">
+              <span class="material-symbols-outlined text-secondary">campaign</span>
+              <h4 class="panel-header-title" style="margin:0;">TPO Bulletin</h4>
+            </div>
+            
+            <div class="announcement-list">
+              <div class="announcement-item">
+                <span class="announcement-date">July 31, 2026</span>
+                <p class="announcement-text">Please ensure all drive details and salary packages are finalized before August 15th.</p>
+              </div>
+              <div class="announcement-item">
+                <span class="announcement-date">July 28, 2026</span>
+                <p class="announcement-text">Students are required to upload verification documents for their CGPA before applying.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
 
     </div>
     }
@@ -248,26 +282,156 @@
         <button class="btn-close" (click)="closeCreateModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label>Job Title / Role</label>
-          <input type="text" [(ngModel)]="newDriveTitle" placeholder="e.g. Software Engineer (SDE-1)" />
-        </div>
-        <div class="form-group">
-          <label>CTC (Annual INR)</label>
-          <input type="number" [(ngModel)]="newDriveCTC" placeholder="1200000" />
-        </div>
-        <div class="form-group">
-          <label>Minimum CGPA</label>
-          <input type="number" [(ngModel)]="newDriveMinCGPA" placeholder="7.0" step="0.1" />
-        </div>
-        <div class="form-group">
-          <label>Application Deadline</label>
-          <input type="date" [(ngModel)]="newDriveDeadline" />
+        @if (errorMessage()) {
+          <div class="modal-error-alert">
+            <span class="material-symbols-outlined">error</span>
+            <span class="error-text">{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <div class="form-grid-modal">
+          <div class="form-group col-span-2">
+            <label for="newDriveTitle">Job Title / Role *</label>
+            <input 
+              type="text" 
+              id="newDriveTitle" 
+              name="newDriveTitle" 
+              [(ngModel)]="newDriveTitle" 
+              placeholder="e.g. Software Engineer (SDE-1)" 
+              required 
+              minlength="3" 
+              #titleRef="ngModel"
+            />
+            @if (titleRef.touched && titleRef.errors?.['required']) {
+              <div class="error-msg">Job Title is required.</div>
+            }
+            @if (titleRef.touched && titleRef.errors?.['minlength']) {
+              <div class="error-msg">Job Title must be at least 3 characters.</div>
+            }
+          </div>
+          
+          <div class="form-group col-span-2">
+            <label for="newDriveDesc">Job Description *</label>
+            <textarea 
+              id="newDriveDesc" 
+              name="newDriveDesc" 
+              [(ngModel)]="newDriveDesc" 
+              placeholder="Describe the role responsibilities, required skills, work location..." 
+              rows="3" 
+              required 
+              minlength="10" 
+              #descRef="ngModel"
+            ></textarea>
+            @if (descRef.touched && descRef.errors?.['required']) {
+              <div class="error-msg">Job Description is required.</div>
+            }
+            @if (descRef.touched && descRef.errors?.['minlength']) {
+              <div class="error-msg">Description must be at least 10 characters long.</div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="newDriveCTC">CTC (Annual INR) *</label>
+            <input 
+              type="number" 
+              id="newDriveCTC" 
+              name="newDriveCTC" 
+              [(ngModel)]="newDriveCTC" 
+              placeholder="e.g. 1200000" 
+              required 
+              min="10000" 
+              #ctcRef="ngModel"
+            />
+            @if (ctcRef.touched && ctcRef.errors?.['required']) {
+              <div class="error-msg">CTC is required.</div>
+            }
+            @if (ctcRef.touched && ctcRef.errors?.['min']) {
+              <div class="error-msg">CTC must be at least 10,000 INR.</div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="newDriveDeadline">Application Deadline *</label>
+            <input 
+              type="date" 
+              id="newDriveDeadline" 
+              name="newDriveDeadline" 
+              [(ngModel)]="newDriveDeadline" 
+              [min]="todayDate" 
+              required 
+              #deadlineRef="ngModel"
+            />
+            @if (deadlineRef.touched && deadlineRef.errors?.['required']) {
+              <div class="error-msg">Deadline is required.</div>
+            }
+            @if (deadlineRef.touched && deadlineRef.value < todayDate) {
+              <div class="error-msg">Deadline must be today or a future date.</div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="newDriveMinCGPA">Minimum CGPA Required (0-10)</label>
+            <input 
+              type="number" 
+              id="newDriveMinCGPA" 
+              name="newDriveMinCGPA" 
+              [(ngModel)]="newDriveMinCGPA" 
+              placeholder="e.g. 7.0" 
+              step="0.1" 
+              min="0" 
+              max="10" 
+              #cgpaRef="ngModel"
+            />
+            @if (cgpaRef.touched && (cgpaRef.errors?.['min'] || cgpaRef.errors?.['max'])) {
+              <div class="error-msg">CGPA must be between 0.0 and 10.0.</div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="newDriveMaxBacklogs">Active Backlog Limit</label>
+            <input 
+              type="number" 
+              id="newDriveMaxBacklogs" 
+              name="newDriveMaxBacklogs" 
+              [(ngModel)]="newDriveMaxBacklogs" 
+              placeholder="e.g. 0" 
+              min="0" 
+              #backlogsRef="ngModel"
+            />
+            @if (backlogsRef.touched && backlogsRef.errors?.['min']) {
+              <div class="error-msg">Backlog limit cannot be negative.</div>
+            }
+          </div>
+
+          <div class="form-group col-span-2">
+            <label>Eligible Branches *</label>
+            <div class="branches-container">
+              @for (branch of availableBranches; track branch) {
+                <button 
+                  type="button" 
+                  class="branch-chip" 
+                  [class.active]="selectedBranches().includes(branch)"
+                  (click)="toggleBranch(branch)"
+                >
+                  {{ branch }}
+                </button>
+              }
+            </div>
+            @if (selectedBranches().length === 0) {
+              <div class="error-msg">Please select at least one eligible branch.</div>
+            }
+          </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn-cancel" (click)="closeCreateModal()">Cancel</button>
-        <button class="btn-submit" (click)="submitCreateDrive()">Publish Drive</button>
+        <button class="btn-cancel" (click)="closeCreateModal()" [disabled]="isSubmitting()">Cancel</button>
+        <button class="btn-submit" (click)="submitCreateDrive()" [disabled]="isFormInvalid() || isSubmitting()">
+          @if (isSubmitting()) {
+            <span>Publishing...</span>
+          } @else {
+            <span>Publish Drive</span>
+          }
+        </button>
       </div>
     </div>
   </div>
