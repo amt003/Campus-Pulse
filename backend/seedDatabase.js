@@ -50,6 +50,8 @@ async function seedDatabase() {
         website: r.website,
         officialEmail: r.officialEmail,
         isApproved: r.isApproved,
+        registrationStatus: r.isApproved ? "approved" : "pending",
+        status: r.isApproved ? "Approved" : "Pending",
         trustScore: r.trustScore,
         verifiedAt: r.isApproved ? new Date() : null,
       });

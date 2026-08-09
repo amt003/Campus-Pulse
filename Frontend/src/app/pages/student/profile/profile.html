@@ -1,0 +1,268 @@
+<div class="profile-page-container" style="display: flex; justify-content: center; width: 100%;">
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading your profile details...</p>
+    </div>
+  } @else if (profile()) {
+    <div class="profile-card">
+      
+      <!-- Section 1: Profile Photo & Basic Identity -->
+      <div class="profile-identity-section" style="display: flex; align-items: center; gap: 32px; flex-wrap: wrap;">
+        <!-- Avatar column -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative;">
+          <div class="avatar-wrapper" (click)="photoFileInput.click()">
+            @if (photoPreviewUrl()) {
+              <img [src]="photoPreviewUrl()" alt="Preview" class="avatar-image" />
+            } @else if (profile()?.profilePicPath) {
+              <img [src]="'http://localhost:5000' + profile()!.profilePicPath" alt="Profile" class="avatar-image" />
+            } @else {
+              <span class="avatar-initials">
+                {{ profile()!.userId.name.substring(0,1) }}{{ profile()!.userId.name.includes(' ') ? profile()!.userId.name.split(' ')[1].substring(0,1) : '' }}
+              </span>
+            }
+            <!-- Hover Upload overlay -->
+            <div class="avatar-overlay">
+              <span class="material-symbols-outlined">photo_camera</span>
+              <p>Change Photo</p>
+            </div>
+          </div>
+          <input type="file" #photoFileInput (change)="onPhotoSelected($event)" accept="image/png, image/jpeg, image/jpg" style="display: none;" />
+          <span style="font-size: 11px; color: var(--text-secondary); font-weight: 500;">PNG, JPG (max 2MB)</span>
+        </div>
+
+        <!-- Identity info column -->
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 6px;">
+          <h2 style="font-size: 22px; font-weight: 800; color: var(--primary); margin: 0;">{{ profile()!.userId.name }}</h2>
+          <p style="font-size: 15px; color: var(--text-secondary); margin: 0; font-weight: 600;">Roll Number: {{ profile()!.rollNumber }}</p>
+          <p style="font-size: 15px; color: var(--text-secondary); margin: 0; font-weight: 600;">Email: {{ profile()!.userId.email }}</p>
+          
+          @if (profile()?.isProfileComplete) {
+            <div style="margin-top: 6px;">
+              <span class="badge-profile-complete" style="background: #E8F8F5; color: var(--success); padding: 6px 12px; border-radius: 20px; font-size: 12.5px; font-weight: 750; display: inline-flex; align-items: center; gap: 4px;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span>
+                <span>Profile Complete</span>
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Section 2: Academic & Personal Details -->
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <h3 style="font-size: 17px; font-weight: 800; color: var(--primary); margin: 0; border-bottom: 1.5px solid var(--border); padding-bottom: 8px;">Academic Details</h3>
+        
+        <div class="profile-form-grid">
+          <div class="form-group-profile">
+            <label class="profile-field-label">Current CGPA</label>
+            <input type="number" [(ngModel)]="profile()!.cgpa" name="profileCgpa" class="profile-input" step="0.1" min="0" max="10" required 
+              [class.is-invalid]="isSaveTriggered() && cgpaError()" [class.is-valid]="isSaveTriggered() && !cgpaError()" />
+            @if (isSaveTriggered() && cgpaError()) {
+              <span class="field-error-text">CGPA must be between 0 and 10</span>
+            }
+          </div>
+
+          <div class="form-group-profile">
+            <label class="profile-field-label">Branch</label>
+            <select [(ngModel)]="profile()!.branch" name="profileBranch" class="profile-input" required
+              [class.is-invalid]="isSaveTriggered() && branchError()" [class.is-valid]="isSaveTriggered() && !branchError()" style="background: white;">
+              <option value="CSE">CSE</option>
+              <option value="ECE">ECE</option>
+              <option value="IT">IT</option>
+              <option value="ME">ME</option>
+              <option value="Civil">Civil</option>
+              <option value="BCA">BCA</option>
+              <option value="MCA">MCA</option>
+              <option value="INMCA">INMCA</option>
+              <option value="EEE">EEE</option>
+              <option value="CE">CE</option>
+              <option value="AD">AD</option>
+            </select>
+            @if (isSaveTriggered() && branchError()) {
+              <span class="field-error-text">Please select a valid branch</span>
+            }
+          </div>
+
+          <div class="form-group-profile">
+            <label class="profile-field-label">Passout Year</label>
+            <select [(ngModel)]="profile()!.passoutYear" name="profileYear" class="profile-input" required
+              [class.is-invalid]="isSaveTriggered() && passoutYearError()" [class.is-valid]="isSaveTriggered() && !passoutYearError()" style="background: white;">
+              <option [value]="2024">2024</option>
+              <option [value]="2025">2025</option>
+              <option [value]="2026">2026</option>
+              <option [value]="2027">2027</option>
+            </select>
+            @if (isSaveTriggered() && passoutYearError()) {
+              <span class="field-error-text">Please select a passout year</span>
+            }
+          </div>
+
+          <div class="form-group-profile">
+            <label class="profile-field-label">Active Backlogs</label>
+            <input type="number" [(ngModel)]="profile()!.activeBacklogs" name="profileBacklogs" class="profile-input" min="0" required
+              [class.is-invalid]="isSaveTriggered() && backlogsError()" [class.is-valid]="isSaveTriggered() && !backlogsError()" />
+            @if (isSaveTriggered() && backlogsError()) {
+              <span class="field-error-text">Backlogs cannot be negative</span>
+            }
+          </div>
+        </div>
+
+        <!-- Resume Upload dashed drop-zone -->
+        <div style="margin-top: 10px;">
+          <label class="profile-field-label">Placement Resume (PDF)</label>
+          <div class="resume-drop-zone" style="margin-top: 6px;">
+            <div class="resume-file-info">
+              <span class="material-symbols-outlined" style="color: var(--primary); font-size: 26px;">description</span>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span class="file-name-label" style="font-weight: 750; font-size: 13.5px; color: var(--text-dark);">
+                  {{ getResumeFileName() || 'No resume uploaded' }}
+                </span>
+                @if (profile()?.resumePath) {
+                  <div class="success-checkmark" style="font-size: 11.5px; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                    <span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span>
+                    <span>Uploaded successfully</span>
+                  </div>
+                }
+              </div>
+            </div>
+            @if (profile()?.resumePath) {
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <a [href]="'http://localhost:5000' + profile()!.resumePath" target="_blank" class="btn-view-resume">
+                  <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
+                  <span>View Resume</span>
+                </a>
+                <div style="position: relative; overflow: hidden; display: inline-block;">
+                  <button type="button" class="btn-upload-action" style="background: var(--surface-low); color: var(--primary); border: 1.5px solid var(--border);">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">autorenew</span>
+                    <span>Replace Resume (PDF)</span>
+                  </button>
+                  <input type="file" (change)="onResumeFileSelected($event)" accept="application/pdf"
+                    style="position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;" />
+                </div>
+              </div>
+            } @else {
+              <div style="position: relative; overflow: hidden; display: inline-block;">
+                <button type="button" class="btn-upload-action">
+                  <span class="material-symbols-outlined" style="font-size: 18px;">upload_file</span>
+                  <span>Upload Resume (PDF)</span>
+                </button>
+                <input type="file" (change)="onResumeFileSelected($event)" accept="application/pdf"
+                  style="position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;" />
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div style="height: 1px; background: var(--border); margin: 8px 0;"></div>
+
+      <!-- Section 3: Security / Change Password -->
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <h3 style="font-size: 17px; font-weight: 800; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 6px;">
+          <span class="material-symbols-outlined">lock</span>
+          <span>Change Password</span>
+        </h3>
+
+        <div style="display: flex; flex-direction: column; gap: 16px; max-width: 500px; width: 100%;">
+          <!-- Current Password -->
+          <div class="form-group-profile">
+            <label class="profile-field-label">Current Password</label>
+            <div class="password-field-wrapper" style="position: relative; width: 100%;">
+              <input [type]="showCurrentPassword() ? 'text' : 'password'" [ngModel]="currentPassword()" (ngModelChange)="currentPassword.set($event)"
+                name="studentCurrentPassword" class="profile-input" placeholder="Enter current password" style="padding-right: 40px;"
+                [class.is-invalid]="isSaveTriggered() && currentPasswordError()" [class.is-valid]="isSaveTriggered() && currentPassword().length > 0 && !currentPasswordError()" />
+              <button type="button" class="btn-password-toggle" (click)="showCurrentPassword.set(!showCurrentPassword())">
+                <span class="material-symbols-outlined" style="font-size: 18px;">
+                  {{ showCurrentPassword() ? 'visibility' : 'visibility_off' }}
+                </span>
+              </button>
+            </div>
+            @if (isSaveTriggered() && currentPasswordError()) {
+              <span class="field-error-text">Current password is required to change password</span>
+            }
+          </div>
+
+          <!-- New Password -->
+          <div class="form-group-profile">
+            <label class="profile-field-label">New Password</label>
+            <div class="password-field-wrapper" style="position: relative; width: 100%;">
+              <input [type]="showNewPassword() ? 'text' : 'password'" [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)"
+                name="studentNewPassword" class="profile-input" placeholder="Enter new password" style="padding-right: 40px;"
+                [class.is-invalid]="isSaveTriggered() && newPasswordError()" [class.is-valid]="isSaveTriggered() && newPassword().length > 0 && !newPasswordError()" />
+              <button type="button" class="btn-password-toggle" (click)="showNewPassword.set(!showNewPassword())">
+                <span class="material-symbols-outlined" style="font-size: 18px;">
+                  {{ showNewPassword() ? 'visibility' : 'visibility_off' }}
+                </span>
+              </button>
+            </div>
+            <!-- 4 Bar Password Strength Indicator -->
+            <div class="strength-bars-container" style="display: flex; gap: 4px; margin-top: 8px; height: 4px; width: 100%;">
+              <div class="strength-bar" [class.filled]="passwordStrength() >= 1" [class.red]="passwordStrength() >= 1 && passwordStrength() <= 2" [class.orange]="passwordStrength() === 3" [class.green]="passwordStrength() === 4" style="flex: 1; height: 100%; border-radius: 2px; background: #E5E8E8; transition: background-color 0.2s;"></div>
+              <div class="strength-bar" [class.filled]="passwordStrength() >= 2" [class.red]="passwordStrength() >= 2 && passwordStrength() <= 2" [class.orange]="passwordStrength() === 3" [class.green]="passwordStrength() === 4" style="flex: 1; height: 100%; border-radius: 2px; background: #E5E8E8; transition: background-color 0.2s;"></div>
+              <div class="strength-bar" [class.filled]="passwordStrength() >= 3" [class.orange]="passwordStrength() === 3" [class.green]="passwordStrength() === 4" style="flex: 1; height: 100%; border-radius: 2px; background: #E5E8E8; transition: background-color 0.2s;"></div>
+              <div class="strength-bar" [class.filled]="passwordStrength() >= 4" [class.green]="passwordStrength() === 4" style="flex: 1; height: 100%; border-radius: 2px; background: #E5E8E8; transition: background-color 0.2s;"></div>
+            </div>
+            <div class="strength-label-text" style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; gap: 8px;">
+              <span style="color: var(--text-secondary); line-height: 1.3;">
+                Minimum 8 characters with at least one uppercase, one lowercase, and one number.
+              </span>
+              @if (newPassword() && passwordStrengthLabel()) {
+                <strong class="strength-badge-text" [class]="'text-' + passwordStrengthColor()" style="font-weight: 750;">{{ passwordStrengthLabel() }}</strong>
+              }
+            </div>
+            @if (isSaveTriggered() && newPasswordError()) {
+              <span class="field-error-text">Password does not meet the complexity requirements</span>
+            }
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="form-group-profile">
+            <label class="profile-field-label">Confirm Password</label>
+            <div class="password-field-wrapper" style="position: relative; width: 100%;">
+              <input [type]="showConfirmPassword() ? 'text' : 'password'" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)"
+                name="studentConfirmPassword" class="profile-input" placeholder="Repeat new password" style="padding-right: 40px;"
+                [class.is-invalid]="isSaveTriggered() && confirmPasswordError()" [class.is-valid]="isSaveTriggered() && confirmPassword().length > 0 && !confirmPasswordError()" />
+              <button type="button" class="btn-password-toggle" (click)="showConfirmPassword.set(!showConfirmPassword())">
+                <span class="material-symbols-outlined" style="font-size: 18px;">
+                  {{ showConfirmPassword() ? 'visibility' : 'visibility_off' }}
+                </span>
+              </button>
+            </div>
+            @if (isSaveTriggered() && confirmPasswordError()) {
+              <span class="field-error-text">Passwords do not match</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Action Footer Buttons & Alerts -->
+      <div style="display: flex; flex-direction: column; gap: 12px; border-top: 1.5px solid var(--border); padding-top: 24px; margin-top: 8px;">
+        <!-- Save messages -->
+        @if (globalSaveSuccess()) {
+          <div class="alert-save-success">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span>{{ globalSaveSuccess() }}</span>
+          </div>
+        }
+        @if (globalSaveError()) {
+          <div class="alert-save-error">
+            <span class="material-symbols-outlined">error</span>
+            <span>{{ globalSaveError() }}</span>
+          </div>
+        }
+
+        <!-- Button Row -->
+        <div style="display: flex; justify-content: flex-end; gap: 14px; width: 100%;">
+          <button type="button" class="btn-profile-cancel" (click)="cancelProfileChanges()">
+            Cancel
+          </button>
+          <button type="button" class="btn-profile-save" (click)="saveAllChanges()">
+            Save Changes
+          </button>
+        </div>
+      </div>
+
+    </div>
+  }
+</div>

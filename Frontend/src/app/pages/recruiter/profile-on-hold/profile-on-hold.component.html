@@ -1,0 +1,246 @@
+<div class="edit-hold-root">
+  <div class="edit-hold-container">
+    
+    <!-- Branding -->
+    <header class="brand-header">
+      <a routerLink="/" class="brand-link">
+        <span class="material-symbols-outlined brand-icon">layers</span>
+        <span class="brand-name">CampusPulse</span>
+      </a>
+      <span class="header-badge">Recruiter Portal</span>
+    </header>
+
+    <!-- Card Wrapper -->
+    <main class="card-wrapper glass-panel">
+      
+      <!-- Title -->
+      <div class="card-header">
+        <h2 class="card-title">Update Company Profile</h2>
+        <p class="card-subtitle">Please resolve the issues identified by the Placement Office to request re-approval.</p>
+      </div>
+
+      <!-- Feedback Banner -->
+      <section class="feedback-banner">
+        <div class="banner-title-row">
+          <span class="material-symbols-outlined banner-icon">warning_amber</span>
+          <strong>TPO Review Feedback</strong>
+        </div>
+        
+        <div class="feedback-blocks">
+          @if (tpoFeedback()) {
+            <div class="feedback-block">
+              <span class="block-label">Feedback:</span>
+              <p class="block-text">{{ tpoFeedback() }}</p>
+            </div>
+          }
+          @if (tpoSuggestions()) {
+            <div class="feedback-block suggestion-block">
+              <span class="block-label">Suggestions:</span>
+              <p class="block-text">{{ tpoSuggestions() }}</p>
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Fetching your profile details...</p>
+        </div>
+      }
+
+      <!-- Form -->
+      @if (!isLoading()) {
+        <form (ngSubmit)="submitEdit()" #editForm="ngForm" class="edit-form">
+          
+          <div class="form-grid">
+            
+            <!-- Company Name -->
+            <div class="form-group">
+              <label class="form-label" for="companyName">Company Name <span class="req">*</span></label>
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined input-icon">corporate_fare</span>
+                <input
+                  id="companyName"
+                  name="companyName"
+                  type="text"
+                  class="form-input"
+                  [class.field-error]="companyName() !== '' && !companyNameValid"
+                  [ngModel]="companyName()"
+                  (ngModelChange)="companyName.set($event)"
+                  placeholder="e.g. Tata Consultancy Services"
+                  required
+                />
+              </div>
+              @if (companyName() !== '' && !companyNameValid) {
+                <p class="field-error-msg">
+                  <span class="material-symbols-outlined">error</span>
+                  Please enter a valid company name (min 2 characters)
+                </p>
+              }
+            </div>
+
+            <!-- Website -->
+            <div class="form-group">
+              <label class="form-label" for="website">Official Website URL <span class="req">*</span></label>
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined input-icon">language</span>
+                <input
+                  id="website"
+                  name="website"
+                  type="url"
+                  class="form-input"
+                  [class.field-error]="website() !== '' && !websiteValid"
+                  [ngModel]="website()"
+                  (ngModelChange)="website.set($event)"
+                  placeholder="e.g. https://tcs.com"
+                  required
+                />
+              </div>
+              @if (website() !== '' && !websiteValid) {
+                <p class="field-error-msg">
+                  <span class="material-symbols-outlined">error</span>
+                  Invalid Website URL (e.g. https://tcs.com)
+                </p>
+              }
+            </div>
+
+            <!-- Official Email -->
+            <div class="form-group">
+              <label class="form-label" for="officialEmail">Official Business Email <span class="req">*</span></label>
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined input-icon">mail</span>
+                <input
+                  id="officialEmail"
+                  name="officialEmail"
+                  type="email"
+                  class="form-input"
+                  [class.field-error]="officialEmail() !== '' && !emailValid"
+                  [ngModel]="officialEmail()"
+                  (ngModelChange)="officialEmail.set($event)"
+                  placeholder="e.g. hr@tcs.com"
+                  required
+                />
+              </div>
+              @if (officialEmail() !== '' && !emailValid) {
+                <p class="field-error-msg">
+                  <span class="material-symbols-outlined">error</span>
+                  Please enter a valid official email address
+                </p>
+              }
+            </div>
+
+            <!-- Contact Person Name -->
+            <div class="form-group">
+              <label class="form-label" for="contactPerson">HR Contact Person Name <span class="req">*</span></label>
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined input-icon">person</span>
+                <input
+                  id="contactPerson"
+                  name="contactPerson"
+                  type="text"
+                  class="form-input"
+                  [class.field-error]="contactPerson() !== '' && !contactPersonValid"
+                  [ngModel]="contactPerson()"
+                  (ngModelChange)="contactPerson.set($event)"
+                  placeholder="e.g. Rahul Sharma"
+                  required
+                />
+              </div>
+              @if (contactPerson() !== '' && !contactPersonValid) {
+                <p class="field-error-msg">
+                  <span class="material-symbols-outlined">error</span>
+                  Please enter contact person name (min 2 characters)
+                </p>
+              }
+            </div>
+
+            <!-- Phone Number -->
+            <div class="form-group full-width">
+              <label class="form-label" for="phone">HR Official Contact Phone <span class="req">*</span></label>
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined input-icon">call</span>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  class="form-input"
+                  [class.field-error]="phone() !== '' && !phoneValid"
+                  [ngModel]="phone()"
+                  (ngModelChange)="phone.set($event)"
+                  placeholder="e.g. +91 98765 43210"
+                  required
+                />
+              </div>
+              @if (phone() !== '' && !phoneValid) {
+                <p class="field-error-msg">
+                  <span class="material-symbols-outlined">error</span>
+                  Must start with + and include country code (min 12 characters, e.g. +919876543210)
+                </p>
+              }
+            </div>
+
+          </div>
+
+          <!-- Live Validation checklist -->
+          <div class="validation-checklist-box">
+            <h5 class="checklist-title">
+              <span class="material-symbols-outlined">task_alt</span>
+              Profile Completion Requirements
+            </h5>
+            <ul class="checklist-items">
+              @for (item of validationItems; track item.label) {
+                <li class="checklist-item" [class.checklist-met]="item.met">
+                  <span class="material-symbols-outlined check-icon">
+                    {{ item.met ? 'check_circle' : 'cancel' }}
+                  </span>
+                  <span>{{ item.label }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <!-- Message Alerts -->
+          @if (errorMessage()) {
+            <div class="alert-banner error-alert">
+              <span class="material-symbols-outlined">error</span>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+
+          <!-- Submit Buttons -->
+          <div class="form-actions">
+            <a routerLink="/login" class="btn-cancel">
+              Cancel
+            </a>
+            
+            <button
+              type="submit"
+              class="btn-submit"
+              [disabled]="isSubmitting() || !isFormValid"
+            >
+              @if (isSubmitting()) {
+                <span class="spinner-sm"></span>
+                <span>Submitting for Re-approval...</span>
+              } @else {
+                <span class="material-symbols-outlined" style="font-size:18px;">cloud_upload</span>
+                <span>Submit for Re-approval</span>
+              }
+            </button>
+          </div>
+
+        </form>
+      }
+
+    </main>
+
+    <!-- Footer Links -->
+    <footer class="footer-links">
+      <a routerLink="/terms">Terms of Service</a>
+      <span class="divider">|</span>
+      <a routerLink="/privacy">Privacy Policy</a>
+    </footer>
+
+  </div>
+</div>

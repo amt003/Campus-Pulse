@@ -1,0 +1,70 @@
+<div class="student-root">
+  <!-- ===== Header Bar ===== -->
+  <header class="rec-header">
+    <div class="header-left">
+      <button class="btn-toggle-sidebar" (click)="toggleSidebar()" title="Toggle Sidebar" style="background: none; border: none; cursor: pointer; color: #1C2833; display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 8px; margin-right: 4px; transition: background-color 0.2s;">
+        <span class="material-symbols-outlined" style="font-size: 24px;">{{ isSidebarCollapsed() ? 'menu' : 'menu_open' }}</span>
+      </button>
+      <div class="brand-logo">
+        <span class="material-symbols-outlined logo-icon">school</span>
+      </div>
+      <div class="brand-title">
+        <span class="brand-name">CampusPulse</span>
+        <span class="brand-sub">Student Portal</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      @if (profile()) {
+      <div class="company-badge">
+        <div class="company-logo-circle">
+          @if (profile()?.profilePicPath) {
+          <img [src]="'http://localhost:5000' + profile()!.profilePicPath" alt="Profile" class="company-mini-logo" />
+          } @else {
+          <span class="material-symbols-outlined default-logo-icon">person</span>
+          }
+        </div>
+        <span class="company-name">{{ profile()!.userId.name }}</span>
+      </div>
+      }
+
+      <button class="btn-logout" (click)="logout()" title="Logout" id="student-logout-btn">
+        <span class="material-symbols-outlined">logout</span>
+        <span>Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sidebar & Main Content Wrapper -->
+  <div class="app-layout-body" style="display: flex; min-height: calc(100vh - 70px); width: 100%;">
+    @if (profile() && profile()!.isProfileComplete) {
+      <aside class="student-sidebar" [class.collapsed]="isSidebarCollapsed()">
+        <a class="sidebar-link" routerLink="/student/dashboard" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">explore</span>
+          <span>Dashboard</span>
+        </a>
+        <a class="sidebar-link" routerLink="/student/applications" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">assignment</span>
+          <span>Applications</span>
+        </a>
+        <a class="sidebar-link" routerLink="/student/schedules" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">event</span>
+          <span>Schedules</span>
+        </a>
+        <a class="sidebar-link" routerLink="/student/offers" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">workspace_premium</span>
+          <span>Offers</span>
+        </a>
+        <a class="sidebar-link" routerLink="/student/profile" routerLinkActive="active-link">
+          <span class="material-symbols-outlined">person</span>
+          <span>Profile</span>
+        </a>
+      </aside>
+    }
+
+    <!-- ===== Main Content Area ===== -->
+    <main class="rec-main" style="flex-grow: 1; padding: 40px; background: #F8F9FA;">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

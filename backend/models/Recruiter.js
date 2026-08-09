@@ -40,9 +40,21 @@ const recruiterSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected"],
+      enum: ["Pending", "Approved", "Rejected", "OnHold"],
       default: "Pending",
     },
+    registrationStatus: {
+      type: String,
+      enum: ["pending", "approved", "on_hold"],
+      default: "pending",
+    },
+    holdFeedback: {
+      message: { type: String, default: "" },
+      suggestions: { type: String, default: "" },
+      providedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+      providedAt: { type: Date, default: null },
+    },
+    lastEditedAt: { type: Date, default: null },
     trustScore: {
       type: Number,
       default: 0,
@@ -51,20 +63,29 @@ const recruiterSchema = new mongoose.Schema(
     },
     verificationDetails: {
       breakdown: {
-        domainAge: { type: Number, default: 50 },
-        emailMatch: { type: Number, default: 50 },
+        domainAge: { type: Number, default: 0 },
+        emailMatch: { type: Number, default: 0 },
+        mca: { type: Number, default: 0 },
       },
       whoisData: {
         domain: { type: String, default: null },
         creationDate: { type: String, default: null },
-        domainAgeYears: { type: Number, default: 0 },
+        domainAgeYears: { type: Number, default: null },
         registrar: { type: String, default: null },
         registrantCountry: { type: String, default: null },
         isValid: { type: Boolean, default: false },
       },
+      mcaData: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null,
+      },
+      directors: {
+        type: Array,
+        default: [],
+      },
       verifiedAt: {
         type: Date,
-        default: Date.now,
+        default: null,
       },
     },
     tpoSuggestions: [

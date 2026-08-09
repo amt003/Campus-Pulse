@@ -8,14 +8,18 @@ const {
   getRecruiterVerificationDetails,
   approveRecruiter,
   rejectRecruiter,
+  putRecruiterOnHold,
   getDashboardAnalytics,
   getPlacementFunnel,
   getBranchWiseStats,
   getOfferAcceptanceTrends,
   bulkImportStudents,
   addRecruiterSuggestion,
-  toggleRecruiterStatus
+  toggleRecruiterStatus,
+  reVerifyRecruiter,
+  reverifyRecruiter
 } = require('../controllers/tpoController');
+
 
 // All routes require authentication and TPO role
 router.use(protect);
@@ -41,9 +45,13 @@ router.get('/recruiters/pending', getPendingRecruiters);
 router.get('/recruiters/approved', getApprovedRecruiters);
 router.get('/recruiter/:id/verify', getRecruiterVerificationDetails);
 router.put('/recruiter/:id/approve', approveRecruiter);
+router.put('/recruiter/:id/hold', putRecruiterOnHold);
 router.put('/recruiter/:id/reject', rejectRecruiter);
 router.put('/recruiter/:id/toggle-status', toggleRecruiterStatus);
 router.post('/recruiter/:id/suggestion', addRecruiterSuggestion);
+router.put('/recruiter/:id/re-verify', reVerifyRecruiter);
+router.put('/recruiter/:id/reverify', reverifyRecruiter);
+
 
 // Import routes
 router.post('/import-students', bulkImportStudents);

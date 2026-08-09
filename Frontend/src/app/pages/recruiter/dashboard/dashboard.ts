@@ -3,6 +3,7 @@ import {
   OnInit,
   inject,
   signal,
+  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -17,6 +18,9 @@ export interface DriveItem {
   applicationDeadline: string;
   ctc: number;
   minCGPA: number;
+  hasAptitudeTest?: boolean;
+  hasGD?: boolean;
+  hasOtherInterviews?: boolean;
 }
 
 @Component({
@@ -29,6 +33,7 @@ export interface DriveItem {
 export class RecruiterDashboardComponent implements OnInit {
   private readonly recruiterService = inject(RecruiterService);
   private readonly router = inject(Router);
+  protected Math = Math;
 
   protected isLoading = signal<boolean>(true);
   protected profile = signal<RecruiterProfile | null>(null);
@@ -44,16 +49,37 @@ export class RecruiterDashboardComponent implements OnInit {
   protected shortlistedCount = signal<number>(0);
   protected offerAcceptanceRate = signal<number>(91);
 
+  protected upcomingInterviews = signal<any[]>([
+    { dateStr: 'TODAY @ 2:30 PM', studentName: 'Ananya Sharma', role: 'SDE Intern' },
+    { dateStr: 'TOMORROW @ 10:00 AM', studentName: 'Rahul Varma', role: 'Data Scientist' }
+  ]);
+
+  protected pipelineStats = computed(() => {
+    const applied = this.totalApplicationsCount() || 120;
+    const screening = Math.round(applied * 0.62) || 75;
+    const interview = this.shortlistedCount() || 45;
+    const offer = Math.round(interview * 0.27) || 12;
+    return { applied, screening, interview, offer };
+  });
+
   // Create Drive Modal / Form placeholder
   protected isCreateModalOpen = signal<boolean>(false);
+  
+  // Applicant List Modal state
+  protected isApplicationsModalOpen = signal<boolean>(false);
+  protected selectedDriveTitle = signal<string>('');
+  protected applications = signal<any[]>([]);
+  protected selectedApplication = signal<any | null>(null);
   protected newDriveTitle = signal<string>('');
   protected newDriveCTC = signal<number>(1200000);
   protected newDriveMinCGPA = signal<number>(7.0);
   protected newDriveMaxBacklogs = signal<number>(0);
   protected newDriveDeadline = signal<string>('');
   protected newDriveDesc = signal<string>('');
+  protected newDriveHasAptitude = signal<boolean>(false);
+  protected newDriveHasGD = signal<boolean>(false);
   
-  protected availableBranches = ['CSE', 'IT', 'ECE', 'EEE', 'ME', 'CE', 'MCA'];
+  protected availableBranches = ['BCA', 'MCA', 'INMCA', 'ECE', 'CSE', 'IT', 'EEE', 'ME', 'CE', 'AD'];
   protected selectedBranches = signal<string[]>(['CSE', 'IT', 'ECE']);
   protected todayDate = new Date().toISOString().split('T')[0];
 
@@ -146,7 +172,6 @@ export class RecruiterDashboardComponent implements OnInit {
 
   protected closeCreateModal(): void {
     this.isCreateModalOpen.set(false);
-    this.resetForm();
   }
 
   private resetForm(): void {
@@ -157,6 +182,8 @@ export class RecruiterDashboardComponent implements OnInit {
     this.newDriveMaxBacklogs.set(0);
     this.newDriveDeadline.set('');
     this.selectedBranches.set(['CSE', 'IT', 'ECE']);
+    this.newDriveHasAptitude.set(false);
+    this.newDriveHasGD.set(false);
   }
 
   protected isFormInvalid(): boolean {
@@ -196,6 +223,8 @@ export class RecruiterDashboardComponent implements OnInit {
       eligibleBranches: this.selectedBranches(),
       maxBacklogs: this.newDriveMaxBacklogs(),
       applicationDeadline: this.newDriveDeadline(),
+      hasAptitudeTest: this.newDriveHasAptitude(),
+      hasGD: this.newDriveHasGD(),
       status: 'Open',
     };
 
@@ -203,6 +232,7 @@ export class RecruiterDashboardComponent implements OnInit {
       next: () => {
         this.isSubmitting.set(false);
         this.closeCreateModal();
+        this.resetForm();
         this.successMessage.set('Placement drive published successfully!');
         this.fetchDrives();
         setTimeout(() => {
@@ -215,5 +245,20 @@ export class RecruiterDashboardComponent implements OnInit {
         this.errorMessage.set(err.error?.message || 'Failed to publish the job drive. Please try again.');
       },
     });
+  }
+
+  // ── Applicant Management Methods ─────────────────────────────────────────
+  protected viewApplications(driveId: string, driveTitle: string): void {
+    this.router.navigate(['/recruiter/applications', driveId]);
+  }
+
+  protected selectApplicant(app: any): void {
+    this.selectedApplication.set(app);
+  }
+
+  protected closeApplicationsModal(): void {
+    this.isApplicationsModalOpen.set(false);
+    this.selectedApplication.set(null);
+    this.applications.set([]);
   }
 }

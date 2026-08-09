@@ -166,27 +166,33 @@
           <div class="field-wrap">
             <span class="field-icon material-symbols-outlined">mail</span>
             <input id="reg-official-email" name="officialEmail" type="email" class="field-input"
-              [class.field-error]="officialEmail && !emailValid" [(ngModel)]="officialEmail"
+              [class.field-error]="(officialEmail && !emailValid) || emailAlreadyExists" [(ngModel)]="officialEmail"
+              (input)="onEmailInput()"
               placeholder="hr@company.com" autocomplete="email" required />
           </div>
-          @if (officialEmail && !emailValid) {
-          <p class="field-error-msg">
+          @if (emailAlreadyExists || (officialEmail && !emailValid)) {
+          <p class="field-error-msg" style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
             <span class="material-symbols-outlined">error</span>
-            Please enter a valid email address
+            <span>{{ emailAlreadyExists ? 'An account with this email is already registered.' : 'Please enter a valid email address' }}</span>
+            @if (emailAlreadyExists) {
+              <a routerLink="/login" style="color: #d32f2f; font-weight: 700; text-decoration: underline; margin-left: 4px;">Sign In Here &rarr;</a>
+            }
           </p>
           }
         </div>
 
         <!-- Website Field -->
         <div class="field-group field-full">
-          <label class="field-label" for="reg-website">Company Website URL</label>
+          <label class="field-label" for="reg-website">
+            Company Website URL <span class="req">*</span>
+          </label>
           <div class="field-wrap">
             <span class="field-icon material-symbols-outlined">language</span>
             <input id="reg-website" name="website" type="url" class="field-input"
-              [class.field-error]="website && !websiteValid" [(ngModel)]="website" placeholder="https://company.com"
-              autocomplete="url" />
+              [class.field-error]="website !== '' && !websiteValid" [(ngModel)]="website" placeholder="https://company.com"
+              autocomplete="url" required />
           </div>
-          @if (website && !websiteValid) {
+          @if (website !== '' && !websiteValid) {
             <p class="field-error-msg">
               <span class="material-symbols-outlined">error</span>
               Invalid Website URL (e.g. https://company.com)
@@ -333,26 +339,28 @@
             <span class="checkbox-custom"></span>
             <span>
               I agree to CampusPulse's
-              <a href="#" class="form-inline-link">Terms of Service</a>,
-              <a href="#" class="form-inline-link">Privacy Policy</a>, and
-              <a href="#" class="form-inline-link">Recruiter Guidelines</a>
+              <a routerLink="/terms" class="form-inline-link" target="_blank">Terms of Service</a>,
+              <a routerLink="/privacy" class="form-inline-link" target="_blank">Privacy Policy</a>, and
+              <a routerLink="/terms" class="form-inline-link" target="_blank">Recruiter Guidelines</a>
             </span>
           </label>
         </div>
 
 
-        @if (errorMessage) {
-          <div class="alert-error-box" style="margin-bottom: 16px;">
-            <span class="material-symbols-outlined">error</span>
-            <span>{{ errorMessage }}</span>
-            <a routerLink="/login" class="form-inline-link" style="margin-left: 8px; font-weight: 700; text-decoration: underline;">Sign In Here &rarr;</a>
+        @if (errorMessage || emailAlreadyExists) {
+          <div class="alert-error-box" style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+              <span class="material-symbols-outlined" style="color: #dc2626; font-size: 20px;">error</span>
+              <span>{{ errorMessage || 'An account with this email address is already registered.' }}</span>
+            </div>
+            <a routerLink="/login" style="background: #dc2626; color: white; padding: 6px 14px; border-radius: 6px; font-weight: 700; text-decoration: none; white-space: nowrap; font-size: 12px;">Sign In &rarr;</a>
           </div>
         }
 
         <!-- Submit -->
-        <button type="button" (click)="onSubmit()" class="btn-submit" [class.loading]="isLoading" [disabled]="isLoading" id="reg-submit-btn">
+        <button type="submit" class="btn-submit" [class.loading]="isLoading" [disabled]="isLoading || emailAlreadyExists" id="reg-submit-btn">
           <span class="material-symbols-outlined">how_to_reg</span>
-          <span>Register Company</span>
+          <span>{{ emailAlreadyExists ? 'Email Already Registered' : 'Register Company' }}</span>
         </button>
 
         <!-- Sign-in redirect -->
@@ -360,6 +368,12 @@
           Already registered?
           <a routerLink="/login" class="form-inline-link">Sign in to your account</a>
         </p>
+
+        <div class="footer-links">
+          <a routerLink="/terms">Terms of Service</a>
+          <span class="divider">|</span>
+          <a routerLink="/privacy">Privacy Policy</a>
+        </div>
 
 
 

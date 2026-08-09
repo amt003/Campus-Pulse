@@ -22,7 +22,8 @@
         class="nav-tab"
         id="layout-nav-dashboard"
       >
-        Dashboard
+        <span class="material-symbols-outlined nav-tab-icon">dashboard</span>
+        <span>Dashboard</span>
       </a>
       <a
         routerLink="/tpo/students"
@@ -31,7 +32,7 @@
         id="layout-nav-students"
       >
         <span class="material-symbols-outlined nav-tab-icon">school</span>
-        Students
+        <span>Students</span>
       </a>
       <a
         routerLink="/tpo/dashboard"
@@ -41,7 +42,8 @@
         class="nav-tab"
         id="layout-nav-import"
       >
-        Import
+        <span class="material-symbols-outlined nav-tab-icon">upload_file</span>
+        <span>Import</span>
       </a>
       <a
         routerLink="/tpo/approval"
@@ -49,7 +51,8 @@
         class="nav-tab"
         id="layout-nav-approve"
       >
-        Approve Recruiters
+        <span class="material-symbols-outlined nav-tab-icon">verified_user</span>
+        <span>Approve Recruiters</span>
         @if (pendingCount() > 0) {
           <span class="tab-badge-pulse">{{ pendingCount() }}</span>
         }

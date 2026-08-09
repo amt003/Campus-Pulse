@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   OnDestroy,
@@ -21,6 +22,7 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
   private readonly elRef = inject(ElementRef);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   // ── Form Model ───────────────────────────────────────────────────────────────
   protected companyName = '';
@@ -39,6 +41,14 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
   protected isLoading = false;
   protected submitSuccess = false;
   protected errorMessage: string | null = null;
+  protected emailAlreadyExists = false;
+
+  protected onEmailInput(): void {
+    this.emailAlreadyExists = false;
+    if (this.errorMessage && (this.errorMessage.includes('email') || this.errorMessage.includes('exists'))) {
+      this.errorMessage = null;
+    }
+  }
 
   private particleInterval?: ReturnType<typeof setInterval>;
 
@@ -69,6 +79,7 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
     return (
       this.companyName.trim().length > 1 &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.officialEmail.trim()) &&
+      this.websiteValid &&
       this.contactPerson.trim().length > 1 &&
       this.coverNote.trim().length >= 20 &&
       this.phoneNumber.trim().startsWith('+') &&
@@ -84,6 +95,7 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
     return [
       { label: 'Company name entered', met: this.companyName.trim().length > 1 },
       { label: 'Valid official email', met: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.officialEmail.trim()) },
+      { label: 'Valid official website URL', met: this.websiteValid },
       { label: 'Contact person name entered', met: this.contactPerson.trim().length > 1 },
       { label: 'Cover Note / Introduction Letter written (min 20 chars)', met: this.coverNote.trim().length >= 20 },
       { label: 'Phone number with + country code (min 12 chars e.g. +919876543210)', met: this.phoneNumber.trim().startsWith('+') && this.phoneNumber.trim().length >= 12 },
@@ -98,8 +110,9 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
   }
 
   protected get websiteValid(): boolean {
-    if (!this.website.trim()) return true;
-    return /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/.*)?$/i.test(this.website.trim());
+    const w = this.website.trim();
+    if (!w) return false;
+    return /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/.*)?$/i.test(w);
   }
 
   protected get phoneValid(): boolean {
@@ -152,46 +165,59 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
     this.router.navigate(['/recruiter/dashboard']);
   }
 
+  private scrollToTop(): void {
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+      const el = this.elRef.nativeElement;
+      const panel = el.querySelector('.reg-panel-right');
+      if (panel) { panel.scrollTop = 0; panel.scrollTo({ top: 0, behavior: 'smooth' }); }
+      const wrapper = el.querySelector('.form-wrapper');
+      if (wrapper) { wrapper.scrollTop = 0; wrapper.scrollTo({ top: 0, behavior: 'smooth' }); }
+    } catch (e) {}
+  }
+
   // ── Submit ───────────────────────────────────────────────────────────────────
   protected onSubmit(): void {
     if (!this.companyName.trim()) {
       this.errorMessage = 'Please enter your Company Name.';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.scrollToTop();
       return;
     }
     if (!this.emailValid || !this.officialEmail.trim()) {
       this.errorMessage = 'Please enter a valid Official Email address.';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.scrollToTop();
       return;
     }
     if (!this.contactPerson.trim()) {
       this.errorMessage = 'Please enter Contact Person Name.';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.scrollToTop();
       return;
     }
     if (!this.coverNote.trim() || this.coverNote.trim().length < 20) {
       this.errorMessage = 'Please provide a Cover Note / Introduction Letter for the TPO (min 20 characters).';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.scrollToTop();
       return;
     }
     if (!this.phoneNumber.trim().startsWith('+') || this.phoneNumber.trim().length < 12) {
       this.errorMessage = 'Please enter a valid Phone Number starting with + and country code (min 12 chars e.g. +919876543210).';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.scrollToTop();
       return;
     }
     if (this.password.length < 8) {
       this.errorMessage = 'Password must be at least 8 characters long.';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.scrollToTop();
       return;
     }
     if (this.password !== this.confirmPassword) {
       this.errorMessage = 'Password and Confirm Password do not match.';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.scrollToTop();
       return;
     }
     if (!this.agreeTerms) {
       this.errorMessage = 'Please accept the Terms of Service to proceed.';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.scrollToTop();
       return;
     }
 
@@ -214,16 +240,22 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
       next: (res) => {
         this.isLoading = false;
         this.submitSuccess = true;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this.scrollToTop();
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.isLoading = false;
-        if (err.status === 409) {
-          this.errorMessage = 'An account with this email address already exists. Please sign in to your account or use a different email.';
+        const msg = err.error?.message || '';
+        if (err.status === 409 || msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('duplicate')) {
+          this.emailAlreadyExists = true;
+          this.errorMessage = msg || 'An account with this email address already exists. Please sign in to your account or use a different email.';
         } else {
-          this.errorMessage = err.error?.message || 'Registration failed. Please check details and try again.';
+          this.errorMessage = msg || 'Registration failed. Please check details and try again.';
         }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this.scrollToTop();
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       },
     });
   }

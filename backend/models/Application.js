@@ -48,6 +48,7 @@ const applicationSchema = new mongoose.Schema(
         default: "Not Applicable",
       },
       score: { type: Number, default: null },
+      feedback: { type: String, default: null },
       markedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Recruiter", default: null },
       markedAt: { type: Date, default: null },
     },
@@ -57,6 +58,8 @@ const applicationSchema = new mongoose.Schema(
         enum: ["Scheduled", "Completed", "Shortlisted", "Rejected", "Not Applicable"],
         default: "Not Applicable",
       },
+      score: { type: Number, default: null },
+      feedback: { type: String, default: null },
       markedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Recruiter", default: null },
       markedAt: { type: Date, default: null },
     },
@@ -71,6 +74,7 @@ const applicationSchema = new mongoose.Schema(
         enum: ["Selected", "Rejected", "Waitlisted", "Pending"],
         default: "Pending",
       },
+      score: { type: Number, default: null },
       feedback: { type: String, default: null },
       markedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Recruiter", default: null },
       markedAt: { type: Date, default: null },
@@ -81,6 +85,7 @@ const applicationSchema = new mongoose.Schema(
       negativeSentences: [{ type: String }],
       skillGaps: [{ type: String }],
       strongSkills: [{ type: String }],
+      isOfflineFallback: { type: Boolean, default: false },
     },
     offer: {
       status: {

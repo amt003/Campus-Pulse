@@ -94,174 +94,260 @@
            STATE B: APPROVED RECRUITER DASHBOARD (If isApproved === true)
            ══════════════════════════════════════════════════════════ -->
     @if (profile()?.isApproved) {
-    <div class="approved-dashboard">
+    <div class="approved-dashboard" style="padding: 24px 32px; background: #F8F9FA;">
 
       @if (successMessage()) {
-        <div class="toast-success-banner">
+        <div class="toast-success-banner" style="margin-bottom: 20px;">
           <span class="material-symbols-outlined">check_circle</span>
           <span class="toast-msg-text">{{ successMessage() }}</span>
           <button class="toast-close-btn" (click)="successMessage.set(null)">&times;</button>
         </div>
       }
 
-      <!-- Welcome Banner -->
-      <div class="welcome-banner-creative">
-        <div class="welcome-banner-overlay"></div>
-        <div class="welcome-content">
-          <span class="welcome-tag">Recruiter Workspace</span>
-          <h1 class="welcome-title-creative">Welcome, {{ profile()?.companyName }}! 🎉</h1>
-          <p class="welcome-sub-creative">Manage your campus placement drives, coordinate schedules, and recruit top student talent.</p>
+      <!-- Command Center Header -->
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 28px;">
+        <div>
+          <h1 style="font-size: 26px; font-weight: 850; color: var(--primary); margin: 0 0 6px 0; letter-spacing: -0.5px;">Recruiter Command Center</h1>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Manage your active recruitment drives and track student applications for the Placement Cycle.</p>
         </div>
-        <button class="btn-create-drive-creative" (click)="openCreateModal()">
-          <span class="material-symbols-outlined">add_circle</span>
+        <button class="btn-create-drive-pill" (click)="openCreateModal()" style="display: flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 9999px; border: none; background: var(--primary); color: white; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(26, 82, 118, 0.2); transition: all 0.2s;">
+          <span class="material-symbols-outlined" style="font-size: 18px;">add_circle</span>
           <span>Create New Drive</span>
         </button>
       </div>
 
-      <!-- Main Layout Grid -->
-      <div class="dashboard-grid-container">
+      <!-- Stats Grid -->
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px;">
         
-        <!-- Left Column: Active Drives List -->
-        <div class="dashboard-main-col">
-          <div class="section-card-header">
-            <h2 class="section-title-creative">Active Recruitment Drives</h2>
-            <p class="section-subtitle-creative">Track and manage student applications for active hiring pipelines</p>
+        <!-- Active Drives Card -->
+        <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 22px 24px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02); display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+          <div>
+            <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">Active Drives</span>
+            <span style="font-size: 28px; font-weight: 850; color: var(--text-dark); display: block; line-height: 1.1;">{{ activeDrivesCount() }}</span>
           </div>
+          <span style="font-size: 11px; font-weight: 600; color: var(--success); display: flex; align-items: center; gap: 4px; margin-top: 10px;">
+            <span class="material-symbols-outlined" style="font-size: 14px;">trending_up</span>
+            <span>2 ongoing today</span>
+          </span>
+          <div style="position: absolute; right: 24px; top: 22px; width: 36px; height: 36px; border-radius: 50%; background: rgba(26, 82, 118, 0.08); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+            <span class="material-symbols-outlined" style="font-size: 18px;">work</span>
+          </div>
+        </div>
 
-          @if (drives().length === 0) {
-            <div class="empty-drives-creative">
-              <span class="material-symbols-outlined empty-icon-creative">work_outline</span>
-              <h4>No Active Drives Yet</h4>
-              <p>Get started by creating your first placement campaign to target students.</p>
-              <button class="btn-create-drive-inline" (click)="openCreateModal()">
-                Create Drive
-              </button>
-            </div>
-          }
+        <!-- Total Applications Card -->
+        <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 22px 24px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02); display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+          <div>
+            <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">Total Applications</span>
+            <span style="font-size: 28px; font-weight: 850; color: var(--text-dark); display: block; line-height: 1.1;">{{ totalApplicationsCount() }}</span>
+          </div>
+          <span style="font-size: 11px; font-weight: 600; color: var(--success); display: flex; align-items: center; gap: 4px; margin-top: 10px;">
+            <span class="material-symbols-outlined" style="font-size: 14px;">trending_up</span>
+            <span>+12% from last week</span>
+          </span>
+          <div style="position: absolute; right: 24px; top: 22px; width: 36px; height: 36px; border-radius: 50%; background: rgba(26, 82, 118, 0.08); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+            <span class="material-symbols-outlined" style="font-size: 18px;">description</span>
+          </div>
+        </div>
 
-          @if (drives().length > 0) {
-            <div class="drives-list-cards">
-              @for (d of drives(); track d._id) {
-                <div class="drive-card-creative">
-                  <div class="drive-card-header">
-                    <div class="drive-badge-icon">
-                      <span class="material-symbols-outlined">business_center</span>
-                    </div>
-                    <div class="drive-header-title">
-                      <h4>{{ d.title }}</h4>
-                      <span class="drive-company">{{ profile()?.companyName }}</span>
-                    </div>
-                    <span class="status-pill" [class.pill-open]="d.status === 'Open'">
-                      {{ d.status }}
-                    </span>
+        <!-- Shortlisted Card -->
+        <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 22px 24px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02); display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+          <div>
+            <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">Shortlisted</span>
+            <span style="font-size: 28px; font-weight: 850; color: var(--text-dark); display: block; line-height: 1.1;">{{ shortlistedCount() }}</span>
+          </div>
+          <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-top: 10px;">Awaiting final rounds</span>
+          <div style="position: absolute; right: 24px; top: 22px; width: 36px; height: 36px; border-radius: 50%; background: rgba(26, 82, 118, 0.08); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+            <span class="material-symbols-outlined" style="font-size: 18px;">person_add</span>
+          </div>
+        </div>
+
+        <!-- Offer Acceptance Card -->
+        <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 22px 24px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02); display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+          <div>
+            <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">Offer Acceptance</span>
+            <span style="font-size: 28px; font-weight: 850; color: var(--text-dark); display: block; line-height: 1.1;">{{ offerAcceptanceRate() }}%</span>
+          </div>
+          <div style="margin-top: 16px; background: #E5E8E8; height: 6px; border-radius: 3px; overflow: hidden;">
+            <div [style.width.%]="offerAcceptanceRate()" style="background: var(--success); height: 100%; border-radius: 3px;"></div>
+          </div>
+          <div style="position: absolute; right: 24px; top: 22px; width: 36px; height: 36px; border-radius: 50%; background: rgba(26, 82, 118, 0.08); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+            <span class="material-symbols-outlined" style="font-size: 18px;">verified</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Drives Section Header -->
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid var(--border); padding-bottom: 10px; margin-bottom: 20px;">
+        <h3 style="font-size: 16px; font-weight: 800; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span class="material-symbols-outlined" style="font-size: 20px; color: var(--secondary);">grid_view</span>
+          <span>Your Active Drives</span>
+        </h3>
+        <a style="font-size: 12px; font-weight: 700; color: var(--secondary); text-decoration: none; cursor: pointer;">View Archive</a>
+      </div>
+
+      <!-- Empty State -->
+      @if (drives().length === 0) {
+        <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 48px; text-align: center; color: var(--text-muted); margin-bottom: 32px;">
+          <span class="material-symbols-outlined" style="font-size: 48px; color: var(--border); margin-bottom: 12px; display: block;">work_outline</span>
+          <h4 style="margin: 0 0 6px 0; font-size: 15px; font-weight: 700; color: var(--text-dark);">No Active Recruitment Campaigns</h4>
+          <p style="margin: 0 0 16px 0; font-size: 12px;">Launch your first drive to start accepting candidate submissions.</p>
+          <button class="btn-refresh-status" (click)="openCreateModal()" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 13px; width: auto; height: auto;">Create Campaign</button>
+        </div>
+      }
+
+      <!-- Grid Cards -->
+      @if (drives().length > 0) {
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px;">
+          @for (d of drives(); track d._id) {
+            <div style="background: white; border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.015); overflow: hidden; display: flex; flex-direction: column;">
+              
+              <!-- Card Header -->
+              <div style="padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(26, 82, 118, 0.08); display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0;">
+                    <span class="material-symbols-outlined" style="font-size: 22px;">code</span>
                   </div>
-
-                  <div class="drive-card-details">
-                    <div class="detail-item">
-                      <span class="detail-label">Applications</span>
-                      <span class="detail-val">{{ d.applicationsCount || 0 }} Candidates</span>
-                    </div>
-                    <div class="detail-item">
-                      <span class="detail-label">Annual Package (CTC)</span>
-                      <span class="detail-val font-accent">₹{{ (d.ctc / 100000).toFixed(1) }} LPA</span>
-                    </div>
-                    <div class="detail-item">
-                      <span class="detail-label">CGPA Cutoff</span>
-                      <span class="detail-val">{{ d.minCGPA || 'None' }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <span class="detail-label">Deadline</span>
-                      <span class="detail-val">{{ d.applicationDeadline | date:'mediumDate' }}</span>
-                    </div>
-                  </div>
-
-                  <div class="drive-card-footer">
-                    <div class="progress-bar-container">
-                      <div class="progress-bar-fill" [style.width.%]="d.applicationsCount > 0 ? 100 : 0"></div>
-                    </div>
-                    <div class="drive-actions">
-                      <button class="btn-action-primary">
-                        <span>View Applications</span>
-                        <span class="material-symbols-outlined">chevron_right</span>
-                      </button>
-                      <button class="btn-action-secondary">
-                        <span class="material-symbols-outlined">edit</span>
-                      </button>
+                  <div>
+                    <h4 style="margin: 0; font-size: 15px; font-weight: 800; color: var(--text-dark);">{{ d.title }}</h4>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                      <span style="background: rgba(39, 174, 96, 0.12); color: var(--success); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">
+                        {{ (d.ctc / 100000).toFixed(1) }} LPA
+                      </span>
+                      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Full Time Role</span>
                     </div>
                   </div>
                 </div>
-              }
+                <button style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
+                  <span class="material-symbols-outlined" style="font-size: 20px;">more_vert</span>
+                </button>
+              </div>
+
+              <!-- Card Metrics Grid -->
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--border);">
+                
+                <div style="padding: 16px; text-align: center; border-right: 1px solid var(--border);">
+                  <strong style="font-size: 18px; font-weight: 850; color: var(--text-dark); display: block; margin-bottom: 2px;">
+                    {{ d.applicationsCount || 0 }}
+                  </strong>
+                  <span style="font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Apps</span>
+                </div>
+
+                <div style="padding: 16px; text-align: center; border-right: 1px solid var(--border);">
+                  <strong style="font-size: 18px; font-weight: 850; color: var(--primary); display: block; margin-bottom: 2px;">
+                    {{ Math.round((d.applicationsCount || 0) * 0.35) }}
+                  </strong>
+                  <span style="font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Shortlisted</span>
+                </div>
+
+                <div style="padding: 16px; text-align: center;">
+                  <strong style="font-size: 18px; font-weight: 850; color: var(--warning); display: block; margin-bottom: 2px;">
+                    {{ (d.hasAptitudeTest ? 1 : 0) + (d.hasGD ? 1 : 0) + 1 }}
+                  </strong>
+                  <span style="font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Rounds Left</span>
+                </div>
+
+              </div>
+
+              <!-- Card Footer -->
+              <div style="padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; background: #FAFBFB; margin-top: auto;">
+                <!-- Stacked circular avatars -->
+                <div style="display: flex; align-items: center;">
+                  <div style="width: 26px; height: 26px; border-radius: 50%; background: #BDC3C7; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: white;">A</div>
+                  <div style="width: 26px; height: 26px; border-radius: 50%; background: #34495E; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: white; margin-left: -8px;">M</div>
+                  <div style="width: 26px; height: 26px; border-radius: 50%; background: #1A5276; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: white; margin-left: -8px;">S</div>
+                  @if (d.applicationsCount > 3) {
+                    <div style="width: 26px; height: 26px; border-radius: 50%; background: var(--secondary); border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: white; margin-left: -8px;">
+                      +{{ d.applicationsCount - 3 }}
+                    </div>
+                  }
+                </div>
+
+                <button class="btn-action-primary" (click)="viewApplications(d._id, d.title)" style="padding: 8px 16px; border-radius: 8px; border: none; background: var(--primary); color: white; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
+                  <span>View Applicants</span>
+                  <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
+                </button>
+              </div>
+
             </div>
           }
         </div>
+      }
 
-        <!-- Right Column: Performance Summary & TPO Announcements -->
-        <div class="dashboard-side-col">
+      <!-- Bottom Section Layout -->
+      <div style="display: grid; grid-template-columns: 1.8fr 1fr; gap: 24px; margin-bottom: 24px;">
+        
+        <!-- Left: Talent Pipeline Overview -->
+        <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.015);">
+          <h4 style="font-size: 15px; font-weight: 800; color: var(--primary); margin: 0 0 20px 0;">Talent Pipeline Overview</h4>
           
-          <!-- Performance Summary Card -->
-          <div class="stats-panel-card">
-            <h4 class="panel-header-title">Performance Summary</h4>
+          <div style="display: flex; align-items: flex-end; justify-content: space-around; height: 220px; border-bottom: 2px solid var(--border); padding-bottom: 12px;">
             
-            <div class="sidebar-stat-item">
-              <div class="stat-icon-wrapper bg-blue-light">
-                <span class="material-symbols-outlined text-blue">work</span>
+            <!-- Applied Bar -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; height: 100%; justify-content: flex-end;">
+              <div [style.height.%]="100" style="width: 48px; background: linear-gradient(180deg, var(--secondary) 0%, var(--primary) 100%); border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; transition: height 0.3s ease; position: relative;">
+                <span style="color: white; font-size: 11px; font-weight: 700; position: absolute; top: -20px; color: var(--text-dark);">
+                  {{ pipelineStats().applied }}
+                </span>
               </div>
-              <div class="stat-item-info">
-                <span class="stat-item-label">Active Drives</span>
-                <span class="stat-item-value">{{ activeDrivesCount() }}</span>
-              </div>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Applied</span>
             </div>
 
-            <div class="sidebar-stat-item">
-              <div class="stat-icon-wrapper bg-green-light">
-                <span class="material-symbols-outlined text-green">description</span>
+            <!-- Screening Bar -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; height: 100%; justify-content: flex-end;">
+              <div [style.height.%]="62" style="width: 48px; background: linear-gradient(180deg, rgba(26, 82, 118, 0.7) 0%, var(--secondary) 100%); border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; transition: height 0.3s ease; position: relative;">
+                <span style="color: white; font-size: 11px; font-weight: 700; position: absolute; top: -20px; color: var(--text-dark);">
+                  {{ pipelineStats().screening }}
+                </span>
               </div>
-              <div class="stat-item-info">
-                <span class="stat-item-label">Total Applications</span>
-                <span class="stat-item-value">{{ totalApplicationsCount() }}</span>
-              </div>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Screening</span>
             </div>
 
-            <div class="sidebar-stat-item">
-              <div class="stat-icon-wrapper bg-amber-light">
-                <span class="material-symbols-outlined text-amber">star</span>
+            <!-- Interview Bar -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; height: 100%; justify-content: flex-end;">
+              <div [style.height.%]="37" style="width: 48px; background: linear-gradient(180deg, var(--warning) 0%, rgba(243, 156, 18, 0.7) 100%); border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; transition: height 0.3s ease; position: relative;">
+                <span style="color: white; font-size: 11px; font-weight: 700; position: absolute; top: -20px; color: var(--text-dark);">
+                  {{ pipelineStats().interview }}
+                </span>
               </div>
-              <div class="stat-item-info">
-                <span class="stat-item-label">Shortlisted Candidates</span>
-                <span class="stat-item-value">{{ shortlistedCount() }}</span>
-              </div>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Interview</span>
             </div>
 
-            <div class="sidebar-stat-item">
-              <div class="stat-icon-wrapper bg-teal-light">
-                <span class="material-symbols-outlined text-teal">task_alt</span>
+            <!-- Offer Bar -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; height: 100%; justify-content: flex-end;">
+              <div [style.height.%]="12" style="width: 48px; background: linear-gradient(180deg, var(--success) 0%, rgba(39, 174, 96, 0.7) 100%); border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; transition: height 0.3s ease; position: relative;">
+                <span style="color: white; font-size: 11px; font-weight: 700; position: absolute; top: -20px; color: var(--text-dark);">
+                  {{ pipelineStats().offer }}
+                </span>
               </div>
-              <div class="stat-item-info">
-                <span class="stat-item-label">Offer Acceptance</span>
-                <span class="stat-item-value">{{ offerAcceptanceRate() }}%</span>
-              </div>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Offer</span>
             </div>
+
+          </div>
+        </div>
+
+        <!-- Right: Upcoming Interviews -->
+        <div style="background: var(--surface-low); border: 1px solid rgba(26, 82, 118, 0.1); border-radius: 16px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.01); display: flex; flex-direction: column;">
+          <h4 style="font-size: 15px; font-weight: 800; color: var(--primary); margin: 0 0 20px 0;">Upcoming Interviews</h4>
+          
+          <div style="display: flex; flex-direction: column; gap: 14px; flex: 1;">
+            @for (item of upcomingInterviews(); track item.studentName) {
+              <div style="background: white; border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.015);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 10px; font-weight: 800; color: var(--secondary); background: rgba(0, 100, 151, 0.08); padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">
+                    {{ item.dateStr }}
+                  </span>
+                  <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-muted);">schedule</span>
+                </div>
+                <strong style="font-size: 14px; color: var(--text-dark); display: block; margin-bottom: 4px;">{{ item.studentName }}</strong>
+                <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Role: {{ item.role }}</span>
+              </div>
+            }
           </div>
 
-          <!-- TPO Announcements Card -->
-          <div class="announcements-panel-card">
-            <div class="panel-header-title-row">
-              <span class="material-symbols-outlined text-secondary">campaign</span>
-              <h4 class="panel-header-title" style="margin:0;">TPO Bulletin</h4>
-            </div>
-            
-            <div class="announcement-list">
-              <div class="announcement-item">
-                <span class="announcement-date">July 31, 2026</span>
-                <p class="announcement-text">Please ensure all drive details and salary packages are finalized before August 15th.</p>
-              </div>
-              <div class="announcement-item">
-                <span class="announcement-date">July 28, 2026</span>
-                <p class="announcement-text">Students are required to upload verification documents for their CGPA before applying.</p>
-              </div>
-            </div>
-          </div>
-
+          <button class="btn-refresh-status" style="margin-top: 20px; width: 100%; height: 38px; border: 1.5px solid rgba(26, 82, 118, 0.2); background: transparent; color: var(--primary); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+            View All Schedule
+          </button>
         </div>
 
       </div>
@@ -421,6 +507,48 @@
               <div class="error-msg">Please select at least one eligible branch.</div>
             }
           </div>
+
+          <!-- Recruitment Pipeline Toggles -->
+          <div class="form-group col-span-2" style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">
+            <h4 style="font-size: 14px; font-weight: 800; color: var(--primary); margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <span class="material-symbols-outlined" style="font-size: 20px; color: var(--secondary);">account_tree</span>
+              <span>Recruitment Pipeline</span>
+            </h4>
+
+            <div style="background: var(--surface-low); border: 1px solid var(--border); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 18px;">
+              
+              <!-- Aptitude Toggle -->
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                <div>
+                  <h5 style="margin: 0 0 4px 0; font-size: 13px; font-weight: 700; color: var(--text-dark);">Include Aptitude Test</h5>
+                  <p style="margin: 0; font-size: 11px; color: var(--text-muted);">Toggle off to skip a stage. Students will move directly to the next stage.</p>
+                </div>
+                <label class="switch-toggle">
+                  <input type="checkbox" [checked]="newDriveHasAptitude()" (change)="newDriveHasAptitude.set(!newDriveHasAptitude())" />
+                  <span class="slider-round"></span>
+                </label>
+              </div>
+
+              <!-- GD Toggle -->
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 18px;">
+                <div>
+                  <h5 style="margin: 0 0 4px 0; font-size: 13px; font-weight: 700; color: var(--text-dark);">Include Group Discussion</h5>
+                  <p style="margin: 0; font-size: 11px; color: var(--text-muted);">Toggle off to skip a stage. Students will move directly to the next stage.</p>
+                </div>
+                <label class="switch-toggle">
+                  <input type="checkbox" [checked]="newDriveHasGD()" (change)="newDriveHasGD.set(!newDriveHasGD())" />
+                  <span class="slider-round"></span>
+                </label>
+              </div>
+
+              <!-- Helper Alert Box -->
+              <div style="background: rgba(26, 82, 118, 0.05); border: 1.5px solid rgba(26, 82, 118, 0.1); border-radius: 8px; padding: 12px; display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; color: var(--primary);">
+                <span class="material-symbols-outlined" style="font-size: 18px; color: var(--secondary);">auto_awesome</span>
+                <span>Interviews are mandatory and included by default for all drives.</span>
+              </div>
+
+            </div>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -433,6 +561,187 @@
           }
         </button>
       </div>
+    </div>
+  </div>
+  }
+
+  <!-- Modal: View Applications & AI Scoring details -->
+  @if (isApplicationsModalOpen()) {
+  <div class="modal-overlay" (click)="closeApplicationsModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()" style="max-width: 90%; width: 1100px; height: 85vh; display: flex; flex-direction: column;">
+      
+      <div class="modal-header">
+        <div>
+          <h3 style="font-size: 18px; font-weight: 800; color: var(--primary);">Applications for: {{ selectedDriveTitle() }}</h3>
+          <span style="font-size: 13px; color: var(--text-muted); display: block; margin-top: 4px;">{{ applications().length }} candidates applied</span>
+        </div>
+        <button class="btn-close" (click)="closeApplicationsModal()">&times;</button>
+      </div>
+
+      <div class="modal-body" style="flex: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; overflow: hidden; padding: 24px; height: calc(100% - 150px);">
+        
+        <!-- Left Pane: Applicant List -->
+        <div style="overflow-y: auto; padding-right: 8px; border-right: 1px solid var(--border);">
+          @if (applications().length === 0) {
+            <div style="text-align: center; padding: 48px; color: var(--text-muted);">
+              <span class="material-symbols-outlined" style="font-size: 48px; margin-bottom: 12px; display: block;">assignment_late</span>
+              <p>No candidates have applied to this drive yet.</p>
+            </div>
+          } @else {
+            <div class="table-wrap" style="box-shadow: none; border: none; padding: 0;">
+              <table class="drives-table" style="width: 100%;">
+                <thead>
+                  <tr>
+                    <th>Candidate</th>
+                    <th>Branch / CGPA</th>
+                    <th style="text-align: center;">AI Match</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (app of applications(); track app._id) {
+                    <tr [class.selected-row]="selectedApplication()?._id === app._id" (click)="selectApplicant(app)" style="cursor: pointer; transition: all 0.2s;">
+                      <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                          <div class="company-logo-circle" style="width: 32px; height: 32px; flex-shrink: 0; background: var(--primary);">
+                            @if (app.studentId?.profilePicPath) {
+                              <img [src]="'http://localhost:5000' + app.studentId.profilePicPath" alt="Avatar" class="company-mini-logo" />
+                            } @else {
+                              <span class="material-symbols-outlined default-logo-icon" style="font-size: 18px; display: flex; align-items: center; justify-content: center; height: 100%;">person</span>
+                            }
+                          </div>
+                          <div>
+                            <div style="font-weight: 700; color: var(--text-dark);">{{ app.studentId?.userId?.name || '—' }}</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">{{ app.studentId?.userId?.email || '—' }}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div style="font-weight: 600;">{{ app.studentId?.branch || '—' }}</div>
+                        <div style="font-size: 11px; color: var(--secondary); font-weight: 700;">CGPA: {{ app.studentId?.cgpa || '—' }}</div>
+                      </td>
+                      <td style="text-align: center;">
+                        @if (app.aiMatchScore !== null) {
+                          <span class="status-pill" 
+                                [style.background]="(app.aiMatchScore <= 1 ? app.aiMatchScore * 100 : app.aiMatchScore) >= 80 ? 'rgba(46, 204, 113, 0.15)' : ((app.aiMatchScore <= 1 ? app.aiMatchScore * 100 : app.aiMatchScore) >= 60 ? 'rgba(241, 196, 15, 0.15)' : 'rgba(231, 76, 60, 0.15)')"
+                                [style.color]="(app.aiMatchScore <= 1 ? app.aiMatchScore * 100 : app.aiMatchScore) >= 80 ? '#2ecc71' : ((app.aiMatchScore <= 1 ? app.aiMatchScore * 100 : app.aiMatchScore) >= 60 ? '#f1c40f' : '#e74c3c')"
+                                style="font-weight: 800; font-size: 11px; padding: 6px 12px; border-radius: 6px;">
+                            {{ (app.aiMatchScore <= 1 ? app.aiMatchScore * 100 : app.aiMatchScore).toFixed(1) }}% Match
+                          </span>
+                        } @else {
+                          <span style="font-size: 12px; color: var(--text-muted); font-style: italic;">Processing...</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+
+        <!-- Right Pane: Detail view & Sentence-BERT XAI Feedback -->
+        <div style="overflow-y: auto; padding-left: 8px; display: flex; flex-direction: column; justify-content: flex-start;">
+          @if (!selectedApplication()) {
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: var(--text-muted); padding: 40px 0;">
+              <span class="material-symbols-outlined" style="font-size: 64px; color: var(--border); margin-bottom: 16px;">contact_page</span>
+              <h3 style="font-size: 16px; font-weight: 800; color: var(--text-dark);">Select a Candidate</h3>
+              <p style="font-size: 12px; max-width: 280px; margin: 8px auto 0; line-height: 1.5;">Click on any applicant from the list to view their calculated match score, parsed details, and AI explanation feedback.</p>
+            </div>
+          } @else {
+            <!-- Candidate Detail Panel -->
+            <div style="animation: fadeIn 0.3s ease;">
+              
+               <!-- Circular Score Display -->
+              <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding: 16px; background: var(--surface-low); border-radius: 12px;">
+                <div style="width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 800; font-size: 15px; border: 4px solid; background: white; flex-shrink: 0;"
+                     [style.border-color]="(selectedApplication()!.aiMatchScore <= 1 ? selectedApplication()!.aiMatchScore * 100 : selectedApplication()!.aiMatchScore) >= 80 ? '#2ecc71' : ((selectedApplication()!.aiMatchScore <= 1 ? selectedApplication()!.aiMatchScore * 100 : selectedApplication()!.aiMatchScore) >= 60 ? '#f1c40f' : '#e74c3c')"
+                     [style.color]="(selectedApplication()!.aiMatchScore <= 1 ? selectedApplication()!.aiMatchScore * 100 : selectedApplication()!.aiMatchScore) >= 80 ? '#2ecc71' : ((selectedApplication()!.aiMatchScore <= 1 ? selectedApplication()!.aiMatchScore * 100 : selectedApplication()!.aiMatchScore) >= 60 ? '#f1c40f' : '#e74c3c')">
+                  {{ (selectedApplication()!.aiMatchScore <= 1 ? selectedApplication()!.aiMatchScore * 100 : selectedApplication()!.aiMatchScore || 0).toFixed(1) }}%
+                </div>
+
+                <div class="company-logo-circle" style="width: 48px; height: 48px; flex-shrink: 0; background: var(--primary);">
+                  @if (selectedApplication()!.studentId?.profilePicPath) {
+                    <img [src]="'http://localhost:5000' + selectedApplication()!.studentId!.profilePicPath" alt="Profile" class="company-mini-logo" />
+                  } @else {
+                    <span class="material-symbols-outlined default-logo-icon" style="font-size: 24px; display: flex; align-items: center; justify-content: center; height: 100%;">person</span>
+                  }
+                </div>
+
+                <div>
+                  <h4 style="margin: 0; font-size: 15px; font-weight: 800; color: var(--text-dark);">
+                    {{ selectedApplication()!.studentId?.userId?.name }}
+                  </h4>
+                  <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">
+                    Applied on {{ selectedApplication()!.createdAt | date:'mediumDate' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Academic Parameters -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div style="background: white; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px;">
+                  <span style="font-size: 10px; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase;">CGPA</span>
+                  <strong style="font-size: 14px; color: var(--primary);">{{ selectedApplication()!.studentId?.cgpa }} / 10</strong>
+                </div>
+                <div style="background: white; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px;">
+                  <span style="font-size: 10px; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase;">Branch (Year)</span>
+                  <strong style="font-size: 14px; color: var(--primary);">{{ selectedApplication()!.studentId?.branch }} ({{ selectedApplication()!.studentId?.passoutYear }})</strong>
+                </div>
+                <div style="background: white; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px;">
+                  <span style="font-size: 10px; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase;">Active Backlogs</span>
+                  <strong style="font-size: 14px; color: var(--primary);">{{ selectedApplication()!.studentId?.activeBacklogs }}</strong>
+                </div>
+                <div style="background: white; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px;">
+                  <span style="font-size: 10px; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase;">Resume Code</span>
+                  <strong style="font-size: 13px; color: var(--success); display: flex; align-items: center; gap: 4px;">
+                    <span class="material-symbols-outlined" style="font-size: 14px;">verified</span> Parsed
+                  </strong>
+                </div>
+              </div>
+
+              <!-- Resume Download/View Action -->
+              @if (selectedApplication()!.studentId?.resumePath) {
+                <div style="margin-bottom: 20px;">
+                  <a [href]="'http://localhost:5000' + selectedApplication()!.studentId?.resumePath" target="_blank" 
+                     class="btn-refresh-status" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 38px; text-decoration: none; margin: 0; background: white; border: 1.5px solid var(--border); font-size: 12px; font-weight: 700;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">download_file</span>
+                    <span>Download Candidate Resume (PDF)</span>
+                  </a>
+                </div>
+              }
+
+              <!-- Explainable AI Feedback Block -->
+              <div style="border-top: 1px solid var(--border); padding-top: 16px;">
+                <h4 style="margin: 0 0 10px; font-size: 13px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+                  <span class="material-symbols-outlined" style="color: var(--secondary); font-size: 18px;">psychology</span>
+                  Explainable AI (XAI) Feedback
+                </h4>
+
+                @if (selectedApplication()!.xai?.positiveSentences && selectedApplication()!.xai.positiveSentences.length > 0) {
+                  <div style="display: flex; flex-direction: column; gap: 8px;">
+                    @for (f of selectedApplication()!.xai.positiveSentences; track f) {
+                      <div style="background: rgba(52, 152, 219, 0.05); border-left: 3px solid var(--secondary); border-radius: 4px; padding: 10px; font-size: 11px; color: var(--text-dark); line-height: 1.4;">
+                        {{ f }}
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div style="font-size: 11px; color: var(--text-muted); font-style: italic;">
+                    No detailed XAI feedback processed for this candidate.
+                  </div>
+                }
+              </div>
+
+            </div>
+          }
+        </div>
+
+      </div>
+      
+      <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end;">
+        <button class="btn-cancel" (click)="closeApplicationsModal()">Close Applications</button>
+      </div>
+
     </div>
   </div>
   }

@@ -9,10 +9,25 @@ import { TpoStudentsComponent } from './pages/tpo/students/students.component';
 import { RecruiterDashboardComponent } from './pages/recruiter/dashboard/dashboard';
 import { RecruiterLayoutComponent } from './pages/recruiter/layout/layout.component';
 import { RecruiterProfileComponent } from './pages/recruiter/profile/profile';
+import { RecruiterApplicationsComponent } from './pages/recruiter/applications/applications';
+import { ProfileOnHoldComponent } from './pages/recruiter/profile-on-hold/profile-on-hold.component';
+import { StudentLayoutComponent } from './pages/student/layout/layout.component';
 import { StudentDashboardComponent } from './pages/student/dashboard/dashboard';
+import { StudentApplicationsComponent } from './pages/student/applications/applications';
+import { StudentSchedulesComponent } from './pages/student/schedules/schedules';
+import { StudentOffersComponent } from './pages/student/offers/offers';
+import { StudentProfileComponent } from './pages/student/profile/profile';
+import { TermsComponent } from './pages/terms/terms.component';
+import { PrivacyComponent } from './pages/privacy/privacy.component';
 import { roleAuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
+  {
+    path: 'recruiter/edit-profile',
+    component: ProfileOnHoldComponent,
+    canActivate: [roleAuthGuard],
+    data: { roles: ['recruiter'] },
+  },
   {
     path: '',
     component: LandingPage,
@@ -24,6 +39,14 @@ export const routes: Routes = [
   {
     path: 'register',
     component: RegisterPage,
+  },
+  {
+    path: 'terms',
+    component: TermsComponent,
+  },
+  {
+    path: 'privacy',
+    component: PrivacyComponent,
   },
   {
     path: 'tpo',
@@ -69,18 +92,44 @@ export const routes: Routes = [
         path: 'profile',
         component: RecruiterProfileComponent,
       },
+      {
+        path: 'applications/:driveId',
+        component: RecruiterApplicationsComponent,
+      },
     ],
   },
   {
-    path: 'student/dashboard',
-    component: StudentDashboardComponent,
+    path: 'student',
+    component: StudentLayoutComponent,
     canActivate: [roleAuthGuard],
     data: { roles: ['student'] },
-  },
-  {
-    path: 'student',
-    redirectTo: 'student/dashboard',
-    pathMatch: 'full',
+    children: [
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full',
+      },
+      {
+        path: 'dashboard',
+        component: StudentDashboardComponent,
+      },
+      {
+        path: 'applications',
+        component: StudentApplicationsComponent,
+      },
+      {
+        path: 'schedules',
+        component: StudentSchedulesComponent,
+      },
+      {
+        path: 'offers',
+        component: StudentOffersComponent,
+      },
+      {
+        path: 'profile',
+        component: StudentProfileComponent,
+      },
+    ],
   },
 ];
 

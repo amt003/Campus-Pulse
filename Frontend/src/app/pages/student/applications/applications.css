@@ -1,0 +1,591 @@
+/* =============================================
+   CampusPulse — Student Applications Details Page
+   Theme: Premium Layout matching Mocks
+   ============================================= */
+
+/* Master list view cards */
+.apps-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.app-card-item {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.app-card-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  border-color: var(--primary);
+}
+
+.app-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.logo-placeholder-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #EBF5FB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.app-card-title {
+  margin: 0 0 2px 0;
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.app-card-subtitle {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.app-meta-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.app-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 550;
+}
+
+.app-card-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-card-details {
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--secondary);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* =============================================
+   DETAILED STAGE UPDATES VIEW
+   ============================================= */
+.btn-details-back {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-details-back:hover {
+  background: #F4F6F7;
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* 1. Job Header Card */
+.details-header-card {
+  background: white;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.company-logo-circle-large {
+  width: 56px;
+  height: 56px;
+  background: #F8F9FA;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-job-title {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.5px;
+}
+
+.header-job-subtitle {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.status-badge-orange {
+  background: #FEF9E7;
+  color: #D68910;
+  border: 1px solid rgba(214, 137, 16, 0.15);
+  font-weight: 750;
+  font-size: 12.5px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 2. Journey Stepper Card */
+.journey-card {
+  background: white;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  padding: 24px 32px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  margin-bottom: 24px;
+}
+
+.journey-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 0 0 20px 0;
+}
+
+.stepper-horizontal-container {
+  position: relative;
+  width: 100%;
+  padding: 10px 0;
+}
+
+.stepper-horizontal-line-connector {
+  position: absolute;
+  top: 26px;
+  left: 8%;
+  right: 8%;
+  height: 4px;
+  background: #E5E8E8;
+  z-index: 1;
+}
+
+.stepper-horizontal-steps {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.stepper-horiz-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 80px;
+}
+
+.stepper-horiz-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #F8F9FA;
+  border: 2px solid #BDC3C7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.stepper-horiz-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* State mappings */
+.step-completed .stepper-horiz-circle {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+.step-completed .stepper-horiz-label {
+  color: var(--success);
+}
+
+.step-current .stepper-horiz-circle {
+  background: var(--warning);
+  border-color: var(--warning);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(243, 156, 18, 0.15);
+}
+.step-current .stepper-horiz-label {
+  color: var(--warning);
+  font-weight: 800;
+}
+
+/* 3. Two column details */
+.details-two-column-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.stage-card, .resources-card {
+  background: white;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+.stage-card-title, .resources-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 0 0 20px 0;
+  border-bottom: 1.5px solid var(--border);
+  padding-bottom: 10px;
+}
+
+/* Active stage updates */
+.active-round-block {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.active-round-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.active-round-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.badge-scheduled {
+  background: #FEF9E7;
+  color: #D68910;
+  border: 1px solid rgba(214, 137, 16, 0.15);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.round-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.round-details-box {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.box-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.box-value {
+  font-size: 13.5px;
+  color: var(--text-dark);
+  font-weight: 700;
+}
+
+.alert-calendar-banner {
+  background: #F4F8FA;
+  border-radius: 8px;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.alert-note-text {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--text-muted);
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.btn-add-calendar {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.btn-add-calendar:hover {
+  background: var(--secondary);
+}
+
+/* Completed stage logs */
+.completed-stage-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.completed-stage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.completed-stage-name {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 750;
+  color: var(--text-dark);
+}
+
+.badge-shortlisted {
+  color: var(--success);
+  font-size: 11px;
+  font-weight: 850;
+  display: flex;
+  align-items: center;
+}
+
+.completed-stage-feedback {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* XAI Insight Box */
+.xai-insight-box {
+  background: #EBF5FB;
+  border: 1px solid rgba(0, 100, 151, 0.15);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.btn-xai-insight-link:hover {
+  text-decoration: underline;
+}
+
+/* Support and contact buttons */
+.btn-contact-placement:hover {
+  background: #F4F6F7;
+  border-color: var(--primary);
+}
+
+.resource-link-item {
+  transition: transform 0.2s;
+}
+
+.resource-link-item:hover {
+  transform: translateX(4px);
+}
+
+@media (max-width: 992px) {
+  .details-two-column-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .round-details-grid {
+    grid-template-columns: 1fr;
+  }
+  .alert-calendar-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .stepper-horizontal-line-connector {
+    display: none;
+  }
+  .stepper-horizontal-steps {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .stepper-horiz-step {
+    flex-direction: row;
+    width: auto;
+    gap: 16px;
+  }
+}
+
+/* ========================================================
+   MODAL & POPUP DIALOGS (XAI Match Modal)
+   ======================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 24px;
+}
+
+.modal-card {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 0;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  background: #F8F9FA;
+}
+
+/* XAI Badges & Chip styles */
+.ai-score-pill-large {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.score-green {
+  background: #E8F8F5;
+  color: #117A65;
+}
+
+.score-yellow {
+  background: #FEF9E7;
+  color: #B7950B;
+}
+
+.score-red {
+  background: #FDEDEC;
+  color: #922B21;
+}
+
+.score-gray {
+  background: #F2F4F4;
+  color: #5D6D7E;
+}
+
+.skills-container-xai {
+  margin-top: 8px;
+}
+
+.skill-gap-chip {
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.btn-cancel {
+  border: 1px solid var(--border);
+  background: white;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #F8F9FA;
+}
+

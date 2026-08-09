@@ -958,3 +958,125 @@ a {
   border-color: var(--error) !important;
   background: rgba(231, 76, 60, 0.04) !important;
 }
+
+.footer-links {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: #7F8C8D;
+}
+.footer-links a {
+  color: #1A5276;
+  text-decoration: none;
+}
+.footer-links a:hover {
+  text-decoration: underline;
+}
+.divider {
+  margin: 0 8px;
+  color: #D5D8DC;
+}
+
+/* --- On-Hold Panel --- */
+.on-hold-panel {
+  background: rgba(230, 126, 34, 0.05);
+  border: 1px solid rgba(230, 126, 34, 0.25);
+  border-left: 4px solid #e67e22;
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin: 15px auto 20px;
+  max-width: 440px;
+  box-shadow: 0 4px 15px rgba(230, 126, 34, 0.06);
+  text-align: left;
+}
+
+.on-hold-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.on-hold-icon {
+  font-size: 32px;
+  color: #e67e22;
+}
+
+.on-hold-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #d35400;
+  margin: 0;
+}
+
+.on-hold-company {
+  font-size: 13px;
+  color: var(--on-surface-var);
+  margin: 2px 0 0 0;
+  font-weight: 600;
+}
+
+.on-hold-desc {
+  font-size: 13.5px;
+  color: var(--on-surface-var);
+  line-height: 1.5;
+  margin: 0 0 14px 0;
+}
+
+.on-hold-feedback-block {
+  background: white;
+  border-left: 3px solid #e67e22;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+
+.feedback-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--on-surface-var);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  letter-spacing: 0.03em;
+}
+
+.feedback-text {
+  font-size: 13px;
+  color: var(--on-surface);
+  line-height: 1.45;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.btn-edit-profile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 11px;
+  background: linear-gradient(135deg, #e67e22, #d35400);
+  color: white !important;
+  text-decoration: none !important;
+  font-weight: 700;
+  font-size: 13.5px;
+  border-radius: 8px;
+  text-align: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(230, 126, 34, 0.2);
+}
+
+.btn-edit-profile:hover {
+  background: linear-gradient(135deg, #d35400, #c0392b);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(230, 126, 34, 0.3);
+}
+
+.btn-edit-profile .material-symbols-outlined {
+  font-size: 18px;
+}

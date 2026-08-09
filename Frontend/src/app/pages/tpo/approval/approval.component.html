@@ -1,23 +1,5 @@
 <div class="approval-root">
 
-  <!-- ===== Top Header ===== -->
-  <header class="approval-header">
-    <div class="header-left">
-      <a routerLink="/tpo/dashboard" class="back-link">
-        <span class="material-symbols-outlined">arrow_back</span>
-        <span>Back to Dashboard</span>
-      </a>
-      <h1 class="page-title">Recruiter Approvals & Verification</h1>
-    </div>
-
-    <div class="header-right">
-      <button class="btn-refresh" (click)="loadPendingRecruiters(false)" [class.spin]="isRefreshing()">
-        <span class="material-symbols-outlined">refresh</span>
-        <span>Refresh List</span>
-      </button>
-    </div>
-  </header>
-
   <!-- ===== Main Container ===== -->
   <main class="approval-container">
 
@@ -30,24 +12,94 @@
 
     @if (!isLoading()) {
 
+      <!-- Category Tabs Switcher -->
+      <div class="tabs-switcher-container">
+        <div class="tabs-bar">
+          <button 
+            class="tab-btn" 
+            [class.active]="activeTab() === 'pending'"
+            (click)="activeTab.set('pending')"
+          >
+            <span class="material-symbols-outlined tab-icon">hourglass_empty</span>
+            <span class="tab-label">Pending</span>
+            <span class="tab-badge badge-pending">{{ pendingList().length }}</span>
+          </button>
+          <button 
+            class="tab-btn" 
+            [class.active]="activeTab() === 'on_hold'"
+            (click)="activeTab.set('on_hold')"
+          >
+            <span class="material-symbols-outlined tab-icon">pause_circle</span>
+            <span class="tab-label">On Hold</span>
+            <span class="tab-badge badge-hold">{{ onHoldList().length }}</span>
+          </button>
+          <button 
+            class="tab-btn" 
+            [class.active]="activeTab() === 'approved'"
+            (click)="activeTab.set('approved')"
+          >
+            <span class="material-symbols-outlined tab-icon">check_circle</span>
+            <span class="tab-label">Approved</span>
+            <span class="tab-badge badge-approved">{{ approvedList().length }}</span>
+          </button>
+        </div>
+      </div>
+
       <div class="table-card glass-panel">
         <div class="card-header">
           <div class="header-title-wrap">
-            <span class="material-symbols-outlined header-icon">verified_user</span>
-            <h2>Pending Recruiter Registrations</h2>
+            <span class="material-symbols-outlined header-icon">
+              @switch (activeTab()) {
+                @case ('pending') { hourglass_empty }
+                @case ('on_hold') { pause_circle }
+                @case ('approved') { check_circle }
+              }
+            </span>
+            <h2>
+              @switch (activeTab()) {
+                @case ('pending') { Pending Recruiter Registrations }
+                @case ('on_hold') { On Hold Recruiters }
+                @case ('approved') { Approved Recruiters }
+              }
+            </h2>
           </div>
-          <span class="pending-count-badge">{{ pendingRecruiters().length }} Pending Review</span>
+          <span class="pending-count-badge">
+            {{ currentRecruitersList.length }} 
+            @switch (activeTab()) {
+              @case ('pending') { Pending Review }
+              @case ('on_hold') { On Hold }
+              @case ('approved') { Approved }
+            }
+          </span>
         </div>
 
-        @if (pendingRecruiters().length === 0) {
+        @if (currentRecruitersList.length === 0) {
           <div class="empty-state">
-            <span class="material-symbols-outlined empty-icon">check_circle</span>
-            <h3>All Recruiters Reviewed</h3>
-            <p>There are currently no recruiter applications pending TPO verification.</p>
+            <span class="material-symbols-outlined empty-icon">
+              @switch (activeTab()) {
+                @case ('pending') { check_circle }
+                @case ('on_hold') { info }
+                @case ('approved') { corporate_fare }
+              }
+            </span>
+            <h3>
+              @switch (activeTab()) {
+                @case ('pending') { All Recruiters Reviewed }
+                @case ('on_hold') { No Recruiters On Hold }
+                @case ('approved') { No Approved Recruiters }
+              }
+            </h3>
+            <p>
+              @switch (activeTab()) {
+                @case ('pending') { There are currently no recruiter applications pending TPO verification. }
+                @case ('on_hold') { There are currently no recruiter applications placed on hold. }
+                @case ('approved') { There are currently no approved recruiter applications. }
+              }
+            </p>
           </div>
         }
 
-        @if (pendingRecruiters().length > 0) {
+        @if (currentRecruitersList.length > 0) {
           <div class="table-scroll">
             <table class="approval-table">
               <thead>
@@ -62,7 +114,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (rec of pendingRecruiters(); track rec._id) {
+                @for (rec of currentRecruitersList; track rec._id) {
                   <!-- Main Row -->
                   <tr class="main-row" [class.expanded]="expandedRecruiterId() === rec._id">
                     <td class="font-bold company-cell">
@@ -74,7 +126,13 @@
                     <td>{{ rec.officialEmail }}</td>
 
                     <td>
-                      <span class="status-tag tag-success">🌐 Active Domain</span>
+                      @if (rec.verificationDetails?.whoisData?.isValid) {
+                        <span class="status-tag tag-success">🌐 Active Domain</span>
+                      } @else if (rec.verificationDetails?.whoisData) {
+                        <span class="status-tag tag-warning">⚠️ Needs Verification</span>
+                      } @else {
+                        <span class="status-tag tag-warning">⚠️ Not Verified</span>
+                      }
                     </td>
 
                     <td>
@@ -95,23 +153,28 @@
                         <button
                           class="btn-action-icon btn-view"
                           (click)="toggleExpand(rec._id)"
-                          title="View Verification Details & Letter"
+                          title="View Verification Details & Feedback"
                         >
                           <span class="material-symbols-outlined">search</span>
                           <span>{{ expandedRecruiterId() === rec._id ? 'Hide' : 'Details' }}</span>
                         </button>
-                        <button
-                          class="btn-action btn-approve"
-                          (click)="openApproveModal(rec)"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          class="btn-action btn-reject"
-                          (click)="openRejectModal(rec)"
-                        >
-                          Reject
-                        </button>
+                        @if (activeTab() !== 'approved') {
+                          <button
+                            class="btn-action btn-approve"
+                            (click)="openApproveModal(rec)"
+                          >
+                            Approve
+                          </button>
+                        }
+                        @if (activeTab() !== 'on_hold') {
+                          <button
+                            class="btn-action btn-hold"
+                            (click)="toggleExpand(rec._id)"
+                            title="Put On Hold — provide feedback below"
+                          >
+                            ⏳ On Hold
+                          </button>
+                        }
                       </div>
                     </td>
                   </tr>
@@ -158,14 +221,14 @@
                             </div>
                           </div>
 
-                          <div class="details-grid-two-col">
+                          <div class="details-grid-three-col">
                             <!-- WHOIS Data -->
                             <div class="detail-card">
                               <div class="card-head">
                                 <span class="material-symbols-outlined card-icon">language</span>
                                 <h5>WHOIS Domain Verification</h5>
                               </div>
-                              <div class="detail-list">
+                              <div class="detail-list" style="flex-grow: 1;">
                                 <div class="detail-item">
                                   <span>Domain Name:</span>
                                   <strong>{{ getFormattedDomain(rec) }}</strong>
@@ -180,36 +243,112 @@
                                 </div>
                                 <div class="detail-item">
                                   <span>Registrant Region:</span>
-                                  <span>US / IN</span>
+                                  <span>{{ rec.verificationDetails?.whoisData?.registrantCountry || 'N/A' }}</span>
                                 </div>
                               </div>
 
-                              <div class="verification-actions-block" style="margin-top: 12px;">
-                                <a [href]="getWhoisLookupUrl(rec)" target="_blank" rel="noopener noreferrer" class="btn-portal btn-whois" title="Verify WHOIS Creation Date on DomainTools">
+                              <div class="verification-actions-block" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+                                <a [href]="getWhoisLookupUrl(rec)" target="_blank" rel="noopener noreferrer" class="btn-portal btn-whois" style="width: 100%; text-align: center; justify-content: center;" title="Verify WHOIS Creation Date on DomainTools">
                                   <span class="material-symbols-outlined">open_in_new</span>
-                                  <span>Verify Domain on DomainTools WHOIS</span>
+                                  <span>Verify Domain WHOIS</span>
                                 </a>
+                                <button class="btn-portal" style="width: 100%; background: var(--outline); color: var(--text-dark); border: 1.5px solid var(--border); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700;" 
+                                  (click)="reVerify(rec._id)" 
+                                  [disabled]="reVerifyingId() === rec._id"
+                                  title="Re-run WHOIS verification">
+                                  <span class="material-symbols-outlined" style="font-size: 16px;" [class.spin]="reVerifyingId() === rec._id">refresh</span>
+                                  <span>{{ reVerifyingId() === rec._id ? 'Verifying WHOIS…' : 'Re-verify WHOIS' }}</span>
+                                </button>
                               </div>
                             </div>
 
-                            <!-- Trust Score Breakdown (50% Domain + 50% Email Match) -->
-                            <div class="detail-card card-score-breakdown">
+                            <!-- MCA Registry Verification (Phase 7) -->
+                            <div class="detail-card">
                               <div class="card-head">
-                                <span class="material-symbols-outlined card-icon">equalizer</span>
+                                <span class="material-symbols-outlined card-icon">verified_user</span>
+                                <h5>MCA Registry Verification</h5>
+                              </div>
+                              
+                              @if (rec.verificationDetails?.mcaData) {
+                                <div class="detail-list" style="flex-grow: 1;">
+                                  <div class="detail-item">
+                                    <span>CIN:</span>
+                                    <strong style="color: var(--primary); font-family: monospace; font-size: 11px;">
+                                      {{ rec.verificationDetails?.mcaData?.cin }}
+                                    </strong>
+                                  </div>
+                                  <div class="detail-item">
+                                    <span>MCA Status:</span>
+                                    <span class="status-tag" [class.tag-success]="rec.verificationDetails?.mcaData?.status === 'Active'" [class.tag-warning]="rec.verificationDetails?.mcaData?.status !== 'Active'">
+                                      {{ rec.verificationDetails?.mcaData?.status || 'Inactive' }}
+                                    </span>
+                                  </div>
+                                  <div class="detail-item">
+                                    <span>Governance:</span>
+                                    <strong>{{ rec.verificationDetails?.directors?.length || 0 }} Directors found</strong>
+                                  </div>
+                                  
+                                  @if (rec.verificationDetails?.directors && rec.verificationDetails!.directors!.length > 0) {
+                                    <div style="border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 8px;">
+                                      <span style="font-size: 10.5px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Active Directors</span>
+                                      <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px; max-height: 80px; overflow-y: auto; padding-right: 4px;">
+                                        @for (dir of rec.verificationDetails?.directors; track dir.din) {
+                                          <div style="font-size: 11.5px; font-weight: 650; display: flex; justify-content: space-between; color: var(--text-dark);">
+                                            <span>• {{ dir.name }}</span>
+                                            <span style="font-size: 9.5px; color: var(--text-muted);">DIN: {{ dir.din }}</span>
+                                          </div>
+                                        }
+                                      </div>
+                                    </div>
+                                  }
+                                </div>
+                              } @else {
+                                <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; border: 1.5px dashed var(--border); border-radius: 8px; background: #FAFBFB; min-height: 120px; margin-bottom: 8px;">
+                                  <span class="material-symbols-outlined" style="font-size: 28px; color: var(--text-muted); margin-bottom: 6px;">hourglass_empty</span>
+                                  <p style="font-size: 12px; font-weight: 700; color: var(--text-dark); margin: 0 0 2px;">⏳ Not Verified</p>
+                                  <p style="font-size: 10px; color: var(--text-muted); margin: 0;">Click 'Re-verify' to scan MCA government registry.</p>
+                                </div>
+                              }
+
+                              <div class="verification-actions-block" style="margin-top: auto; padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                                <a [href]="getMcaLookupUrl(rec)" target="_blank" rel="noopener noreferrer" class="btn-portal btn-whois" style="width: 100%; text-align: center; justify-content: center;" title="Cross-check company details on Zauba Corp">
+                                  <span class="material-symbols-outlined">open_in_new</span>
+                                  <span>Cross-check on Zauba Corp</span>
+                                </a>
+                                <button class="btn-portal" style="width: 100%; background: var(--primary); color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700;" 
+                                  (click)="mcaReVerify(rec._id)" 
+                                  [disabled]="reVerifyingMcaId() === rec._id"
+                                  title="Re-run MCA & WHOIS combined verification">
+                                  <span class="material-symbols-outlined" style="font-size: 16px;" [class.spin]="reVerifyingMcaId() === rec._id">sync</span>
+                                  <span>{{ reVerifyingMcaId() === rec._id ? 'Verifying MCA…' : 'Re-verify MCA' }}</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            <!-- Trust Score Breakdown -->
+                            <div class="detail-card card-score-breakdown">
+                              <div class="card-head" style="border-bottom: 1px solid rgba(255,255,255,0.15);">
+                                <span class="material-symbols-outlined card-icon" style="color: rgba(255,255,255,0.85);">equalizer</span>
                                 <h5>Trust Score Breakdown</h5>
                               </div>
-                              <div class="score-bars">
+                              <div class="score-bars" style="display: flex; flex-direction: column; gap: 10px; flex-grow: 1;">
                                 <div class="score-line">
-                                  <span>Domain Age & Active Status:</span>
-                                  <strong>{{ getFormattedBreakdown(rec).domainAge }}/50</strong>
+                                  <span>Domain Age Points:</span>
+                                  <strong>{{ getFormattedBreakdown(rec).domainAge }}/40</strong>
                                 </div>
                                 <div class="score-line">
-                                  <span>Email & Domain Match:</span>
-                                  <strong>{{ getFormattedBreakdown(rec).emailMatch }}/50</strong>
+                                  <span>Email Match Points:</span>
+                                  <strong>{{ getFormattedBreakdown(rec).emailMatch }}/30</strong>
                                 </div>
-                                <div class="score-line-total">
-                                  <span>Total Trust Score:</span>
-                                  <span class="total-score-val" [style.color]="getTrustScoreColor(getFormattedBreakdown(rec).total)">{{ getFormattedBreakdown(rec).total }}/100</span>
+                                <div class="score-line" style="margin-bottom: auto;">
+                                  <span>MCA Registry Check:</span>
+                                  <strong>{{ getFormattedBreakdown(rec).mca }}/30</strong>
+                                </div>
+                                <div class="score-line-total" style="border-top: 1px solid rgba(255,255,255,0.15); padding-top: 10px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                                  <span style="font-weight: 850; font-size: 12px; color: rgba(255,255,255,0.85);">Total Trust Score:</span>
+                                  <span class="total-score-val" style="font-size: 15px; font-weight: 900;" [style.color]="getTrustScoreColor(getFormattedBreakdown(rec).total)">
+                                    {{ getFormattedBreakdown(rec).total }}/100
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -222,13 +361,24 @@
                               <h5>TPO Feedback & Suggestions to {{ rec.companyName }}</h5>
                             </div>
                             <div class="suggestion-body">
+                              <p class="hold-instruction-note">
+                                <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;">info</span>
+                                Write your feedback below, then click <strong>"⏳ Put On Hold"</strong> to block this recruiter and send them the feedback for correction.
+                              </p>
                               <textarea
                                 class="suggestion-textarea"
                                 rows="3"
                                 [ngModel]="suggestionInputs()[rec._id] || ''"
                                 (ngModelChange)="updateSuggestionInput(rec._id, $event)"
-                                placeholder="Write official feedback or suggestions for {{ rec.companyName }} (e.g., Please provide secondary HR contact number, or update website URL)..."
+                                placeholder="Write feedback for {{ rec.companyName }} (e.g., Please update your official website to HTTPS, or provide a valid HR contact number)..."
                               ></textarea>
+
+                              @if (holdErrorMsg()[rec._id]) {
+                                <div class="hold-error-msg">
+                                  <span class="material-symbols-outlined" style="font-size:15px;">error</span>
+                                  {{ holdErrorMsg()[rec._id] }}
+                                </div>
+                              }
 
                               <div class="suggestion-actions">
                                 @if (suggestionSuccessMsg()[rec._id]) {
@@ -243,7 +393,19 @@
                                   (click)="sendSuggestion(rec._id)"
                                 >
                                   <span class="material-symbols-outlined">send</span>
-                                  <span>Send Suggestion</span>
+                                  <span>Send Suggestion Only</span>
+                                </button>
+                                <button
+                                  class="btn-hold-confirm"
+                                  [disabled]="!suggestionInputs()[rec._id]?.trim() || isHoldProcessing() === rec._id"
+                                  (click)="confirmHold(rec._id)"
+                                >
+                                  @if (isHoldProcessing() === rec._id) {
+                                    <span class="material-symbols-outlined spin-icon">hourglass_top</span>
+                                    <span>Placing on Hold…</span>
+                                  } @else {
+                                    <span>⏳ Put On Hold</span>
+                                  }
                                 </button>
                               </div>
                             </div>
@@ -289,36 +451,6 @@
             [disabled]="isProcessing()"
           >
             Confirm Approval
-          </button>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- Reject Confirmation Modal -->
-  @if (isRejectModalOpen()) {
-    <div class="modal-backdrop" (click)="closeRejectModal()">
-      <div class="modal-card" (click)="$event.stopPropagation()">
-        <div class="modal-header header-reject">
-          <h3>Reject Recruiter Application</h3>
-          <button class="btn-close" (click)="closeRejectModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-          <p>
-            Are you sure you want to reject <strong>{{ selectedRecruiter()?.companyName }}</strong>?
-          </p>
-          <p class="modal-sub text-danger">
-            This action will delete the company application record.
-          </p>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-cancel" (click)="closeRejectModal()">Cancel</button>
-          <button
-            class="btn-confirm-reject"
-            (click)="confirmReject()"
-            [disabled]="isProcessing()"
-          >
-            Confirm Rejection
           </button>
         </div>
       </div>

@@ -148,7 +148,7 @@
         <div class="field-group">
           <div class="field-label-row">
             <label class="field-label" for="login-password">Password</label>
-            <a href="#" class="forgot-link">Forgot password?</a>
+            <a href="javascript:void(0)" (click)="openForgotModal()" class="forgot-link">Forgot password?</a>
           </div>
           <div class="field-wrap">
             <span class="field-icon material-symbols-outlined">lock</span>
@@ -200,6 +200,13 @@
           </label>
         </div>
 
+        @if (successMessage()) {
+          <div class="login-alert-banner success-alert" style="background: rgba(39, 174, 96, 0.08); border-left: 4px solid var(--success); color: var(--success); padding: 12px 16px; border-radius: 6px; font-size: 13.5px; font-weight: 650; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; max-width: 440px; margin: 15px auto 20px;">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span>{{ successMessage() }}</span>
+          </div>
+        }
+
         @if (errorMessage()) {
           <div class="login-alert-banner">
             <div class="alert-title-row">
@@ -223,6 +230,44 @@
                 </ul>
               </div>
             }
+          </div>
+        }
+
+        @if (isOnHold()) {
+          <div class="on-hold-panel">
+            <div class="on-hold-header">
+              <span class="material-symbols-outlined on-hold-icon">pause_circle</span>
+              <div>
+                <h4 class="on-hold-title">Account On Hold</h4>
+                <p class="on-hold-company">{{ holdCompanyName() }}</p>
+              </div>
+            </div>
+            <p class="on-hold-desc">Your company's placement drive registration is currently on hold by the TPO. Please review the feedback and update your company details accordingly.</p>
+
+            @if (holdFeedback()) {
+              <div class="on-hold-feedback-block">
+                <span class="feedback-label">
+                  <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">feedback</span>
+                  TPO Feedback:
+                </span>
+                <p class="feedback-text">{{ holdFeedback() }}</p>
+              </div>
+            }
+
+            @if (holdSuggestions()) {
+              <div class="on-hold-feedback-block" style="border-left-color: #27AE60;">
+                <span class="feedback-label">
+                  <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">lightbulb</span>
+                  Suggestions:
+                </span>
+                <p class="feedback-text">{{ holdSuggestions() }}</p>
+              </div>
+            }
+
+            <a routerLink="/recruiter/edit-profile" class="btn-edit-profile">
+              <span class="material-symbols-outlined">edit</span>
+              Edit Company Details & Request Re-Approval
+            </a>
           </div>
         }
 
@@ -256,8 +301,8 @@
       <!-- Footer text -->
       <p class="form-footer-note">
         By signing in, you agree to our
-        <a href="#" class="form-inline-link">Terms of Service</a> and
-        <a href="#" class="form-inline-link">Privacy Policy</a>.
+        <a routerLink="/terms" class="form-inline-link">Terms of Service</a> and
+        <a routerLink="/privacy" class="form-inline-link">Privacy Policy</a>.
       </p>
       @if (selectedRole() === 'recruiter') {
         <p class="form-footer-note">
@@ -266,9 +311,120 @@
         </p>
       }
 
+      <div class="footer-links">
+        <a routerLink="/terms">Terms of Service</a>
+        <span class="divider">|</span>
+        <a routerLink="/privacy">Privacy Policy</a>
+      </div>
+
     </div>
   </main>
-
-
-
 </div>
+
+<!-- Forgot Password Modal -->
+@if (isForgotModalOpen()) {
+<div class="forgot-modal-overlay"
+  style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000;">
+  <div class="modal-card"
+    style="background: white; border-radius: 12px; max-width: 480px; width: 90%; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); animation: modalFadeIn 0.3s ease; text-align: left; font-family: inherit;">
+    
+    <!-- Modal Header -->
+    <header class="modal-header"
+      style="padding: 20px 24px; border-bottom: 1.5px solid #EAECEE; display: flex; justify-content: space-between; align-items: center; background: #F8F9FA;">
+      <div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 850; color: #003b5a;">
+          Reset Your Password
+        </h3>
+        <span style="font-size: 12px; color: #7F8C8D; font-weight: 600; margin-top: 2px; display: block;">
+          Request a password reset for your CampusPulse account
+        </span>
+      </div>
+      <button (click)="closeForgotModal()"
+        style="background: none; border: none; font-size: 20px; font-weight: bold; cursor: pointer; color: #7F8C8D; display: flex; align-items: center; justify-content: center;">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+
+    <!-- Modal Body -->
+    <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+      
+      @if (forgotError()) {
+        <div style="background: #FADBD8; border-left: 4px solid #E74C3C; color: #C0392B; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+          <span class="material-symbols-outlined" style="font-size: 18px;">error</span>
+          <span>{{ forgotError() }}</span>
+        </div>
+      }
+
+      @if (forgotSuccess()) {
+        <div style="background: #D4EFDF; border-left: 4px solid #27AE60; color: #196F3D; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+          <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
+          <span>{{ forgotSuccess() }}</span>
+        </div>
+      }
+
+      <!-- Step 1: Request Reset Code -->
+      @if (forgotStep() === 1) {
+        <form (ngSubmit)="submitForgotEmail()" novalidate>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 13px; font-weight: 750; color: #2C3E50;">Enter Registered Email Address</label>
+            <input type="email" name="forgotEmail" [(ngModel)]="forgotEmail" 
+              placeholder="e.g. user@university.edu" required
+              style="padding: 10px 14px; border: 1.5px solid #BDC3C7; border-radius: 8px; font-size: 14px; color: #2C3E50; outline: none; background: #FAFAFA;" />
+            <span style="font-size: 11.5px; color: #7F8C8D; line-height: 1.4;">
+              A 6-digit password verification code will be generated and printed to the terminal console running the backend service.
+            </span>
+          </div>
+
+          <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px;">
+            <button type="button" (click)="closeForgotModal()"
+              style="width: 100px; height: 38px; border-radius: 8px; border: 1px solid #BDC3C7; background: white; font-weight: 650; cursor: pointer; font-size: 13px; color: #2C3E50;">Cancel</button>
+            <button type="submit" [disabled]="forgotIsLoading() || !forgotEmail"
+              style="padding: 0 20px; height: 38px; border-radius: 8px; border: none; background: #003b5a; color: white; font-weight: 750; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+              @if (forgotIsLoading()) {
+                <span style="width: 16px; height: 16px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; display: inline-block; animation: spin 0.8s linear infinite;"></span>
+              }
+              <span>Send Reset Code</span>
+            </button>
+          </div>
+        </form>
+      }
+
+      <!-- Step 2: Input Code and New Password -->
+      @if (forgotStep() === 2) {
+        <form (ngSubmit)="submitResetPassword()" novalidate>
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <label style="font-size: 13px; font-weight: 750; color: #2C3E50;">Reset Verification Code</label>
+              <input type="text" name="resetCode" [(ngModel)]="resetCode" 
+                placeholder="Enter 6-digit code" required
+                style="padding: 10px 14px; border: 1.5px solid #BDC3C7; border-radius: 8px; font-size: 14px; color: #2C3E50; outline: none; background: #FAFAFA; font-family: monospace; letter-spacing: 2px; text-align: center; font-weight: bold;" />
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <label style="font-size: 13px; font-weight: 750; color: #2C3E50;">New Password</label>
+              <input type="password" name="resetNewPassword" [(ngModel)]="resetNewPassword" 
+                placeholder="Enter new password (min 6 chars)" required minlength="6"
+                style="padding: 10px 14px; border: 1.5px solid #BDC3C7; border-radius: 8px; font-size: 14px; color: #2C3E50; outline: none; background: #FAFAFA;" />
+            </div>
+
+          </div>
+
+          <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px;">
+            <button type="button" (click)="forgotStep.set(1)"
+              style="width: 100px; height: 38px; border-radius: 8px; border: 1px solid #BDC3C7; background: white; font-weight: 650; cursor: pointer; font-size: 13px; color: #2C3E50;">Back</button>
+            <button type="submit" [disabled]="forgotIsLoading() || !resetCode || resetNewPassword.length < 6"
+              style="padding: 0 20px; height: 38px; border-radius: 8px; border: none; background: #27AE60; color: white; font-weight: 750; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+              @if (forgotIsLoading()) {
+                <span style="width: 16px; height: 16px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; display: inline-block; animation: spin 0.8s linear infinite;"></span>
+              }
+              <span>Reset Password</span>
+            </button>
+          </div>
+        </form>
+      }
+
+    </div>
+  </div>
+</div>
+}

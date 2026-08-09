@@ -34,6 +34,7 @@ export interface VerificationDetails {
   breakdown?: {
     domainAge: number;
     emailMatch: number;
+    mca?: number;
   };
   whoisData?: {
     domain: string;
@@ -43,6 +44,8 @@ export interface VerificationDetails {
     registrantCountry: string;
     isValid: boolean;
   };
+  mcaData?: any;
+  directors?: any[];
   verifiedAt?: string;
 }
 
@@ -89,6 +92,13 @@ export interface PendingRecruiter {
   coverNote?: string;
   trustScore?: number;
   isApproved: boolean;
+  status?: string;
+  registrationStatus?: 'pending' | 'approved' | 'on_hold';
+  holdFeedback?: {
+    message: string;
+    suggestions: string;
+    providedAt?: string;
+  };
   createdAt?: string;
   verificationDetails?: VerificationDetails;
   userId?: {
@@ -169,6 +179,14 @@ export class TpoService {
     );
   }
 
+  putRecruiterOnHold(id: string, data: { feedback: string; suggestions?: string }): Observable<any> {
+    return this.http.put(
+      `${this.apiUrl}/recruiter/${id}/hold`,
+      data,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
   rejectRecruiter(id: string): Observable<any> {
     return this.http.put(
       `${this.apiUrl}/recruiter/${id}/reject`,
@@ -180,6 +198,22 @@ export class TpoService {
   toggleRecruiterStatus(id: string): Observable<any> {
     return this.http.put(
       `${this.apiUrl}/recruiter/${id}/toggle-status`,
+      {},
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  reVerifyRecruiter(id: string): Observable<any> {
+    return this.http.put(
+      `${this.apiUrl}/recruiter/${id}/re-verify`,
+      {},
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  reverifyRecruiter(id: string): Observable<any> {
+    return this.http.put(
+      `${this.apiUrl}/recruiter/${id}/reverify`,
       {},
       { headers: this.getAuthHeaders() }
     );

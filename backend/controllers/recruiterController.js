@@ -65,32 +65,65 @@ const getRecruiterProfile = async (req, res) => {
 
 const getDriveApplications = async (req, res) => {
   try {
-    const drive = await JobDrive.findOne({
-      _id: req.params.driveId,
-      recruiterId: req.user._id,
-    });
+    const { driveId } = req.params;
+    const recruiter = await Recruiter.findOne({ userId: req.user._id });
 
-    if (!drive) {
+    if (!recruiter) {
       return res.status(404).json({
         success: false,
-        message: "Job drive not found",
+        message: "Recruiter profile not found",
       });
     }
 
-    const applications = await Application.find({ driveId: drive._id })
+    // Security: Verify this drive belongs to this recruiter
+    const drive = await JobDrive.findOne({ _id: driveId, recruiterId: req.user._id });
+    if (!drive) {
+      return res.status(404).json({
+        success: false,
+        message: "Drive not found or unauthorized",
+      });
+    }
+
+    const applications = await Application.find({ driveId })
       .populate({
         path: "studentId",
         populate: {
           path: "userId",
-          select: "name email phone role isActive",
+          select: "name",
         },
       })
-      .sort({ createdAt: -1 });
+      .sort({ aiMatchScore: -1 }); // Highest score first
 
     return res.status(200).json({
       success: true,
-      drive,
-      applications,
+      data: {
+        driveTitle: drive.title,
+        driveDescription: drive.description,
+        hasAptitudeTest: drive.hasAptitudeTest,
+        hasGD: drive.hasGD,
+        companyName: recruiter.companyName,
+        applications: applications.map(app => {
+          const studentObj = app.studentId;
+          return {
+            applicationId: app._id,
+            appliedDate: app.appliedDate,
+            status: app.status,
+            aiMatchScore: app.aiMatchScore,
+            student: studentObj ? {
+              _id: studentObj._id,
+              rollNumber: studentObj.rollNumber,
+              cgpa: studentObj.cgpa,
+              branch: studentObj.branch,
+              resumePath: studentObj.resumePath,
+              name: studentObj.userId ? studentObj.userId.name : "N/A"
+            } : null,
+            xai: app.xai,
+            aptitude: app.aptitude,
+            gd: app.gd,
+            interview: app.interview
+          };
+        })
+      }
     });
   } catch (error) {
     return res.status(500).json({
@@ -233,9 +266,19 @@ const getRecruiterDrives = async (req, res) => {
       createdAt: -1,
     });
 
+    const drivesWithCount = await Promise.all(
+      drives.map(async (drive) => {
+        const count = await Application.countDocuments({ driveId: drive._id });
+        return {
+          ...drive.toObject(),
+          applicationsCount: count,
+        };
+      })
+    );
+
     return res.status(200).json({
       success: true,
-      drives,
+      drives: drivesWithCount,
     });
   } catch (error) {
     return res.status(500).json({
@@ -428,7 +471,7 @@ const markInterviewResult = async (req, res) => {
 const scheduleStage = async (req, res) => {
   try {
     const { driveId } = req.params;
-    const { studentIds, eventType, date, timeSlot, location } = req.body;
+    const { studentIds, eventType, date, timeSlot, location, meetingUrl } = req.body;
 
     if (!Array.isArray(studentIds) || studentIds.length === 0 || !eventType || !date || !timeSlot) {
       return res.status(400).json({
@@ -481,11 +524,31 @@ const scheduleStage = async (req, res) => {
 
     const recruiter = await Recruiter.findOne({ userId: req.user._id });
 
-    // No conflicts detected — proceed to schedule
+    // No conflicts detected — proceed to schedule eligible candidates
     for (const studentId of studentIds) {
       const application = await Application.findOne({ studentId, driveId: drive._id });
 
       if (application) {
+        // Enforce stage progression: student MUST pass prior round to qualify for next round
+        if (eventType === "GD" && drive.hasAptitudeTest) {
+          const passedAptitude = application.aptitude && (application.aptitude.status === "Passed" || application.status === "Aptitude Completed");
+          if (!passedAptitude) {
+            continue; // Candidate did not pass Aptitude -> skip GD scheduling
+          }
+        } else if (eventType === "Interview") {
+          if (drive.hasGD) {
+            const passedGD = application.gd && (application.gd.status === "Shortlisted" || application.status === "GD Completed");
+            if (!passedGD) {
+              continue; // Candidate did not pass GD -> skip Interview scheduling
+            }
+          } else if (drive.hasAptitudeTest) {
+            const passedAptitude = application.aptitude && (application.aptitude.status === "Passed" || application.status === "Aptitude Completed");
+            if (!passedAptitude) {
+              continue; // Candidate did not pass Aptitude -> skip Interview scheduling
+            }
+          }
+        }
+
         const newSchedule = await Schedule.create({
           studentId,
           recruiterId: recruiter ? recruiter._id : req.user._id,
@@ -495,6 +558,7 @@ const scheduleStage = async (req, res) => {
           date: scheduledDate,
           timeSlot,
           location: location || "Online",
+          meetingUrl: meetingUrl || null,
           status: "Scheduled",
         });
 
@@ -519,6 +583,13 @@ const scheduleStage = async (req, res) => {
       }
     }
 
+    if (createdSchedules.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: `None of the selected candidates are eligible for ${eventType}. Candidates must pass the required prior round first.`,
+      });
+    }
+
     return res.status(201).json({
       success: true,
       message: `Successfully scheduled ${eventType} for ${createdSchedules.length} candidate(s)`,
@@ -534,9 +605,197 @@ const scheduleStage = async (req, res) => {
   }
 };
 
+const scheduleEvent = async (req, res) => {
+  try {
+    const { applicationIds, eventType, date, timeSlot, location, meetingUrl } = req.body;
+
+    if (!Array.isArray(applicationIds) || applicationIds.length === 0 || !eventType || !date || !timeSlot) {
+      return res.status(400).json({
+        success: false,
+        message: "applicationIds (array), eventType, date, and timeSlot are required",
+      });
+    }
+
+    const scheduledDate = new Date(date);
+    const conflicts = [];
+    const applications = [];
+
+    // 1. Check all applications and scan for conflicts
+    for (const appId of applicationIds) {
+      const app = await Application.findById(appId).populate({
+        path: "studentId",
+        populate: { path: "userId", select: "name" }
+      });
+
+      if (!app) {
+        return res.status(404).json({ success: false, message: `Application ${appId} not found` });
+      }
+
+      applications.push(app);
+
+      if (!app.studentId) continue;
+
+      const studentId = app.studentId._id;
+      const conflict = await Schedule.findOne({
+        studentId,
+        date: scheduledDate,
+        timeSlot,
+        status: "Scheduled",
+      }).populate("driveId", "title");
+
+      if (conflict) {
+        const studentName = app.studentId.userId ? app.studentId.userId.name : "Unknown Student";
+        const driveTitle = conflict.driveId ? conflict.driveId.title : "Another Drive";
+        conflicts.push({
+          studentName,
+          eventType: conflict.eventType,
+          timeSlot: conflict.timeSlot,
+          driveTitle,
+        });
+      }
+    }
+
+    // 2. Return 409 Conflict if any overlap exists
+    if (conflicts.length > 0) {
+      const busyStudentNames = conflicts
+        .map(c => `${c.studentName} is busy with ${c.eventType} for ${c.driveTitle} at ${c.timeSlot}`)
+        .join(", ");
+      return res.status(409).json({
+        success: false,
+        message: `Scheduling conflict: ${busyStudentNames}`,
+        conflicts,
+      });
+    }
+
+    const recruiter = await Recruiter.findOne({ userId: req.user._id });
+    const createdSchedules = [];
+
+    // 3. No conflicts — proceed to save schedules for stage-eligible candidates
+    for (const app of applications) {
+      const drive = await JobDrive.findById(app.driveId);
+      if (drive) {
+        if (eventType === "GD" && drive.hasAptitudeTest) {
+          const passedAptitude = app.aptitude && (app.aptitude.status === "Passed" || app.status === "Aptitude Completed");
+          if (!passedAptitude) continue;
+        } else if (eventType === "Interview") {
+          if (drive.hasGD) {
+            const passedGD = app.gd && (app.gd.status === "Shortlisted" || app.status === "GD Completed");
+            if (!passedGD) continue;
+          } else if (drive.hasAptitudeTest) {
+            const passedAptitude = app.aptitude && (app.aptitude.status === "Passed" || app.status === "Aptitude Completed");
+            if (!passedAptitude) continue;
+          }
+        }
+      }
+
+      const newSchedule = await Schedule.create({
+        studentId: app.studentId._id,
+        recruiterId: recruiter ? recruiter._id : req.user._id,
+        driveId: app.driveId,
+        applicationId: app._id,
+        eventType,
+        date: scheduledDate,
+        timeSlot,
+        location: location || "Online",
+        meetingUrl: meetingUrl || null,
+        status: "Scheduled",
+      });
+
+      createdSchedules.push(newSchedule);
+
+      if (eventType === "Aptitude") {
+        app.aptitude.status = "Scheduled";
+        app.aptitude.scheduledDate = scheduledDate;
+        app.status = "Aptitude Scheduled";
+      } else if (eventType === "GD") {
+        app.gd.status = "Scheduled";
+        app.gd.scheduledDate = scheduledDate;
+        app.status = "GD Scheduled";
+      } else if (eventType === "Interview") {
+        app.interview.status = "Scheduled";
+        app.interview.scheduledDate = scheduledDate;
+        app.interview.timeSlot = timeSlot;
+        app.status = "Interview Scheduled";
+      }
+
+      await app.save();
+    }
+
+    if (createdSchedules.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: `None of the selected candidates are eligible for ${eventType}. Candidates must pass the required prior round first.`,
+      });
+    }
+
+    // Trigger notification placeholder
+    console.log(`[Notification Placeholder] Emailed ${createdSchedules.length} candidates about scheduled ${eventType} round.`);
+
+    const scheduledStudentNames = applications.map(app =>
+      app.studentId.userId ? app.studentId.userId.name : "Student"
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully scheduled ${eventType} for selected candidates.`,
+      scheduledStudents: scheduledStudentNames,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to schedule event",
+      error: error.message,
+    });
+  }
+};
+
+const getAvailableStudentsForSlot = async (req, res) => {
+  try {
+    const { driveId, date, timeSlot } = req.body;
+    if (!driveId || !date || !timeSlot) {
+      return res.status(400).json({ success: false, message: "driveId, date, and timeSlot are required" });
+    }
+
+    // Find all applications for the drive
+    const applications = await Application.find({ driveId }).populate({
+      path: "studentId",
+      populate: { path: "userId", select: "name" }
+    });
+
+    const availableApplications = [];
+    const scheduledDate = new Date(date);
+
+    for (const app of applications) {
+      if (!app.studentId) continue;
+
+      const conflict = await Schedule.findOne({
+        studentId: app.studentId._id,
+        date: scheduledDate,
+        timeSlot,
+        status: "Scheduled",
+      });
+
+      if (!conflict) {
+        availableApplications.push(app);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: availableApplications,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to check student availability",
+      error: error.message,
+    });
+  }
+};
+
 const updateRecruiterProfile = async (req, res) => {
   try {
-    const { officialEmail, website, password } = req.body;
+    const { companyName, officialEmail, website, contactPerson, phone, password } = req.body;
     const recruiter = await Recruiter.findOne({ userId: req.user._id });
     
     if (!recruiter) {
@@ -554,6 +813,10 @@ const updateRecruiterProfile = async (req, res) => {
       });
     }
 
+    if (companyName && companyName.trim()) {
+      recruiter.companyName = companyName.trim();
+    }
+
     if (officialEmail) {
       const emailLower = officialEmail.toLowerCase().trim();
       const existingUser = await User.findOne({ email: emailLower, _id: { $ne: req.user._id } });
@@ -569,7 +832,21 @@ const updateRecruiterProfile = async (req, res) => {
     }
 
     if (website !== undefined) {
-      recruiter.website = website.trim() || null;
+      if (!website || !website.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: "Official company website URL is required",
+        });
+      }
+      recruiter.website = website.trim();
+    }
+
+    if (contactPerson && contactPerson.trim()) {
+      user.name = contactPerson.trim();
+    }
+
+    if (phone && phone.trim()) {
+      user.phone = phone.trim();
     }
 
     if (req.file) {
@@ -579,6 +856,8 @@ const updateRecruiterProfile = async (req, res) => {
     if (password && password.trim()) {
       user.password = password;
     }
+
+    recruiter.lastEditedAt = new Date();
 
     await recruiter.save();
     await user.save();
@@ -593,6 +872,7 @@ const updateRecruiterProfile = async (req, res) => {
         website: recruiter.website,
         companyLogo: recruiter.companyLogo,
         isApproved: recruiter.isApproved,
+        registrationStatus: recruiter.registrationStatus,
         status: recruiter.status,
       },
     });
@@ -600,6 +880,351 @@ const updateRecruiterProfile = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to update company profile",
+      error: error.message,
+    });
+  }
+};
+
+
+const getResumeText = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    
+    const application = await Application.findById(applicationId).populate("studentId");
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found",
+      });
+    }
+
+    const student = application.studentId;
+    if (!student || !student.resumePath) {
+      return res.status(404).json({
+        success: false,
+        message: "No resume found for this candidate",
+      });
+    }
+
+    const fs = require("fs");
+    const path = require("path");
+    const { PDFParse } = require("pdf-parse");
+
+    const absolutePath = path.join(__dirname, "..", student.resumePath);
+    if (!fs.existsSync(absolutePath)) {
+      return res.status(404).json({
+        success: false,
+        message: "Resume file not found on server disk",
+      });
+    }
+
+    const dataBuffer = fs.readFileSync(absolutePath);
+    const parser = new PDFParse({ data: dataBuffer });
+    const pdfData = await parser.getText();
+    const resumeText = pdfData.text || "";
+
+    return res.status(200).json({
+      success: true,
+      text: resumeText,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to parse candidate resume text",
+      error: error.message,
+    });
+  }
+};
+
+const declareAptitudeResults = async (req, res) => {
+  try {
+    const { applicationIds, result, score, feedback } = req.body;
+
+    if (!Array.isArray(applicationIds) || applicationIds.length === 0 || !result) {
+      return res.status(400).json({
+        success: false,
+        message: "applicationIds (array) and result are required",
+      });
+    }
+
+    if (result !== "Passed" && result !== "Failed") {
+      return res.status(400).json({
+        success: false,
+        message: "Result must be either 'Passed' or 'Failed'",
+      });
+    }
+
+    if (score === undefined || score === null || isNaN(score) || score < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Marks / Score is required and must be a valid number >= 0",
+      });
+    }
+
+    if (!feedback || !feedback.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Performance Feedback / Explanation is required",
+      });
+    }
+
+    const recruiter = await Recruiter.findOne({ userId: req.user._id });
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    const applications = await Application.find({ _id: { $in: applicationIds } }).populate("driveId");
+
+    for (const app of applications) {
+      if (!app.driveId || app.driveId.recruiterId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized to declare results for some of these applications",
+        });
+      }
+
+      if (app.status !== "Aptitude Scheduled" && app.status !== "Aptitude Completed") {
+        return res.status(400).json({
+          success: false,
+          message: "You cannot mark results for this student as they haven't been scheduled yet.",
+        });
+      }
+    }
+
+    for (const app of applications) {
+      app.aptitude.status = result;
+      app.aptitude.markedBy = recruiter._id;
+      app.aptitude.markedAt = new Date();
+      if (score !== undefined) {
+        app.aptitude.score = score;
+      }
+      if (feedback !== undefined) {
+        app.aptitude.feedback = feedback;
+      }
+      app.status = "Aptitude Completed";
+      await app.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `${applications.length} students marked as ${result} successfully!`,
+      count: applications.length,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to declare Aptitude results",
+      error: error.message,
+    });
+  }
+};
+
+const declareGDResults = async (req, res) => {
+  try {
+    const { applicationIds, result, feedback, score } = req.body;
+
+    if (!Array.isArray(applicationIds) || applicationIds.length === 0 || !result) {
+      return res.status(400).json({
+        success: false,
+        message: "applicationIds (array) and result are required",
+      });
+    }
+
+    if (result !== "Shortlisted" && result !== "Rejected") {
+      return res.status(400).json({
+        success: false,
+        message: "Result must be either 'Shortlisted' or 'Rejected'",
+      });
+    }
+
+    if (score === undefined || score === null || isNaN(score) || score < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Marks / Score is required and must be a valid number >= 0",
+      });
+    }
+
+    if (!feedback || !feedback.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Performance Feedback / Explanation is required",
+      });
+    }
+
+    const recruiter = await Recruiter.findOne({ userId: req.user._id });
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    const applications = await Application.find({ _id: { $in: applicationIds } }).populate("driveId");
+
+    for (const app of applications) {
+      if (!app.driveId || app.driveId.recruiterId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized to declare results for some of these applications",
+        });
+      }
+
+      if (app.status !== "GD Scheduled" && app.status !== "GD Completed") {
+        return res.status(400).json({
+          success: false,
+          message: "You cannot mark results for this student as they haven't been scheduled yet.",
+        });
+      }
+    }
+
+    for (const app of applications) {
+      app.gd.status = result;
+      app.gd.markedBy = recruiter._id;
+      app.gd.markedAt = new Date();
+      if (score !== undefined && score !== null) {
+        app.gd.score = score;
+      }
+      if (feedback !== undefined) {
+        app.gd.feedback = feedback.trim();
+      }
+      app.status = "GD Completed";
+      await app.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `${applications.length} students marked as ${result} successfully!`,
+      count: applications.length,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to declare GD results",
+      error: error.message,
+    });
+  }
+};
+
+const declareInterviewResults = async (req, res) => {
+  try {
+    const { applicationIds, result, feedback, score } = req.body;
+
+    if (!Array.isArray(applicationIds) || applicationIds.length === 0 || !result) {
+      return res.status(400).json({
+        success: false,
+        message: "applicationIds (array) and result are required",
+      });
+    }
+
+    if (result !== "Selected" && result !== "Rejected" && result !== "Waitlisted") {
+      return res.status(400).json({
+        success: false,
+        message: "Result must be 'Selected', 'Rejected', or 'Waitlisted'",
+      });
+    }
+
+    if (score === undefined || score === null || isNaN(score) || score < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Marks / Score is required and must be a valid number >= 0",
+      });
+    }
+
+    if (!feedback || !feedback.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Performance Feedback / Explanation is required",
+      });
+    }
+
+    const recruiter = await Recruiter.findOne({ userId: req.user._id });
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    const applications = await Application.find({ _id: { $in: applicationIds } }).populate("driveId");
+
+    for (const app of applications) {
+      if (!app.driveId || app.driveId.recruiterId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized to declare results for some of these applications",
+        });
+      }
+
+      if (app.status !== "Interview Scheduled" && app.status !== "Interview Completed") {
+        return res.status(400).json({
+          success: false,
+          message: "You cannot mark results for this student as they haven't been scheduled yet.",
+        });
+      }
+    }
+
+    for (const app of applications) {
+      app.interview.status = "Completed";
+      app.interview.result = result;
+      app.interview.markedBy = recruiter._id;
+      app.interview.markedAt = new Date();
+      if (score !== undefined && score !== null) {
+        app.interview.score = score;
+      }
+      if (feedback !== undefined) {
+        app.interview.feedback = feedback.trim();
+      }
+      app.status = "Interview Completed";
+      await app.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `${applications.length} students marked as ${result} successfully!`,
+      count: applications.length,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to declare Interview results",
+      error: error.message,
+    });
+  }
+};
+
+// POST /api/recruiter/request-reapproval — on-hold recruiter submits for re-approval after editing
+const requestReapproval = async (req, res) => {
+  try {
+    const recruiter = await Recruiter.findOne({ userId: req.user._id });
+    if (!recruiter) {
+      return res.status(404).json({ success: false, message: "Recruiter profile not found" });
+    }
+
+    if (recruiter.registrationStatus !== "on_hold") {
+      return res.status(400).json({
+        success: false,
+        message: "Only on-hold recruiters can request re-approval.",
+      });
+    }
+
+    recruiter.registrationStatus = "pending";
+    recruiter.isApproved = false;
+    recruiter.status = "Pending";
+    recruiter.holdFeedback = { message: "", suggestions: "", providedBy: null, providedAt: null };
+    recruiter.lastEditedAt = new Date();
+    await recruiter.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Re-approval request submitted. The TPO will review your updated profile.",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to submit re-approval request",
       error: error.message,
     });
   }
@@ -618,5 +1243,13 @@ module.exports = {
   markGDResult,
   markInterviewResult,
   scheduleStage,
+  scheduleEvent,
+  getAvailableStudentsForSlot,
   updateRecruiterProfile,
+  requestReapproval,
+  getResumeText,
+  declareAptitudeResults,
+  declareGDResults,
+  declareInterviewResults,
 };
+

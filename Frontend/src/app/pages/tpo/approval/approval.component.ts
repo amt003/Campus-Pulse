@@ -16,32 +16,62 @@ export class TpoApprovalComponent implements OnInit {
 
   protected isLoading = signal<boolean>(true);
   protected isRefreshing = signal<boolean>(false);
-  protected pendingRecruiters = signal<PendingRecruiter[]>([]);
+  
+  // Tab lists
+  protected pendingList = signal<PendingRecruiter[]>([]);
+  protected onHoldList = signal<PendingRecruiter[]>([]);
+  protected approvedList = signal<PendingRecruiter[]>([]);
+  protected activeTab = signal<'pending' | 'on_hold' | 'approved'>('pending');
+
   protected expandedRecruiterId = signal<string | null>(null);
 
   // Modals & Suggestions state
   protected selectedRecruiter = signal<PendingRecruiter | null>(null);
   protected isApproveModalOpen = signal<boolean>(false);
-  protected isRejectModalOpen = signal<boolean>(false);
   protected isProcessing = signal<boolean>(false);
 
   protected suggestionInputs = signal<Record<string, string>>({});
   protected isSendingSuggestion = signal<string | null>(null);
   protected suggestionSuccessMsg = signal<Record<string, string>>({});
+  protected reVerifyingId = signal<string | null>(null);
+  protected reVerifyingMcaId = signal<string | null>(null);
+  protected isHoldProcessing = signal<string | null>(null);
+  protected holdErrorMsg = signal<Record<string, string>>({});
 
   ngOnInit(): void {
-    this.loadPendingRecruiters();
+    this.loadAllRecruiters();
   }
 
-  protected loadPendingRecruiters(isInitial = true): void {
+  protected loadAllRecruiters(isInitial = true): void {
     if (isInitial) this.isLoading.set(true);
     this.isRefreshing.set(true);
 
     this.tpoService.getPendingRecruiters().subscribe({
-      next: (data) => {
-        this.pendingRecruiters.set(data || []);
-        this.isLoading.set(false);
-        this.isRefreshing.set(false);
+      next: (pendingData) => {
+        // Categorize pending vs on-hold based on registrationStatus or legacy isApproved/status
+        const pending = (pendingData || []).filter(
+          r => r.registrationStatus === 'pending' || (!r.registrationStatus && !r.isApproved && r.status !== 'OnHold' && r.status !== 'Rejected')
+        );
+        const onHold = (pendingData || []).filter(
+          r => r.registrationStatus === 'on_hold' || r.status === 'OnHold' || r.status === 'Rejected'
+        );
+        
+        this.pendingList.set(pending);
+        this.onHoldList.set(onHold);
+
+        // Fetch approved recruiters
+        this.tpoService.getApprovedRecruiters().subscribe({
+          next: (approvedData) => {
+            this.approvedList.set(approvedData || []);
+            this.isLoading.set(false);
+            this.isRefreshing.set(false);
+          },
+          error: (err) => {
+            console.error('Failed to load approved recruiters:', err);
+            this.isLoading.set(false);
+            this.isRefreshing.set(false);
+          }
+        });
       },
       error: (err) => {
         console.error('Failed to load pending recruiters:', err);
@@ -49,6 +79,13 @@ export class TpoApprovalComponent implements OnInit {
         this.isRefreshing.set(false);
       },
     });
+  }
+
+  protected get currentRecruitersList(): PendingRecruiter[] {
+    const tab = this.activeTab();
+    if (tab === 'pending') return this.pendingList();
+    if (tab === 'on_hold') return this.onHoldList();
+    return this.approvedList();
   }
 
   protected toggleExpand(id: string): void {
@@ -79,32 +116,7 @@ export class TpoApprovalComponent implements OnInit {
       next: () => {
         this.isProcessing.set(false);
         this.closeApproveModal();
-        this.loadPendingRecruiters(false);
-      },
-      error: () => this.isProcessing.set(false),
-    });
-  }
-
-  protected openRejectModal(rec: PendingRecruiter): void {
-    this.selectedRecruiter.set(rec);
-    this.isRejectModalOpen.set(true);
-  }
-
-  protected closeRejectModal(): void {
-    this.isRejectModalOpen.set(false);
-    this.selectedRecruiter.set(null);
-  }
-
-  protected confirmReject(): void {
-    const rec = this.selectedRecruiter();
-    if (!rec) return;
-
-    this.isProcessing.set(true);
-    this.tpoService.rejectRecruiter(rec._id).subscribe({
-      next: () => {
-        this.isProcessing.set(false);
-        this.closeRejectModal();
-        this.loadPendingRecruiters(false);
+        this.loadAllRecruiters(false);
       },
       error: () => this.isProcessing.set(false),
     });
@@ -133,19 +145,27 @@ export class TpoApprovalComponent implements OnInit {
   }
 
   protected getFormattedBreakdown(rec: PendingRecruiter) {
-    const age = rec.verificationDetails?.whoisData?.domainAgeYears;
-    const domainAge = age ? (age >= 10 ? 50 : age >= 3 ? 40 : 30) : 30;
+    // Always use the backend-computed trustScore as the authoritative total
+    const total = rec.trustScore ?? 0;
+    const storedBreakdown = rec.verificationDetails?.breakdown;
+    const hasRealVerification = rec.verificationDetails?.verifiedAt != null;
 
-    let emailMatch = 15;
-    const officialEmail = (rec.officialEmail || '').toLowerCase();
-    const domain = this.getFormattedDomain(rec).toLowerCase();
-    if (officialEmail && domain && (officialEmail.endsWith(domain) || domain.includes(officialEmail.split('@')[1] || ''))) {
-      emailMatch = 50;
+    if (hasRealVerification && storedBreakdown) {
+      return {
+        domainAge: storedBreakdown.domainAge ?? 0,
+        emailMatch: storedBreakdown.emailMatch ?? 0,
+        mca: (storedBreakdown as any).mca ?? 0,
+        total,
+      };
     }
 
-    const total = Math.min(100, domainAge + emailMatch);
+    // Fallback: estimate sub-scores from WHOIS data if real verification not yet run
+    const age = rec.verificationDetails?.whoisData?.domainAgeYears;
+    const domainAge = age ? (age >= 10 ? 50 : age >= 3 ? 40 : 30) : 30;
+    const emailMatch = Math.max(0, Math.min(50, total - domainAge));
+    const mca = Math.max(0, total - (domainAge + emailMatch));
 
-    return { domainAge, emailMatch, total };
+    return { domainAge, emailMatch, mca, total };
   }
 
   protected updateSuggestionInput(recId: string, val: string): void {
@@ -176,6 +196,69 @@ export class TpoApprovalComponent implements OnInit {
       error: (err) => {
         console.error('Failed to send suggestion:', err);
         this.isSendingSuggestion.set(null);
+      },
+    });
+  }
+
+  protected confirmHold(recId: string): void {
+    const feedback = this.suggestionInputs()[recId];
+    if (!feedback || !feedback.trim()) {
+      this.holdErrorMsg.update((prev) => ({
+        ...prev,
+        [recId]: 'Please provide feedback before putting the recruiter on hold.',
+      }));
+      return;
+    }
+
+    this.holdErrorMsg.update((prev) => { const n = {...prev}; delete n[recId]; return n; });
+    this.isHoldProcessing.set(recId);
+
+    this.tpoService.putRecruiterOnHold(recId, { feedback: feedback.trim() }).subscribe({
+      next: () => {
+        this.isHoldProcessing.set(null);
+        this.suggestionInputs.update((prev) => ({ ...prev, [recId]: '' }));
+        this.loadAllRecruiters(false);
+      },
+      error: (err) => {
+        console.error('Failed to put recruiter on hold:', err);
+        this.isHoldProcessing.set(null);
+        this.holdErrorMsg.update((prev) => ({
+          ...prev,
+          [recId]: err?.error?.message || 'Failed to put recruiter on hold.',
+        }));
+      },
+    });
+  }
+
+  protected getMcaLookupUrl(rec: PendingRecruiter): string {
+    const query = rec.verificationDetails?.mcaData?.cin || rec.companyName || '';
+    return `https://www.zaubacorp.com/companysearchresults?search=${encodeURIComponent(query)}`;
+  }
+
+  protected reVerify(recId: string): void {
+    this.reVerifyingId.set(recId);
+    this.tpoService.reVerifyRecruiter(recId).subscribe({
+      next: () => {
+        this.reVerifyingId.set(null);
+        this.loadAllRecruiters(false);
+      },
+      error: (err) => {
+        console.error('Re-verification failed:', err);
+        this.reVerifyingId.set(null);
+      },
+    });
+  }
+
+  protected mcaReVerify(recId: string): void {
+    this.reVerifyingMcaId.set(recId);
+    this.tpoService.reverifyRecruiter(recId).subscribe({
+      next: () => {
+        this.reVerifyingMcaId.set(null);
+        this.loadAllRecruiters(false);
+      },
+      error: (err) => {
+        console.error('MCA Re-verification failed:', err);
+        this.reVerifyingMcaId.set(null);
       },
     });
   }

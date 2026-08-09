@@ -85,10 +85,16 @@ export class TpoDashboardComponent implements OnInit, OnDestroy {
   ];
 
   private readonly zeroBranchStats: BranchStat[] = [
+    { branch: 'BCA', total: 0, placed: 0, percentage: 0 },
+    { branch: 'MCA', total: 0, placed: 0, percentage: 0 },
+    { branch: 'INMCA', total: 0, placed: 0, percentage: 0 },
+    { branch: 'ECE', total: 0, placed: 0, percentage: 0 },
     { branch: 'CSE', total: 0, placed: 0, percentage: 0 },
     { branch: 'IT', total: 0, placed: 0, percentage: 0 },
-    { branch: 'ECE', total: 0, placed: 0, percentage: 0 },
-    { branch: 'Mechanical', total: 0, placed: 0, percentage: 0 },
+    { branch: 'EEE', total: 0, placed: 0, percentage: 0 },
+    { branch: 'ME', total: 0, placed: 0, percentage: 0 },
+    { branch: 'CE', total: 0, placed: 0, percentage: 0 },
+    { branch: 'AD', total: 0, placed: 0, percentage: 0 },
   ];
 
   private readonly zeroOfferTrends: OfferTrends = {

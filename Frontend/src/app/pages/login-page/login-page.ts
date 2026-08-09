@@ -3,12 +3,13 @@ import {
   Component,
   ElementRef,
   OnDestroy,
+  OnInit,
   inject,
   signal,
 } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 
 type UserRole = 'student' | 'recruiter' | 'tpo';
@@ -20,10 +21,11 @@ type UserRole = 'student' | 'recruiter' | 'tpo';
   templateUrl: './login-page.html',
   styleUrl: './login-page.css',
 })
-export class LoginPage implements AfterViewInit, OnDestroy {
+export class LoginPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly elRef = inject(ElementRef);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected selectedRole = signal<UserRole>('student');
   protected email = '';
@@ -32,7 +34,22 @@ export class LoginPage implements AfterViewInit, OnDestroy {
   protected isLoading = false;
   protected rememberMe = false;
   protected errorMessage = signal<string | null>(null);
+  protected successMessage = signal<string | null>(null);
   protected tpoSuggestions = signal<any[]>([]);
+  protected isOnHold = signal<boolean>(false);
+  protected holdFeedback = signal<string>('');
+  protected holdSuggestions = signal<string>('');
+  protected holdCompanyName = signal<string>('');
+
+  // Forgot password flow states
+  protected isForgotModalOpen = signal<boolean>(false);
+  protected forgotEmail = '';
+  protected resetCode = '';
+  protected resetNewPassword = '';
+  protected forgotStep = signal<number>(1);
+  protected forgotIsLoading = signal<boolean>(false);
+  protected forgotError = signal<string | null>(null);
+  protected forgotSuccess = signal<string | null>(null);
 
   private particleInterval?: ReturnType<typeof setInterval>;
 
@@ -43,6 +60,54 @@ export class LoginPage implements AfterViewInit, OnDestroy {
   ];
 
   protected googleClientId = signal<string | null>(null);
+
+  ngOnInit(): void {
+    // 1. Auto-redirect if session/token already exists
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        const role = (user.role || '').toLowerCase();
+        if (role === 'tpo') {
+          this.router.navigate(['/tpo/dashboard']);
+          return;
+        } else if (role === 'recruiter') {
+          this.router.navigate(['/recruiter/dashboard']);
+          return;
+        } else if (role === 'student') {
+          this.router.navigate(['/student/dashboard']);
+          return;
+        }
+      } catch (e) {
+        console.error('Error auto-redirecting on init:', e);
+      }
+    }
+
+    // 2. Pre-fill email/role if "Remember me" was checked on last login
+    const rememberedEmail = localStorage.getItem('remembered_email');
+    const rememberedRole = localStorage.getItem('remembered_role');
+    if (rememberedEmail) {
+      this.email = rememberedEmail;
+      this.rememberMe = true;
+      if (rememberedRole) {
+        this.selectedRole.set(rememberedRole as UserRole);
+      }
+    }
+
+    // 3. Check for reapproval success message query param
+    this.route.queryParams.subscribe((params) => {
+      if (params['reapprovalSuccess'] === 'true') {
+        this.successMessage.set('Your company profile update and re-approval request have been submitted successfully. The TPO will review it shortly.');
+        this.selectedRole.set('recruiter');
+        // Clear query parameters
+        this.router.navigate([], {
+          queryParams: { reapprovalSuccess: null },
+          queryParamsHandling: 'merge'
+        });
+      }
+    });
+  }
 
   ngAfterViewInit(): void {
     this.spawnParticles();
@@ -106,6 +171,14 @@ export class LoginPage implements AfterViewInit, OnDestroy {
         const storage = this.rememberMe ? localStorage : sessionStorage;
         storage.setItem('token', res.token);
         storage.setItem('user', JSON.stringify(res.user));
+
+        if (this.rememberMe) {
+          localStorage.setItem('remembered_email', res.user.email || '');
+          localStorage.setItem('remembered_role', this.selectedRole());
+        } else {
+          localStorage.removeItem('remembered_email');
+          localStorage.removeItem('remembered_role');
+        }
 
         const role = (res.user.role || '').toLowerCase();
         if (role === 'tpo') {
@@ -237,6 +310,14 @@ export class LoginPage implements AfterViewInit, OnDestroy {
         storage.setItem('token', res.token);
         storage.setItem('user', JSON.stringify(res.user));
 
+        if (this.rememberMe) {
+          localStorage.setItem('remembered_email', this.email);
+          localStorage.setItem('remembered_role', this.selectedRole());
+        } else {
+          localStorage.removeItem('remembered_email');
+          localStorage.removeItem('remembered_role');
+        }
+
         const role = (res.user.role || this.selectedRole()).toLowerCase();
 
         if (role === 'tpo') {
@@ -253,6 +334,24 @@ export class LoginPage implements AfterViewInit, OnDestroy {
         this.isLoading = false;
         const errBody = err.error || {};
         const msg = errBody.message || 'Login failed. Please check your credentials.';
+
+        // Handle ON_HOLD status
+        if (errBody.status === 'ON_HOLD') {
+          this.isOnHold.set(true);
+          this.holdFeedback.set(errBody.feedback || '');
+          this.holdSuggestions.set(errBody.suggestions || '');
+          this.holdCompanyName.set(errBody.companyName || '');
+          this.errorMessage.set(null);
+          this.tpoSuggestions.set([]);
+          
+          if (errBody.token) {
+            const storage = this.rememberMe ? localStorage : sessionStorage;
+            storage.setItem('token', errBody.token);
+          }
+          return;
+        }
+
+        this.isOnHold.set(false);
         this.errorMessage.set(msg);
         if (errBody.tpoSuggestions && Array.isArray(errBody.tpoSuggestions)) {
           this.tpoSuggestions.set(errBody.tpoSuggestions);
@@ -279,6 +378,69 @@ export class LoginPage implements AfterViewInit, OnDestroy {
       tpo: 'linear-gradient(135deg, #0a2d45 0%, #004f7a 60%, #006fa0 100%)',
     };
     return map[this.selectedRole()];
+  }
+
+  protected openForgotModal(): void {
+    this.forgotEmail = '';
+    this.resetCode = '';
+    this.resetNewPassword = '';
+    this.forgotStep.set(1);
+    this.forgotError.set(null);
+    this.forgotSuccess.set(null);
+    this.isForgotModalOpen.set(true);
+  }
+
+  protected closeForgotModal(): void {
+    this.isForgotModalOpen.set(false);
+  }
+
+  protected submitForgotEmail(): void {
+    if (!this.forgotEmail.trim()) return;
+    this.forgotIsLoading.set(true);
+    this.forgotError.set(null);
+    this.forgotSuccess.set(null);
+
+    this.http.post<any>('http://localhost:5000/api/auth/forgot-password', {
+      email: this.forgotEmail.trim()
+    }).subscribe({
+      next: (res) => {
+        this.forgotIsLoading.set(false);
+        this.forgotStep.set(2);
+        this.forgotSuccess.set('Reset code has been sent! Check your server console (and response body in local testing).');
+        // Pre-fill reset code for frictionless development
+        if (res.code) {
+          this.resetCode = res.code;
+        }
+      },
+      error: (err) => {
+        this.forgotIsLoading.set(false);
+        this.forgotError.set(err.error?.message || 'Failed to send reset code.');
+      }
+    });
+  }
+
+  protected submitResetPassword(): void {
+    if (!this.forgotEmail.trim() || !this.resetCode.trim() || !this.resetNewPassword.trim()) return;
+    this.forgotIsLoading.set(true);
+    this.forgotError.set(null);
+    this.forgotSuccess.set(null);
+
+    this.http.post<any>('http://localhost:5000/api/auth/reset-password', {
+      email: this.forgotEmail.trim(),
+      code: this.resetCode.trim(),
+      newPassword: this.resetNewPassword.trim()
+    }).subscribe({
+      next: (res) => {
+        this.forgotIsLoading.set(false);
+        this.closeForgotModal();
+        this.successMessage.set('Password reset successfully. You can now login with your new password.');
+        this.password = ''; // Clear password field
+      },
+      error: (err) => {
+        this.forgotIsLoading.set(false);
+        this.forgotError.set(err.error?.message || 'Failed to reset password.');
+      }
+    });
   }
 
   ngOnDestroy(): void {

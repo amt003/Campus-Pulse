@@ -1,0 +1,83 @@
+<div class="tab-content-panel">
+  <h2 style="font-size: 20px; font-weight: 800; color: var(--primary); margin: 0 0 20px 0;">My Job Offers</h2>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading your offers...</p>
+    </div>
+  } @else {
+    @if (studentOffers().length === 0) {
+      <div class="empty-drives">
+        <span class="material-symbols-outlined empty-icon">workspace_premium</span>
+        <p>No active job offers released yet. Keep applying and doing your best!</p>
+      </div>
+    }
+
+    @if (studentOffers().length > 0) {
+      <div class="offers-grid">
+        @for (app of studentOffers(); track app._id) {
+        <div class="offer-card">
+          <!-- Offer Card Header -->
+          <div class="offer-header">
+            <div>
+              <h4 class="offer-title">{{ app.driveId?.title || 'Job Offer' }}</h4>
+              <p class="offer-company">{{ app.driveId?.companyName || 'Campus Recruitment Program' }}</p>
+            </div>
+            <span class="status-pill" 
+              [class.pill-open]="app.offer?.status === 'Accepted' || app.status === 'Placed'"
+              [class.pill-closed]="app.offer?.status === 'Declined'"
+              [class.pill-pending]="app.offer?.status === 'Sent' || app.offer?.status === 'Released' || app.offer?.status === 'Viewed'">
+              {{ app.offer?.status === 'Sent' || app.offer?.status === 'Released' || app.offer?.status === 'Viewed' ? 'Pending Action' : app.offer?.status }}
+            </span>
+          </div>
+
+          <!-- CTC / Value -->
+          <div class="ctc-box">
+            <span class="ctc-label">Offered CTC</span>
+            <strong class="ctc-value">₹{{ getCTCInLpa(app.driveId?.ctc || 0) }}</strong>
+          </div>
+
+          <!-- Details -->
+          <div class="details-box">
+            <div class="detail-row">
+              <span>Released Date:</span>
+              <strong>{{ (app.offer?.uploadedDate || app.createdAt) | date:'mediumDate' }}</strong>
+            </div>
+            @if (app.offer?.acceptedAt) {
+              <div class="detail-row">
+                <span>Accepted Date:</span>
+                <strong style="color: var(--success);">{{ app.offer.acceptedAt | date:'mediumDate' }}</strong>
+              </div>
+            }
+            @if (app.offer?.declinedAt) {
+              <div class="detail-row">
+                <span>Declined Date:</span>
+                <strong style="color: var(--danger);">{{ app.offer.declinedAt | date:'mediumDate' }}</strong>
+              </div>
+            }
+            @if (app.offer?.declineReason) {
+              <div class="decline-box">
+                <span style="font-weight: 700;">Decline Reason:</span>
+                <span>{{ app.offer.declineReason }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Action buttons -->
+          @if (app.offer?.status === 'Sent' || app.offer?.status === 'Released' || app.offer?.status === 'Viewed') {
+            <div class="action-buttons">
+              <button type="button" class="btn-decline" (click)="declineSimulatedOffer(app._id)">
+                Decline
+              </button>
+              <button type="button" class="btn-accept" (click)="acceptSimulatedOffer(app._id)">
+                Accept Offer
+              </button>
+            </div>
+          }
+        </div>
+        }
+      </div>
+    }
+  }
+</div>

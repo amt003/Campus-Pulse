@@ -1,0 +1,219 @@
+:host {
+  --primary:   #1A5276;
+  --secondary: #006497;
+  --success:   #27AE60;
+  --warning:   #F39C12;
+  --danger:    #E74C3C;
+  --bg-page:   #F8F9FA;
+  --surface:   #FFFFFF;
+  --text-dark: #1C2833;
+  --text-muted:#5D6D7E;
+  --border:    #E5E8E8;
+  --surface-low: #edf4ff;
+
+  display: block;
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  background: var(--bg-page);
+  min-height: 100vh;
+  color: var(--text-dark);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Header */
+.rec-header {
+  height: 70px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.brand-logo {
+  width: 38px;
+  height: 38px;
+  background: var(--primary);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.brand-logo .logo-icon {
+  font-size: 24px;
+}
+
+.brand-title {
+  display: flex;
+  flex-direction: column;
+  margin-right: 16px;
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.brand-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.company-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #F4F6F7;
+  padding: 6px 16px 6px 8px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+}
+
+.company-logo-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.company-mini-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: white;
+}
+
+.default-logo-icon {
+  font-size: 18px;
+}
+
+.company-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1C2833;
+}
+
+.btn-logout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-logout:hover {
+  background: rgba(231, 76, 60, 0.08);
+  border-color: rgba(231, 76, 60, 0.2);
+}
+
+/* ========================================================
+   STUDENT SIDEBAR NAVIGATION
+   ======================================================== */
+.student-sidebar {
+  width: 240px;
+  background: white;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  gap: 8px;
+  flex-shrink: 0;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.student-sidebar.collapsed {
+  width: 76px;
+  padding: 24px 10px;
+}
+
+.student-sidebar.collapsed .sidebar-link {
+  justify-content: center;
+  padding: 12px;
+  gap: 0;
+}
+
+.student-sidebar.collapsed .sidebar-link span:not(.material-symbols-outlined) {
+  display: none;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-link:hover {
+  background: #F4F6F7;
+  color: var(--primary);
+}
+
+.sidebar-link.active-link {
+  background: #EBF5FB;
+  color: var(--primary);
+  font-weight: 750;
+}
+
+.sidebar-link span.material-symbols-outlined {
+  font-size: 20px;
+}
+
+@media (max-width: 768px) {
+  .student-sidebar {
+    width: 70px;
+    padding: 24px 8px;
+  }
+  .sidebar-link span:not(.material-symbols-outlined) {
+    display: none;
+  }
+  .sidebar-link {
+    justify-content: center;
+    padding: 12px;
+  }
+}

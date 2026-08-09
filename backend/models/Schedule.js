@@ -41,6 +41,11 @@ const scheduleSchema = new mongoose.Schema(
       default: "Online",
       trim: true,
     },
+    meetingUrl: {
+      type: String,
+      default: null,
+      trim: true,
+    },
     status: {
       type: String,
       enum: ["Scheduled", "Completed", "Cancelled"],

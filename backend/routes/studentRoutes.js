@@ -8,6 +8,7 @@ const {
   applyToDrive,
   getStudentApplications,
   getApplicationById,
+  getStudentSchedule,
 } = require("../controllers/studentController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
@@ -18,11 +19,12 @@ router.use(protect, authorizeRoles("Student"));
 
 router.post("/profile", createStudentProfile);
 router.get("/profile", getStudentProfile);
-router.put("/profile", updateStudentProfile);
+router.put("/profile", upload.uploadImage.single("profilePic"), updateStudentProfile);
 router.post("/resume", upload.single("resume"), uploadResume);
 router.get("/drives", getEligibleDrives);
 router.post("/apply/:driveId", applyToDrive);
 router.get("/applications", getStudentApplications);
 router.get("/application/:id", getApplicationById);
+router.get("/schedule", getStudentSchedule);
 
 module.exports = router;

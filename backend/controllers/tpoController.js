@@ -3,6 +3,7 @@ const Student = require("../models/Student");
 const Recruiter = require("../models/Recruiter");
 const JobDrive = require("../models/JobDrive");
 const Application = require("../models/Application");
+const verificationService = require("../services/verificationService");
 
 // 0. GET /api/tpo/students — Full students list with filters & pagination
 const getStudentsList = async (req, res) => {
@@ -311,7 +312,9 @@ const approveRecruiter = async (req, res) => {
 
     recruiter.isApproved = true;
     recruiter.status = "Approved";
+    recruiter.registrationStatus = "approved";
     recruiter.verifiedAt = new Date();
+    recruiter.holdFeedback = { message: "", suggestions: "", providedBy: null, providedAt: null };
     await recruiter.save();
 
     if (recruiter.userId) {
@@ -332,7 +335,8 @@ const approveRecruiter = async (req, res) => {
   }
 };
 
-// 8. PUT /api/tpo/recruiter/:id/reject
+
+// 8. PUT /api/tpo/recruiter/:id/reject (kept for backward compat, not exposed in UI)
 const rejectRecruiter = async (req, res) => {
   try {
     const recruiter = await Recruiter.findById(req.params.id);
@@ -346,6 +350,7 @@ const rejectRecruiter = async (req, res) => {
 
     recruiter.isApproved = false;
     recruiter.status = "Rejected";
+    recruiter.registrationStatus = "on_hold";
     await recruiter.save();
 
     if (recruiter.userId) {
@@ -361,6 +366,56 @@ const rejectRecruiter = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to reject recruiter",
+      error: error.message,
+    });
+  }
+};
+
+// 8b. PUT /api/tpo/recruiter/:id/hold — puts recruiter on hold with feedback
+const putRecruiterOnHold = async (req, res) => {
+  try {
+    const { feedback, suggestions } = req.body;
+
+    if (!feedback || !feedback.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Feedback message is required when putting a recruiter on hold.",
+      });
+    }
+
+    const recruiter = await Recruiter.findById(req.params.id);
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    recruiter.isApproved = false;
+    recruiter.status = "OnHold";
+    recruiter.registrationStatus = "on_hold";
+    recruiter.holdFeedback = {
+      message: feedback.trim(),
+      suggestions: (suggestions || "").trim(),
+      providedBy: req.user._id,
+      providedAt: new Date(),
+    };
+    await recruiter.save();
+
+    // Keep user account active so they can access the edit-profile page
+    if (recruiter.userId) {
+      await User.findByIdAndUpdate(recruiter.userId, { isActive: true });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Recruiter placed on hold successfully. Feedback has been recorded.",
+      recruiter,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to put recruiter on hold",
       error: error.message,
     });
   }
@@ -531,6 +586,113 @@ const toggleRecruiterStatus = async (req, res) => {
   }
 };
 
+// Re-verify a recruiter's trust score (useful for existing recruiters where WHOIS timed out)
+const reVerifyRecruiter = async (req, res) => {
+  try {
+    const recruiter = await Recruiter.findById(req.params.id);
+    if (!recruiter) {
+      return res.status(404).json({ success: false, message: "Recruiter not found" });
+    }
+
+    const verification = await verificationService.calculateTrustScore({
+      website: recruiter.website,
+      officialEmail: recruiter.officialEmail,
+      companyName: recruiter.companyName,
+    });
+
+    console.log(`[Re-verify] ${recruiter.companyName}: trustScore=${verification.trustScore}, domainAge=${verification.breakdown.domainAge}, emailMatch=${verification.breakdown.emailMatch}`);
+    console.log(`[Re-verify] WHOIS: domain=${verification.whoisData.domain}, ageYears=${verification.whoisData.domainAgeYears}, registrar=${verification.whoisData.registrar}`);
+
+    // Use findByIdAndUpdate with $set for reliable nested object persistence
+    const updated = await Recruiter.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          trustScore: verification.trustScore,
+          "verificationDetails.breakdown.domainAge": verification.breakdown.domainAge,
+          "verificationDetails.breakdown.emailMatch": verification.breakdown.emailMatch,
+          "verificationDetails.whoisData.domain": verification.whoisData.domain,
+          "verificationDetails.whoisData.creationDate": verification.whoisData.creationDate,
+          "verificationDetails.whoisData.domainAgeYears": verification.whoisData.domainAgeYears,
+          "verificationDetails.whoisData.registrar": verification.whoisData.registrar,
+          "verificationDetails.whoisData.registrantCountry": verification.whoisData.registrantCountry,
+          "verificationDetails.whoisData.isValid": verification.whoisData.isValid,
+          "verificationDetails.verifiedAt": verification.verifiedAt,
+        },
+      },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Trust score re-verified successfully",
+      trustScore: updated.trustScore,
+      breakdown: updated.verificationDetails.breakdown,
+      whoisData: updated.verificationDetails.whoisData,
+    });
+  } catch (error) {
+    console.error("[Re-verify] Error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to re-verify recruiter",
+      error: error.message,
+    });
+  }
+};
+
+// Phase 5: Re-verify recruiter using both WHOIS and Indian BizVerify MCA MCP server
+const reverifyRecruiter = async (req, res) => {
+  try {
+    const recruiter = await Recruiter.findById(req.params.id);
+    if (!recruiter) {
+      return res.status(404).json({ success: false, message: "Recruiter not found" });
+    }
+
+    const verification = await verificationService.calculateTrustScore({
+      website: recruiter.website,
+      officialEmail: recruiter.officialEmail,
+      companyName: recruiter.companyName,
+    });
+
+    console.log(`[MCA & WHOIS Re-verify] ${recruiter.companyName}: trustScore=${verification.trustScore}, mcaScore=${verification.breakdown.mca}`);
+
+    const updated = await Recruiter.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          trustScore: verification.trustScore,
+          "verificationDetails.breakdown.domainAge": verification.breakdown.domainAge,
+          "verificationDetails.breakdown.emailMatch": verification.breakdown.emailMatch,
+          "verificationDetails.breakdown.mca": verification.breakdown.mca,
+          "verificationDetails.whoisData.domain": verification.whoisData.domain,
+          "verificationDetails.whoisData.creationDate": verification.whoisData.creationDate,
+          "verificationDetails.whoisData.domainAgeYears": verification.whoisData.domainAgeYears,
+          "verificationDetails.whoisData.registrar": verification.whoisData.registrar,
+          "verificationDetails.whoisData.registrantCountry": verification.whoisData.registrantCountry,
+          "verificationDetails.whoisData.isValid": verification.whoisData.isValid,
+          "verificationDetails.mcaData": verification.mcaData,
+          "verificationDetails.directors": verification.directors,
+          "verificationDetails.verifiedAt": verification.verifiedAt,
+        },
+      },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Recruiter verification re-verified successfully",
+      data: updated,
+    });
+  } catch (error) {
+    console.error("[MCA Re-verify] Error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to re-verify recruiter",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getStudentsList,
   getDashboardAnalytics,
@@ -542,7 +704,11 @@ module.exports = {
   getRecruiterVerificationDetails,
   approveRecruiter,
   rejectRecruiter,
+  putRecruiterOnHold,
   bulkImportStudents,
   addRecruiterSuggestion,
   toggleRecruiterStatus,
+  reVerifyRecruiter,
+  reverifyRecruiter,
 };
+

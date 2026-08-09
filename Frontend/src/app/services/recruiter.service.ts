@@ -78,6 +78,30 @@ export class RecruiterService {
     });
   }
 
+  updateApplicationStatus(applicationId: string, status: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/application/${applicationId}/status`, { status }, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  scheduleStage(driveId: string, payload: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/schedule/${driveId}`, payload, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  scheduleEvent(payload: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/schedule`, payload, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  checkAvailability(payload: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/check-availability`, payload, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
   updateProfile(formData: FormData): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/profile`, formData, {
       headers: this.getMultipartHeaders(),
@@ -88,5 +112,42 @@ export class RecruiterService {
         }
       })
     );
+  }
+
+  updateProfileJson(data: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/profile`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  requestReapproval(): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/request-reapproval`, {}, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+
+  getResumeText(applicationId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/application/${applicationId}/resume-text`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  declareAptitudeResults(applicationIds: string[], result: string, score?: number, feedback?: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/result/aptitude`, { applicationIds, result, score, feedback }, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  declareGDResults(applicationIds: string[], result: string, score?: number, feedback?: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/result/gd`, { applicationIds, result, score, feedback }, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  declareInterviewResults(applicationIds: string[], result: string, score?: number, feedback?: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/result/interview`, { applicationIds, result, score, feedback }, {
+      headers: this.getAuthHeaders(),
+    });
   }
 }

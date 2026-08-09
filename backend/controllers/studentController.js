@@ -2,6 +2,9 @@ const Student = require("../models/Student");
 const JobDrive = require("../models/JobDrive");
 const Application = require("../models/Application");
 const Schedule = require("../models/Schedule");
+const User = require("../models/User");
+const Recruiter = require("../models/Recruiter");
+const aiService = require("../services/aiService");
 
 const createStudentProfile = async (req, res) => {
   try {
@@ -97,16 +100,30 @@ const updateStudentProfile = async (req, res) => {
       "passoutYear",
       "activeBacklogs",
       "resumePath",
+      "profilePicPath",
       "isProfileComplete",
     ];
 
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
-        profile[field] = req.body[field];
+        profile[field] = req.body[field] === "null" || req.body[field] === "" ? null : req.body[field];
       }
     });
 
+    if (req.file) {
+      profile.profilePicPath = `/uploads/logos/${req.file.filename}`;
+    }
+
     await profile.save();
+
+    // Check if password change is requested
+    if (req.body.password && req.body.password.trim()) {
+      const user = await User.findById(req.user._id);
+      if (user) {
+        user.password = req.body.password.trim();
+        await user.save();
+      }
+    }
 
     return res.status(200).json({
       message: "Student profile updated successfully",
@@ -175,8 +192,26 @@ const getEligibleDrives = async (req, res) => {
       ],
     }).sort({ createdAt: -1 });
 
+    const recruiters = await Recruiter.find({});
+    const recruiterMap = {};
+    recruiters.forEach(r => {
+      recruiterMap[r.userId.toString()] = {
+        companyName: r.companyName,
+        companyLogo: r.companyLogo
+      };
+    });
+
+    const drivesWithCompany = drives.map(d => {
+      const rec = recruiterMap[d.recruiterId.toString()] || { companyName: "Placement Recruiter", companyLogo: null };
+      return {
+        ...d.toObject(),
+        companyName: rec.companyName,
+        companyLogo: rec.companyLogo
+      };
+    });
+
     return res.status(200).json({
-      drives,
+      drives: drivesWithCompany,
     });
   } catch (error) {
     return res.status(500).json({
@@ -249,9 +284,20 @@ const applyToDrive = async (req, res) => {
       });
     }
 
+    const scoreResult = await aiService.scoreResume(profile.resumePath, drive.description);
+
     const application = await Application.create({
       studentId: profile._id,
       driveId: drive._id,
+      aiMatchScore: scoreResult.matchScore,
+      xai: {
+        matchScore: scoreResult.matchScore,
+        positiveSentences: scoreResult.positiveSentences || [],
+        negativeSentences: scoreResult.negativeSentences || [],
+        skillGaps: scoreResult.skillGaps || [],
+        strongSkills: scoreResult.strongSkills || [],
+        isOfflineFallback: scoreResult.isOfflineFallback || false
+      }
     });
 
     return res.status(201).json({
@@ -278,8 +324,27 @@ const getStudentApplications = async (req, res) => {
       .populate("driveId")
       .sort({ createdAt: -1 });
 
+    const recruiters = await Recruiter.find({});
+    const recruiterMap = {};
+    recruiters.forEach(r => {
+      recruiterMap[r.userId.toString()] = {
+        companyName: r.companyName,
+        companyLogo: r.companyLogo
+      };
+    });
+
+    const appsWithCompany = applications.map(app => {
+      const appObj = app.toObject();
+      if (appObj.driveId) {
+        const rec = recruiterMap[appObj.driveId.recruiterId.toString()] || { companyName: "Placement Recruiter", companyLogo: null };
+        appObj.driveId.companyName = rec.companyName;
+        appObj.driveId.companyLogo = rec.companyLogo;
+      }
+      return appObj;
+    });
+
     return res.status(200).json({
-      applications,
+      applications: appsWithCompany,
     });
   } catch (error) {
     return res.status(500).json({
@@ -306,17 +371,106 @@ const getApplicationById = async (req, res) => {
       return res.status(404).json({ message: "Application not found" });
     }
 
+    const rec = await Recruiter.findOne({ userId: application.driveId.recruiterId });
+    const appObj = application.toObject();
+    if (appObj.driveId) {
+      appObj.driveId.companyName = rec ? rec.companyName : "Placement Recruiter";
+      appObj.driveId.companyLogo = rec ? rec.companyLogo : null;
+    }
+
     const schedules = await Schedule.find({
       applicationId: application._id,
     }).sort({ date: 1 });
 
     return res.status(200).json({
-      application,
+      application: appObj,
       schedules,
     });
   } catch (error) {
     return res.status(500).json({
       message: "Failed to fetch application details",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/student/schedule
+const getStudentSchedule = async (req, res) => {
+  try {
+    const student = await Student.findOne({ userId: req.user._id });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student profile not found",
+      });
+    }
+
+    const rawSchedules = await Schedule.find({ studentId: student._id })
+      .populate({
+        path: "driveId",
+        select: "title recruiterId companyName",
+      })
+      .sort({ date: 1 });
+
+    const formattedSchedules = await Promise.all(
+      rawSchedules.map(async (sch) => {
+        let companyName = "Campus Recruiter";
+        if (sch.driveId) {
+          if (sch.driveId.companyName) {
+            companyName = sch.driveId.companyName;
+          } else if (sch.driveId.recruiterId) {
+            const rec = await Recruiter.findOne({ userId: sch.driveId.recruiterId });
+            if (rec) companyName = rec.companyName;
+          }
+        }
+
+        return {
+          scheduleId: sch._id,
+          _id: sch._id,
+          eventType: sch.eventType,
+          date: sch.date,
+          timeSlot: sch.timeSlot,
+          location: sch.location,
+          meetingUrl: sch.meetingUrl,
+          status: sch.status,
+          drive: {
+            title: sch.driveId ? sch.driveId.title : "Placement Drive",
+            companyName,
+          },
+          driveTitle: sch.driveId ? sch.driveId.title : "Placement Drive",
+          companyName,
+        };
+      })
+    );
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const upcoming = [];
+    const past = [];
+
+    for (const item of formattedSchedules) {
+      const schDate = new Date(item.date);
+      schDate.setHours(0, 0, 0, 0);
+
+      if (schDate >= today && item.status !== "Completed") {
+        upcoming.push(item);
+      } else {
+        past.push(item);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        upcoming,
+        past,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch student schedules",
       error: error.message,
     });
   }
@@ -331,4 +485,5 @@ module.exports = {
   applyToDrive,
   getStudentApplications,
   getApplicationById,
+  getStudentSchedule,
 };

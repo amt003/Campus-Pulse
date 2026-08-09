@@ -1,55 +1,156 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { StudentService, StudentProfile, Drive, Application } from '../../../services/student.service';
 
 @Component({
   selector: 'app-student-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
 export class StudentDashboardComponent implements OnInit {
   private readonly studentService = inject(StudentService);
-  private readonly router = inject(Router);
 
-  // ── States ──────────────────────────────────────────────────────────────
+  // States
   protected isLoading = signal<boolean>(true);
-  protected isRefreshing = signal<boolean>(false);
   protected profile = signal<StudentProfile | null>(null);
   protected allDrives = signal<Drive[]>([]);
   protected applications = signal<Application[]>([]);
-  protected activeTab = signal<'drives' | 'applications' | 'profile'>('drives');
   protected filterEligibleOnly = signal<boolean>(false);
+  
+  protected selectedApplication = signal<any | null>(null);
+  protected schedules = signal<any[]>([]);
+  protected isXaiModalOpen = signal<boolean>(false);
+  protected selectedXaiApp = signal<any | null>(null);
+  protected selectedDriveForJd = signal<Drive | null>(null);
+  protected isJdModalOpen = signal<boolean>(false);
+  protected Math = Math;
 
-  // ── Create Profile Form State (for non-imported manually registered students) ─
-  protected newRollNumber = '';
-  protected newCgpa = 8.0;
-  protected newBranch = 'CSE';
-  protected newPassoutYear = 2024;
-  protected newBacklogs = 0;
-  protected formErrorMessage = signal<string | null>(null);
+  protected isTodayOrPast(dateInput: string | Date | undefined): boolean {
+    if (!dateInput) return false;
+    const testDate = new Date(dateInput);
+    testDate.setHours(0, 0, 0, 0);
 
-  // ── Resume Upload State ──────────────────────────────────────────────────
-  protected isUploadingResume = signal<boolean>(false);
-  protected uploadSuccessMsg = signal<string | null>(null);
-  protected uploadErrorMsg = signal<string | null>(null);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  // ── Stats for Dashboard (computed) ──────────────────────────────────────
-  protected totalApplied = computed(() => this.applications().length);
-  protected totalOffers = computed(() => this.applications().filter(a => a.offer?.status === 'Accepted' || a.status === 'Placed').length);
-  protected pendingApprovals = computed(() => this.applications().filter(a => a.status === 'Applied').length);
-  protected maxPackageApplied = computed(() => {
-    const activeApps = this.applications();
-    if (!activeApps.length) return 0;
-    const packages = activeApps.map(a => a.driveId?.ctc || 0);
-    return Math.max(...packages);
+    return testDate.getTime() <= today.getTime();
+  }
+
+  protected formatIcsDate(date: Date): string {
+    const pad = (n: number) => (n < 10 ? '0' + n : '' + n);
+    return (
+      date.getUTCFullYear() +
+      pad(date.getUTCMonth() + 1) +
+      pad(date.getUTCDate()) +
+      'T' +
+      pad(date.getUTCHours()) +
+      pad(date.getUTCMinutes()) +
+      pad(date.getUTCSeconds()) +
+      'Z'
+    );
+  }
+
+  protected parseScheduleDates(scheduleDate: string | Date, timeSlot?: string): { start: Date; end: Date } {
+    const start = new Date(scheduleDate);
+    const end = new Date(scheduleDate);
+
+    if (timeSlot && timeSlot.includes('-')) {
+      try {
+        const [startTimeStr, endTimeStr] = timeSlot.split('-').map(t => t.trim());
+        const parseTime = (baseDate: Date, timeStr: string): Date => {
+          const d = new Date(baseDate);
+          const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+          if (match) {
+            let hours = parseInt(match[1], 10);
+            const minutes = parseInt(match[2], 10);
+            const ampm = match[3].toUpperCase();
+            if (ampm === 'PM' && hours < 12) hours += 12;
+            if (ampm === 'AM' && hours === 12) hours = 0;
+            d.setHours(hours, minutes, 0, 0);
+          }
+          return d;
+        };
+
+        const parsedStart = parseTime(start, startTimeStr);
+        const parsedEnd = parseTime(end, endTimeStr);
+        return { start: parsedStart, end: parsedEnd };
+      } catch (e) {
+        // Fallback default
+      }
+    }
+
+    start.setHours(10, 0, 0, 0);
+    end.setHours(11, 0, 0, 0);
+    return { start, end };
+  }
+
+  protected downloadScheduleICS(s: any): void {
+    const companyName = s.companyName || 'Campus Recruiter';
+    const driveTitle = s.driveTitle || 'Placement Drive';
+    const eventType = s.eventType || 'Interview';
+    const location = s.location || 'Online';
+    const meetingUrl = s.meetingUrl ? `\\nMeeting Link: ${s.meetingUrl}` : '';
+
+    const summary = `${eventType} Round - ${companyName} (${driveTitle})`;
+    const description = `CampusPulse Placement Schedule\\nDrive: ${driveTitle}\\nCompany: ${companyName}\\nStage: ${eventType}${meetingUrl}`;
+
+    const { start, end } = this.parseScheduleDates(s.date, s.timeSlot);
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//CampusPulse//Placement Engine//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      `SUMMARY:${summary}`,
+      `DESCRIPTION:${description}`,
+      `LOCATION:${location}`,
+      `DTSTART:${this.formatIcsDate(start)}`,
+      `DTEND:${this.formatIcsDate(end)}`,
+      `STATUS:CONFIRMED`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.setAttribute('download', `${companyName}_${eventType}_Schedule.ics`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  protected addToGoogleCalendar(s: any): void {
+    const companyName = s.companyName || 'Campus Recruiter';
+    const driveTitle = s.driveTitle || 'Placement Drive';
+    const eventType = s.eventType || 'Interview';
+    const location = s.location || 'Online';
+    const meetingUrl = s.meetingUrl ? `\nMeeting Link: ${s.meetingUrl}` : '';
+
+    const summary = encodeURIComponent(`${eventType} Round - ${companyName} (${driveTitle})`);
+    const details = encodeURIComponent(`CampusPulse Placement Schedule\nDrive: ${driveTitle}\nCompany: ${companyName}\nStage: ${eventType}${meetingUrl}`);
+    const loc = encodeURIComponent(location);
+
+    const { start, end } = this.parseScheduleDates(s.date, s.timeSlot);
+    const dates = `${this.formatIcsDate(start)}/${this.formatIcsDate(end)}`;
+
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${summary}&dates=${dates}&details=${details}&location=${loc}`;
+    window.open(googleCalendarUrl, '_blank');
+  }
+
+  // Computed Drive Filters
+  protected filteredDrives = computed(() => {
+    let list = this.allDrives();
+    if (this.filterEligibleOnly()) {
+      list = list.filter(d => this.isEligible(d));
+    }
+    return list;
   });
-
-  // ── Eligible Branches List ────────────────────────────────────────────────
-  protected branchesList = ['CSE', 'IT', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Chemical', 'Biotech'];
 
   ngOnInit(): void {
     this.loadDashboardData();
@@ -57,112 +158,105 @@ export class StudentDashboardComponent implements OnInit {
 
   protected loadDashboardData(): void {
     this.isLoading.set(true);
-    this.isRefreshing.set(true);
-
+    // Fetch profile first, then drives and applications
     this.studentService.getProfile().subscribe({
       next: (res) => {
         if (res && res.profile) {
           this.profile.set(res.profile);
           this.fetchDrivesAndApplications();
         } else {
-          this.profile.set(null);
           this.isLoading.set(false);
-          this.isRefreshing.set(false);
         }
       },
       error: (err) => {
         console.error('Failed to load student profile:', err);
-        this.profile.set(null);
         this.isLoading.set(false);
-        this.isRefreshing.set(false);
       }
     });
   }
 
-  private fetchDrivesAndApplications(): void {
-    Promise.all([
-      this.studentService.getEligibleDrives().toPromise(),
-      this.studentService.getApplications().toPromise()
-    ])
-      .then(([drivesRes, appsRes]) => {
-        this.allDrives.set(drivesRes?.drives || []);
-        this.applications.set(appsRes?.applications || []);
-        this.isLoading.set(false);
-        this.isRefreshing.set(false);
-      })
-      .catch((err) => {
-        console.error('Failed to load student dashboard items:', err);
-        this.isLoading.set(false);
-        this.isRefreshing.set(false);
-      });
-  }
-
-  protected refreshData(): void {
-    this.fetchDrivesAndApplications();
-  }
-
-  // ── Tab Switching ────────────────────────────────────────────────────────
-  protected switchTab(tab: 'drives' | 'applications' | 'profile'): void {
-    this.activeTab.set(tab);
-  }
-
-  // ── Profile Creation ─────────────────────────────────────────────────────
-  protected submitCreateProfile(): void {
-    if (!this.newRollNumber.trim() || !this.newBranch.trim()) {
-      this.formErrorMessage.set('Please fill out all fields correctly.');
-      return;
-    }
-
-    const payload: Partial<StudentProfile> = {
-      rollNumber: this.newRollNumber.trim().toUpperCase(),
-      cgpa: Number(this.newCgpa),
-      branch: this.newBranch,
-      passoutYear: Number(this.newPassoutYear),
-      activeBacklogs: Number(this.newBacklogs),
-      isProfileComplete: true
-    };
-
-    this.studentService.updateProfile(payload).subscribe({
-      next: (res) => {
-        this.profile.set(res.profile);
-        this.loadDashboardData();
-      },
-      error: (err) => {
-        this.formErrorMessage.set(err.error?.message || 'Failed to initialize profile. Please try again.');
-      }
-    });
-  }
-
-  // ── Profile Details Update ────────────────────────────────────────────────
-  protected submitUpdateProfile(): void {
-    const prof = this.profile();
-    if (!prof) return;
-
-    this.studentService.updateProfile({
-      rollNumber: prof.rollNumber,
-      cgpa: Number(prof.cgpa),
-      branch: prof.branch,
-      passoutYear: Number(prof.passoutYear),
-      activeBacklogs: Number(prof.activeBacklogs)
+  protected fetchDrivesAndApplications(): void {
+    forkJoin({
+      drives: this.studentService.getEligibleDrives(),
+      apps: this.studentService.getApplications()
     }).subscribe({
-      next: (res) => {
-        this.profile.set(res.profile);
-        this.uploadSuccessMsg.set('Profile details updated successfully.');
-        setTimeout(() => this.uploadSuccessMsg.set(null), 3000);
+      next: (result) => {
+        this.allDrives.set(result.drives.drives || []);
+        const apps = result.apps.applications || [];
+        this.applications.set(apps);
+
+        // Pre-select first application for timeline if available
+        if (apps.length > 0) {
+          this.selectedApplication.set(apps[0]);
+        } else {
+          this.selectedApplication.set(null);
+        }
+
+        // Fetch application schedules
+        const appRequests = apps.map(app => this.studentService.getApplicationDetails(app._id));
+        if (appRequests.length > 0) {
+          forkJoin(appRequests).subscribe({
+            next: (detailsList: any[]) => {
+              let allSchedules: any[] = [];
+              detailsList.forEach((details, index) => {
+                const app = apps[index];
+                const mapped = (details.schedules || []).map((s: any) => ({
+                  ...s,
+                  driveTitle: app.driveId?.title || 'Job Drive',
+                  companyName: (app.driveId as any)?.companyName || 'Company'
+                }));
+                allSchedules = allSchedules.concat(mapped);
+              });
+              allSchedules.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+              this.schedules.set(allSchedules);
+              this.isLoading.set(false);
+            },
+            error: (err) => {
+              console.error('Failed to load application schedules:', err);
+              this.isLoading.set(false);
+            }
+          });
+        } else {
+          this.schedules.set([]);
+          this.isLoading.set(false);
+        }
       },
       error: (err) => {
-        this.uploadErrorMsg.set(err.error?.message || 'Failed to update profile.');
-        setTimeout(() => this.uploadErrorMsg.set(null), 3000);
+        console.error('Failed to fetch drives and applications:', err);
+        this.isLoading.set(false);
       }
     });
   }
 
-  // ── Apply to Drive ───────────────────────────────────────────────────────
+  // Drives Eligibility helpers
+  protected isEligible(drive: Drive): boolean {
+    const prof = this.profile();
+    if (!prof) return false;
+    if (prof.cgpa < drive.minCGPA) return false;
+    if (prof.activeBacklogs > drive.maxBacklogs) return false;
+    if (!drive.eligibleBranches.includes(prof.branch)) return false;
+    return true;
+  }
+
+  protected hasApplied(driveId: string): boolean {
+    return this.applications().some(app => app.driveId?._id === driveId);
+  }
+
+  protected toggleEligibilityFilter(): void {
+    this.filterEligibleOnly.set(!this.filterEligibleOnly());
+  }
+
+  protected selectActiveApplication(driveId: string): void {
+    const app = this.applications().find(a => a.driveId?._id === driveId);
+    if (app) {
+      this.selectedApplication.set(app);
+    }
+  }
+
   protected applyToDrive(driveId: string): void {
     const profileData = this.profile();
     if (!profileData || !profileData.resumePath) {
       alert('Please upload your resume in the "Profile & Resume" section before applying.');
-      this.switchTab('profile');
       return;
     }
 
@@ -177,102 +271,129 @@ export class StudentDashboardComponent implements OnInit {
     });
   }
 
-  // ── Resume Upload ────────────────────────────────────────────────────────
-  protected onResumeFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
+  protected getCTCInLpa(ctcInRupees: number): string {
+    if (!ctcInRupees) return '—';
+    const lpa = ctcInRupees / 100000;
+    return lpa.toFixed(1) + ' LPA';
+  }
 
-    const file = input.files[0];
-    if (file.type !== 'application/pdf') {
-      this.uploadErrorMsg.set('Please upload a PDF file only.');
-      return;
+  protected scrollToDrives(): void {
+    const el = document.getElementById('explore-drives-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
     }
+  }
 
-    const formData = new FormData();
-    formData.append('resume', file);
+  // Stepper helper
+  protected getTimelineSteps(app: Application): any[] {
+    const steps = [];
+    const hasAptitude = app.driveId?.hasAptitudeTest !== false; // Default to true if not explicitly false
+    const hasGD = app.driveId?.hasGD !== false; // Default to true if not explicitly false
 
-    this.isUploadingResume.set(true);
-    this.uploadSuccessMsg.set(null);
-    this.uploadErrorMsg.set(null);
+    // Map each status to a numeric progress level:
+    // 0: Applied, Under Review
+    // 1: Aptitude Scheduled
+    // 2: Aptitude Completed
+    // 3: GD Scheduled
+    // 4: GD Completed
+    // 5: Interview Scheduled
+    // 6: Interview Completed
+    // 7: Selected, Waitlisted, Offer Sent, Offer Accepted, Placed
+    // -1: Rejected
+    
+    let currentLevel = 0;
+    const status = app.status;
 
-    this.studentService.uploadResume(formData).subscribe({
-      next: (res) => {
-        this.isUploadingResume.set(false);
-        this.uploadSuccessMsg.set('Resume uploaded successfully.');
-        if (this.profile()) {
-          this.profile.set({
-            ...this.profile()!,
-            resumePath: res.resumePath,
-            isProfileComplete: true
-          });
-        }
-      },
-      error: (err) => {
-        this.isUploadingResume.set(false);
-        this.uploadErrorMsg.set(err.error?.message || 'Failed to upload resume. Please try again.');
-      }
+    if (status === 'Applied' || status === 'Under Review') currentLevel = 0;
+    else if (status === 'Aptitude Scheduled') currentLevel = 1;
+    else if (status === 'Aptitude Completed') currentLevel = 2;
+    else if (status === 'GD Scheduled') currentLevel = 3;
+    else if (status === 'GD Completed') currentLevel = 4;
+    else if (status === 'Interview Scheduled') currentLevel = 5;
+    else if (status === 'Interview Completed') currentLevel = 6;
+    else if (['Selected', 'Placed', 'Offer Sent', 'Offer Accepted', 'Waitlisted'].includes(status)) currentLevel = 7;
+    else if (status === 'Rejected') currentLevel = -1;
+
+    // Step 1: Applied
+    steps.push({
+      label: 'Applied',
+      date: app.createdAt ? new Date(app.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : '',
+      completed: true,
+      current: currentLevel === 0
     });
-  }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
-  protected isApplied(driveId: string): boolean {
-    return this.applications().some(a => a.driveId?._id === driveId);
-  }
-
-  protected getApplicationStatus(driveId: string): string {
-    const app = this.applications().find(a => a.driveId?._id === driveId);
-    return app ? app.status : 'Not Applied';
-  }
-
-  protected isEligible(drive: Drive): boolean {
-    const p = this.profile();
-    if (!p) return false;
-
-    // Check CGPA
-    if (p.cgpa < drive.minCGPA) return false;
-    // Check Backlogs
-    if (p.activeBacklogs > drive.maxBacklogs) return false;
-    // Check Branch
-    if (drive.eligibleBranches && drive.eligibleBranches.length > 0 && !drive.eligibleBranches.includes(p.branch)) return false;
-
-    return true;
-  }
-
-  protected getEligibilityReason(drive: Drive): string {
-    const p = this.profile();
-    if (!p) return 'Profile incomplete';
-
-    const reasons: string[] = [];
-    if (p.cgpa < drive.minCGPA) {
-      reasons.push(`Requires Min CGPA ${drive.minCGPA} (You have ${p.cgpa})`);
-    }
-    if (p.activeBacklogs > drive.maxBacklogs) {
-      reasons.push(`Allows Max ${drive.maxBacklogs} Backlogs (You have ${p.activeBacklogs})`);
-    }
-    if (drive.eligibleBranches && drive.eligibleBranches.length > 0 && !drive.eligibleBranches.includes(p.branch)) {
-      reasons.push(`Only for branches: ${drive.eligibleBranches.join(', ')} (You are ${p.branch})`);
+    // Step 2: Aptitude Test (Conditional)
+    if (hasAptitude) {
+      steps.push({
+        label: 'Aptitude Test',
+        date: '',
+        completed: currentLevel > 2,
+        current: currentLevel === 1 || currentLevel === 2
+      });
     }
 
-    return reasons.join('; ');
-  }
-
-  protected get filteredDrives(): Drive[] {
-    const drives = this.allDrives();
-    if (this.filterEligibleOnly()) {
-      return drives.filter(d => this.isEligible(d));
+    // Step 3: Group Discussion (Conditional)
+    if (hasGD) {
+      steps.push({
+        label: 'Group Discussion',
+        date: '',
+        completed: currentLevel > 4,
+        current: currentLevel === 3 || currentLevel === 4
+      });
     }
-    return drives;
+
+    // Step 4: Technical Round
+    steps.push({
+      label: 'Technical Round',
+      date: '',
+      completed: currentLevel > 6,
+      current: currentLevel === 5 || currentLevel === 6
+    });
+
+    // Step 5: Interview / Placement
+    steps.push({
+      label: 'Placement Selection',
+      date: '',
+      completed: currentLevel === 7,
+      current: false
+    });
+
+    return steps;
   }
 
-  protected getCTCInLpa(ctc: number): string {
-    return (ctc / 100000).toFixed(1) + ' LPA';
+  // AI Fit Explanations
+  protected formatMatchScore(score: number | null | undefined): string {
+    if (score === null || score === undefined) return '0.0';
+    const val = score <= 1.0 ? score * 100 : score;
+    return val.toFixed(1);
   }
 
-  protected logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
-    this.router.navigate(['/login']);
+  protected getScoreColorClass(score: number | null | undefined): string {
+    if (score === null || score === undefined) return 'score-gray';
+    const percent = score <= 1.0 ? score * 100 : score;
+    if (percent >= 80) return 'score-green';
+    if (percent >= 60) return 'score-yellow';
+    return 'score-red';
+  }
+
+  protected openXaiFeedback(app: any): void {
+    if (!app) return;
+    this.selectedXaiApp.set(app);
+    this.isXaiModalOpen.set(true);
+  }
+
+  protected closeXaiModal(): void {
+    this.selectedXaiApp.set(null);
+    this.isXaiModalOpen.set(false);
+  }
+
+  protected openJdModal(drive: Drive): void {
+    this.selectedDriveForJd.set(drive);
+    this.isJdModalOpen.set(true);
+  }
+
+  protected closeJdModal(): void {
+    this.selectedDriveForJd.set(null);
+    this.isJdModalOpen.set(false);
   }
 }

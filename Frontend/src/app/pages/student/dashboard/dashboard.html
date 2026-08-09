@@ -1,425 +1,428 @@
-<div class="student-root">
+<!-- Welcome Banner -->
+<div class="welcome-banner-screenshot" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 16px; padding: 32px; color: white; margin-bottom: 32px; box-shadow: 0 4px 15px rgba(26, 82, 118, 0.15);">
+  <div>
+    <h1 style="font-size: 26px; font-weight: 800; margin: 0 0 8px 0; letter-spacing: -0.5px;">Welcome back, {{ profile()?.userId?.name || 'Student' }}!</h1>
+    <p style="margin: 0; font-size: 14px; opacity: 0.9; font-weight: 500;">Track your applications, interview schedules, and explore new job opportunities.</p>
+  </div>
+  <button class="btn-primary-action" (click)="scrollToDrives()" style="background: white; color: var(--primary); border: none; padding: 12px 24px; border-radius: 8px; font-weight: 750; font-size: 13.5px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+    Explore Drives
+  </button>
+</div>
 
-  <!-- ===== Header Bar ===== -->
-  <header class="rec-header">
-    <div class="header-left">
-      <div class="brand-logo">
-        <span class="material-symbols-outlined logo-icon">school</span>
-      </div>
-      <div class="brand-title">
-        <span class="brand-name">CampusPulse</span>
-        <span class="brand-sub">Student Portal</span>
-      </div>
+<!-- Academic Metrics Row -->
+<div class="metrics-dashboard-row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px;">
+  <div class="metric-card-screenshot" style="background: white; border-radius: 12px; padding: 20px; border: 1.5px solid var(--border); display: flex; align-items: center; gap: 16px;">
+    <div style="background: rgba(26, 82, 118, 0.08); color: var(--primary); width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+      <span class="material-symbols-outlined" style="font-size: 24px;">grade</span>
+    </div>
+    <div>
+      <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 2px;">Current CGPA</span>
+      <strong style="font-size: 20px; color: var(--text-dark); font-weight: 800;">{{ profile()?.cgpa || '—' }}</strong>
+    </div>
+  </div>
+
+  <div class="metric-card-screenshot" style="background: white; border-radius: 12px; padding: 20px; border: 1.5px solid var(--border); display: flex; align-items: center; gap: 16px;">
+    <div style="background: rgba(0, 100, 151, 0.08); color: var(--secondary); width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+      <span class="material-symbols-outlined" style="font-size: 24px;">account_tree</span>
+    </div>
+    <div>
+      <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 2px;">Branch</span>
+      <strong style="font-size: 20px; color: var(--text-dark); font-weight: 800;">{{ profile()?.branch || '—' }}</strong>
+    </div>
+  </div>
+
+  <div class="metric-card-screenshot" style="background: white; border-radius: 12px; padding: 20px; border: 1.5px solid var(--border); display: flex; align-items: center; gap: 16px;">
+    <div style="background: rgba(39, 174, 96, 0.08); color: var(--success); width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+      <span class="material-symbols-outlined" style="font-size: 24px;">calendar_month</span>
+    </div>
+    <div>
+      <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 2px;">Passout Year</span>
+      <strong style="font-size: 20px; color: var(--text-dark); font-weight: 800;">{{ profile()?.passoutYear || '—' }}</strong>
+    </div>
+  </div>
+
+  <div class="metric-card-screenshot" style="background: white; border-radius: 12px; padding: 20px; border: 1.5px solid var(--border); display: flex; align-items: center; gap: 16px;">
+    <div style="background: rgba(231, 76, 60, 0.08); color: var(--danger); width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+      <span class="material-symbols-outlined" style="font-size: 24px;">error_outline</span>
+    </div>
+    <div>
+      <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 2px;">Active Backlogs</span>
+      <strong style="font-size: 20px; color: var(--text-dark); font-weight: 800;">{{ profile()?.activeBacklogs ?? '—' }}</strong>
+    </div>
+  </div>
+</div>
+
+<!-- Main Two-Column Layout -->
+<div class="two-column-dashboard-grid" id="explore-drives-section" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; align-items: start;">
+  
+  <!-- Left Column: Eligible Campus Drives -->
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="font-size: 18px; font-weight: 800; color: var(--primary); margin: 0;">Eligible Placement Drives</h3>
+      <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text-muted); cursor: pointer;">
+        <input type="checkbox" [checked]="filterEligibleOnly()" (change)="toggleEligibilityFilter()" style="cursor: pointer;" />
+        <span>Hide Met-Criteria Limits</span>
+      </label>
     </div>
 
-    <div class="header-right">
-      <span class="company-badge-name">
-        {{ profile() ? profile()!.userId.name : 'Student' }}
-      </span>
-
-      <button class="btn-logout" (click)="logout()" title="Logout" id="student-logout-btn">
-        <span class="material-symbols-outlined">logout</span>
-        <span>Logout</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- ===== Main Content ===== -->
-  <main class="rec-main">
-
-    <!-- Loading State -->
-    @if (isLoading()) {
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading student profile details…</p>
+    @if (filteredDrives().length === 0) {
+      <div class="empty-drives" style="background: white; border-radius: 12px; border: 1.5px solid var(--border); padding: 48px; text-align: center;">
+        <span class="material-symbols-outlined empty-icon" style="font-size: 48px; color: var(--text-muted); margin-bottom: 12px;">work_off</span>
+        <p style="font-weight: 700; color: var(--text-dark); margin: 0 0 6px;">No drives match your profile filters</p>
+        <p style="font-size: 12.5px; color: var(--text-muted); margin: 0;">Try updating your CGPA/Backlogs in Profile to expand search parameters.</p>
       </div>
-    }
+    } @else {
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        @for (drive of filteredDrives(); track drive._id) {
+          <div class="drive-card-screenshot" style="background: white; border-radius: 12px; border: 1.5px solid var(--border); padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;">
+            <div style="flex: 1; margin-right: 24px;">
+              <h4 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 800; color: var(--primary);">{{ drive.title }}</h4>
+              <p style="margin: 0 0 12px 0; font-size: 13px; color: var(--text-secondary); font-weight: 600;">{{ drive.companyName || 'Campus Recruitment Drive' }}</p>
+              
+              <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                <span class="badge-item-meta" style="background: #F8F9FA; border-radius: 6px; padding: 4px 10px; font-size: 11.5px; font-weight: 700; color: var(--primary);">
+                  ₹{{ getCTCInLpa(drive.ctc) }}
+                </span>
+                <span class="badge-item-meta" style="background: #F8F9FA; border-radius: 6px; padding: 4px 10px; font-size: 11.5px; font-weight: 700; color: var(--text-muted);">
+                  Min CGPA: {{ drive.minCGPA }}
+                </span>
+                <span class="badge-item-meta" style="background: #FDEDEC; border-radius: 6px; padding: 4px 10px; font-size: 11.5px; font-weight: 700; color: var(--danger);">
+                  Deadline: {{ drive.applicationDeadline | date:'shortDate' }}
+                </span>
+              </div>
 
-    @if (!isLoading()) {
-
-      <!-- ══════════════════════════════════════════════════════════
-             STATE A: INITIAL PROFILE SETUP (If profile is null/incomplete)
-             ══════════════════════════════════════════════════════════ -->
-      @if (!profile() || !profile()!.isProfileComplete) {
-        <div class="pending-approval-container">
-          <div class="pending-card" style="max-width: 520px;">
-            <div class="pending-icon-circle">
-              <span class="material-symbols-outlined pending-icon">account_circle</span>
+              <!-- Job Description link trigger -->
+              @if (drive.description) {
+                <button type="button" class="btn-link-jd" (click)="openJdModal(drive)" style="background: none; border: none; padding: 0; color: var(--primary); font-size: 12.5px; font-weight: 750; display: inline-flex; align-items: center; gap: 4px; margin-top: 12px; cursor: pointer; transition: all 0.2s;">
+                  <span class="material-symbols-outlined" style="font-size: 16px;">info</span>
+                  <span style="text-decoration: underline;">View Job Description</span>
+                </button>
+              }
             </div>
 
-            <h2 class="pending-title">Complete Your Placement Profile</h2>
-            <p class="pending-subtitle">Please initialize your academic credentials to view and apply for campus drives.</p>
-
-            <form class="setup-form" (ngSubmit)="submitCreateProfile()" style="text-align: left; margin-top: 24px;">
-              <div class="form-group" style="margin-bottom: 16px;">
-                <label style="font-weight: 700; font-size: 13px; color: var(--text-dark); margin-bottom: 6px; display: block;">Roll Number</label>
-                <input type="text" [(ngModel)]="newRollNumber" name="newRollNumber" class="field-input" placeholder="e.g. 2021CS101" required
-                  style="width: 100%; height: 42px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px; font-size: 14px;" />
-              </div>
-
-              <div class="form-group" style="margin-bottom: 16px;">
-                <label style="font-weight: 700; font-size: 13px; color: var(--text-dark); margin-bottom: 6px; display: block;">Current CGPA</label>
-                <input type="number" [(ngModel)]="newCgpa" name="newCgpa" class="field-input" placeholder="e.g. 8.5" min="0" max="10" step="0.1" required
-                  style="width: 100%; height: 42px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px; font-size: 14px;" />
-              </div>
-
-              <div class="form-group" style="margin-bottom: 16px;">
-                <label style="font-weight: 700; font-size: 13px; color: var(--text-dark); margin-bottom: 6px; display: block;">Branch</label>
-                <select [(ngModel)]="newBranch" name="newBranch" class="field-input" required
-                  style="width: 100%; height: 42px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px; font-size: 14px; background: white;">
-                  @for (br of branchesList; track br) {
-                    <option [value]="br">{{ br }}</option>
-                  }
-                </select>
-              </div>
-
-              <div class="form-group" style="margin-bottom: 16px;">
-                <label style="font-weight: 700; font-size: 13px; color: var(--text-dark); margin-bottom: 6px; display: block;">Passout Year</label>
-                <input type="number" [(ngModel)]="newPassoutYear" name="newPassoutYear" class="field-input" placeholder="2024" required
-                  style="width: 100%; height: 42px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px; font-size: 14px;" />
-              </div>
-
-              <div class="form-group" style="margin-bottom: 24px;">
-                <label style="font-weight: 700; font-size: 13px; color: var(--text-dark); margin-bottom: 6px; display: block;">Active Backlogs</label>
-                <input type="number" [(ngModel)]="newBacklogs" name="newBacklogs" class="field-input" placeholder="0" min="0" required
-                  style="width: 100%; height: 42px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px; font-size: 14px;" />
-              </div>
-
-              @if (formErrorMessage()) {
-                <div style="color: var(--danger); font-size: 13px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
-                  <span class="material-symbols-outlined" style="font-size: 16px;">error</span>
-                  {{ formErrorMessage() }}
-                </div>
+            <div>
+              @if (hasApplied(drive._id)) {
+                <button type="button" class="btn-applied-status" (click)="selectActiveApplication(drive._id)" style="background: #E8F8F5; color: var(--success); border: none; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                  <span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span>
+                  <span>Applied</span>
+                </button>
+              } @else {
+                <button type="button" class="btn-apply-action" (click)="applyToDrive(drive._id)" [disabled]="!isEligible(drive)" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 13px; cursor: pointer; transition: all 0.2s;">
+                  Apply Now
+                </button>
               }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
 
-              <button type="submit" class="btn-refresh-status" style="width: 100%; background: var(--primary); color: white; border: none; height: 44px; font-size: 14px;">
-                Initialize Profile
+  <!-- Right Column: Status timeline & Schedules summary -->
+  <div style="display: flex; flex-direction: column; gap: 32px;">
+    
+    <!-- Timeline Stepper Widget -->
+    <div class="timeline-stepper-card" style="background: white; border-radius: 12px; border: 1.5px solid var(--border); padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+      <h3 style="font-size: 15px; font-weight: 800; color: var(--primary); margin: 0 0 16px 0; border-bottom: 1.5px solid var(--border); padding-bottom: 10px;">
+        Your Application Status
+      </h3>
+
+      @if (!selectedApplication()) {
+        <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px; font-style: italic;">
+          Select an applied drive card to view selection rounds timeline.
+        </div>
+      } @else {
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+            <div>
+              <h4 style="margin: 0; font-size: 14px; font-weight: 800; color: var(--text-dark);">
+                {{ selectedApplication()!.driveId?.title }}
+              </h4>
+              <span style="font-size: 11.5px; font-weight: 700; color: var(--success); background: #E8F8F5; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 4px;">
+                {{ selectedApplication()!.status }}
+              </span>
+            </div>
+            
+            @if (selectedApplication()!.aiMatchScore !== null) {
+              <button class="btn-xai-trigger" (click)="openXaiFeedback(selectedApplication())" [class]="getScoreColorClass(selectedApplication()!.aiMatchScore)" style="border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 750; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                <span>{{ formatMatchScore(selectedApplication()!.aiMatchScore) }}% AI Fit</span>
+                <span class="material-symbols-outlined" style="font-size: 12px;">auto_awesome</span>
               </button>
-            </form>
+            }
+          </div>
+
+          <!-- Stepper flow -->
+          <div class="stepper-vertical" style="display: flex; flex-direction: column; gap: 20px; position: relative; padding-left: 12px;">
+            @for (step of getTimelineSteps(selectedApplication()!); track step.label; let isLast = $last) {
+              <div style="display: flex; gap: 16px; position: relative;">
+                
+                <!-- Line connector -->
+                @if (!isLast) {
+                  <div style="position: absolute; left: 10px; top: 20px; bottom: -20px; width: 2px; background: #E5E8E8;"
+                       [style.background]="step.completed ? 'var(--success)' : '#E5E8E8'"></div>
+                }
+
+                <!-- Step Circle icon -->
+                <div style="width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; z-index: 2; border: 2px solid;"
+                     [style.border-color]="step.completed ? 'var(--success)' : (step.current ? 'var(--secondary)' : '#BDC3C7')"
+                     [style.background]="step.completed ? 'var(--success)' : (step.current ? 'white' : '#F8F9FA')">
+                  @if (step.completed) {
+                    <span class="material-symbols-outlined" style="font-size: 12px; color: white; font-weight: 900;">check</span>
+                  } @else if (step.current) {
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--secondary);"></div>
+                  }
+                </div>
+
+                <div>
+                  <h5 style="margin: 0; font-size: 13px; font-weight: 750;"
+                      [style.color]="step.completed || step.current ? 'var(--text-dark)' : 'var(--text-muted)'">
+                    {{ step.label }}
+                  </h5>
+                  @if (step.date) {
+                    <span style="font-size: 11px; color: var(--text-secondary); font-weight: 600; display: block; margin-top: 2px;">{{ step.date }}</span>
+                  }
+                </div>
+
+              </div>
+            }
           </div>
         </div>
       }
+    </div>
 
-      <!-- ══════════════════════════════════════════════════════════
-             STATE B: FULL STUDENT PLACEMENT DASHBOARD
-             ══════════════════════════════════════════════════════════ -->
-      @if (profile() && profile()!.isProfileComplete) {
-        <div class="approved-dashboard">
+    <!-- Upcoming Schedules list card -->
+    <div class="upcoming-schedules-card" style="background: white; border-radius: 12px; border: 1.5px solid var(--border); padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+      <h3 style="font-size: 15px; font-weight: 800; color: var(--primary); margin: 0 0 16px 0; border-bottom: 1.5px solid var(--border); padding-bottom: 10px;">
+        Upcoming Schedule Rounds
+      </h3>
 
-          <!-- Welcome Banner -->
-          <div class="welcome-banner">
-            <div class="welcome-text-wrap">
-              <h1 class="welcome-title">Welcome, {{ profile()!.userId.name }}! 👋</h1>
-              <p class="welcome-sub">Explore active placement opportunities, track application statuses, and manage your placement profile.</p>
-            </div>
-            <div class="student-quick-info" style="text-align: right; font-size: 13px; color: var(--text-muted); background: white; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border);">
-              <div>Roll No: <strong>{{ profile()!.rollNumber }}</strong></div>
-              <div>CGPA: <strong>{{ profile()!.cgpa }}</strong> · Branch: <strong>{{ profile()!.branch }}</strong></div>
-            </div>
-          </div>
-
-          <!-- Stats Grid -->
-          <section class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon icon-blue">
-                <span class="material-symbols-outlined">send</span>
+      @if (schedules().length === 0) {
+        <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px; font-style: italic;">
+          No interview or test schedules upcoming.
+        </div>
+      } @else {
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          @for (s of schedules().slice(0, 3); track s._id) {
+            <div style="display: flex; gap: 14px; border-bottom: 1px solid var(--border); padding-bottom: 12px; align-items: start;">
+              <!-- Date Badge -->
+              <div style="background: #EBF5FB; border-radius: 8px; padding: 8px; text-align: center; width: 50px; flex-shrink: 0;">
+                <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--secondary);">
+                  {{ s.date | date:'MMM' }}
+                </span>
+                <strong style="display: block; font-size: 16px; font-weight: 900; color: var(--primary);">
+                  {{ s.date | date:'d' }}
+                </strong>
               </div>
-              <div class="stat-info">
-                <span class="stat-label">Total Applied</span>
-                <h3 class="stat-value">{{ totalApplied() }}</h3>
-              </div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-icon icon-green">
-                <span class="material-symbols-outlined">celebration</span>
-              </div>
-              <div class="stat-info">
-                <span class="stat-label">Offers Received</span>
-                <h3 class="stat-value text-green">{{ totalOffers() }}</h3>
-              </div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-icon icon-amber">
-                <span class="material-symbols-outlined">hourglass_top</span>
-              </div>
-              <div class="stat-info">
-                <span class="stat-label">Pending Review</span>
-                <h3 class="stat-value text-amber">{{ pendingApprovals() }}</h3>
-              </div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-icon icon-teal">
-                <span class="material-symbols-outlined">payments</span>
-              </div>
-              <div class="stat-info">
-                <span class="stat-label">Max CTC Applied</span>
-                <h3 class="stat-value">{{ maxPackageApplied() ? getCTCInLpa(maxPackageApplied()) : '—' }}</h3>
-              </div>
-            </div>
-          </section>
-
-          <!-- Dashboard Tabs & Details Area -->
-          <section class="drives-section" style="margin-top: 24px;">
-            <div class="section-header" style="border-bottom: 2px solid var(--border); padding-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
-              <div class="tabs-list" style="display: flex; gap: 24px;">
-                <button class="tab-btn" [class.active]="activeTab() === 'drives'" (click)="switchTab('drives')">
-                  <span class="material-symbols-outlined">work_outline</span>
-                  Explore Campus Drives
-                </button>
-                <button class="tab-btn" [class.active]="activeTab() === 'applications'" (click)="switchTab('applications')">
-                  <span class="material-symbols-outlined">assignment</span>
-                  My Applications
-                </button>
-                <button class="tab-btn" [class.active]="activeTab() === 'profile'" (click)="switchTab('profile')">
-                  <span class="material-symbols-outlined">manage_accounts</span>
-                  Profile & Resume
-                </button>
-              </div>
-
-              <!-- Inline Action for drives tab -->
-              @if (activeTab() === 'drives') {
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <label class="checkbox-label" for="filter-eligible" style="font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                    <input id="filter-eligible" type="checkbox" [ngModel]="filterEligibleOnly()" (ngModelChange)="filterEligibleOnly.set($event)" class="checkbox-input" />
-                    <span class="checkbox-custom"></span>
-                    <span>Show Eligible Only</span>
-                  </label>
-                  <button class="btn-action" (click)="refreshData()" style="padding: 6px 12px; border-radius: 6px;">
-                    <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">refresh</span>
-                  </button>
-                </div>
-              }
-            </div>
-
-            <!-- TAB 1: EXPLORE JOB DRIVES -->
-            @if (activeTab() === 'drives') {
-              <div class="tab-content-panel" style="margin-top: 20px;">
-                @if (filteredDrives.length === 0) {
-                  <div class="empty-drives">
-                    <span class="material-symbols-outlined empty-icon">work_off</span>
-                    <p>No active placement drives found. Please check back later.</p>
-                  </div>
-                }
-
-                @if (filteredDrives.length > 0) {
-                  <div class="student-job-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px;">
-                    @for (d of filteredDrives; track d._id) {
-                      <div class="job-card" style="background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.02); position: relative; transition: transform 0.2s;">
-                        
-                        <!-- Header details -->
-                        <div>
-                          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                            <span class="job-company" style="font-weight: 700; color: var(--secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">CAMPUS RECRUITMENT</span>
-                            <span class="status-pill pill-open">OPEN</span>
-                          </div>
-                          <h3 class="job-title" style="font-size: 18px; font-weight: 800; color: var(--text-dark); margin: 0 0 8px;">{{ d.title }}</h3>
-                          <p class="job-desc" style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 0 16px;">{{ d.description }}</p>
-                          
-                          <!-- Job Specs -->
-                          <div class="job-specs-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 13px; border-top: 1px solid var(--border); padding-top: 12px;">
-                            <div>
-                              <span style="color: var(--text-muted); font-size: 11px; display: block;">ANNUAL CTC</span>
-                              <strong>₹{{ getCTCInLpa(d.ctc) }}</strong>
-                            </div>
-                            <div>
-                              <span style="color: var(--text-muted); font-size: 11px; display: block;">MIN CGPA</span>
-                              <strong>{{ d.minCGPA }} CGPA</strong>
-                            </div>
-                            <div>
-                              <span style="color: var(--text-muted); font-size: 11px; display: block;">MAX BACKLOGS</span>
-                              <strong [style.color]="d.maxBacklogs === 0 ? 'var(--success)' : 'var(--warning)'">{{ d.maxBacklogs === 0 ? 'No Backlogs' : d.maxBacklogs }}</strong>
-                            </div>
-                            <div>
-                              <span style="color: var(--text-muted); font-size: 11px; display: block;">DEADLINE</span>
-                              <strong>{{ d.applicationDeadline | date:'mediumDate' }}</strong>
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Footer Actions / Eligibility Check -->
-                        <div style="border-top: 1px solid var(--border); padding-top: 16px; display: flex; flex-direction: column; gap: 8px;">
-                          @if (isApplied(d._id)) {
-                            <div class="status-tag" style="background: rgba(39, 174, 96, 0.1); color: var(--success); width: 100%; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; gap: 4px;">
-                              <span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span>
-                              Applied ({{ getApplicationStatus(d._id) }})
-                            </div>
-                          } @else {
-                            @if (isEligible(d)) {
-                              <button class="btn-refresh-status" (click)="applyToDrive(d._id)"
-                                style="width: 100%; height: 38px; font-size: 13px; font-weight: 700; background: var(--primary); color: white; border: none; margin: 0;">
-                                <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle; margin-right: 4px;">send</span>
-                                Apply Now
-                              </button>
-                            } @else {
-                              <div class="status-tag" style="background: rgba(231, 76, 60, 0.08); color: var(--danger); width: 100%; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; line-height: 1.4; text-align: left; display: flex; align-items: flex-start; gap: 6px;">
-                                <span class="material-symbols-outlined" style="font-size: 16px; color: var(--danger); margin-top: 1px;">warning</span>
-                                <span>Not Eligible: {{ getEligibilityReason(d) }}</span>
-                              </div>
-                            }
-                          }
-                        </div>
-
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
-            }
-
-            <!-- TAB 2: MY APPLICATIONS LIST -->
-            @if (activeTab() === 'applications') {
-              <div class="tab-content-panel" style="margin-top: 20px;">
-                @if (applications().length === 0) {
-                  <div class="empty-drives">
-                    <span class="material-symbols-outlined empty-icon">assignment_late</span>
-                    <p>You have not submitted any applications to campus drives yet.</p>
-                  </div>
-                }
-
-                @if (applications().length > 0) {
-                  <div class="table-wrap">
-                    <table class="drives-table">
-                      <thead>
-                        <tr>
-                          <th>Job Role</th>
-                          <th>Company / Program</th>
-                          <th>Offered CTC</th>
-                          <th>Application Date</th>
-                          <th>Application Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                          @for (app of applications(); track app._id) {
-                            <tr>
-                              <td class="font-bold">{{ app.driveId.title || '—' }}</td>
-                              <td>Alphabet Campus Recruitment</td>
-                              <td>₹{{ getCTCInLpa(app.driveId.ctc || 0) }}</td>
-                              <td>{{ app.createdAt | date:'mediumDate' }}</td>
-                              <td>
-                              <span class="status-pill"
-                                [class.pill-open]="app.status === 'Applied' || app.status === 'Shortlisted'"
-                                [class.pill-closed]="app.status === 'Rejected'"
-                                style="font-weight: 700;">
-                                {{ app.status }}
-                              </span>
-                            </td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
-                  </div>
-                }
-              </div>
-            }
-
-            <!-- TAB 3: PROFILE & RESUME -->
-            @if (activeTab() === 'profile') {
-              <div class="tab-content-panel" style="margin-top: 20px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: start;">
-                
-                <!-- Left Column: Academic Credentials Update -->
-                <div class="stat-card" style="display: block; padding: 24px;">
-                  <h3 style="font-size: 16px; font-weight: 800; color: var(--primary); margin: 0 0 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                    <span class="material-symbols-outlined">edit_note</span>
-                    Update Academic Details
-                  </h3>
-                  
-                  <form (ngSubmit)="submitUpdateProfile()">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                      <div class="form-group">
-                        <label style="font-weight: 600; font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">CGPA</label>
-                        <input type="number" [(ngModel)]="profile()!.cgpa" name="profileCgpa" class="field-input" step="0.1" min="0" max="10" required
-                          style="width: 100%; height: 40px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px;" />
-                      </div>
-                      
-                      <div class="form-group">
-                        <label style="font-weight: 600; font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Active Backlogs</label>
-                        <input type="number" [(ngModel)]="profile()!.activeBacklogs" name="profileBacklogs" class="field-input" min="0" required
-                          style="width: 100%; height: 40px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px;" />
-                      </div>
-
-                      <div class="form-group">
-                        <label style="font-weight: 600; font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Branch</label>
-                        <select [(ngModel)]="profile()!.branch" name="profileBranch" class="field-input" required
-                          style="width: 100%; height: 40px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px; background: white;">
-                          @for (br of branchesList; track br) {
-                            <option [value]="br">{{ br }}</option>
-                          }
-                        </select>
-                      </div>
-
-                      <div class="form-group">
-                        <label style="font-weight: 600; font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Passout Year</label>
-                        <input type="number" [(ngModel)]="profile()!.passoutYear" name="profileYear" class="field-input" required
-                          style="width: 100%; height: 40px; border: 1.5px solid var(--border); border-radius: 8px; padding: 0 12px;" />
-                      </div>
-                    </div>
-
-                    <button type="submit" class="btn-refresh-status" style="margin-top: 20px; width: 100%; height: 40px; font-size: 13px;">
-                      Save Changes
-                    </button>
-                  </form>
-                </div>
-
-                <!-- Right Column: Resume Management -->
-                <div class="stat-card" style="display: block; padding: 24px;">
-                  <h3 style="font-size: 16px; font-weight: 800; color: var(--primary); margin: 0 0 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-                    <span class="material-symbols-outlined">cloud_upload</span>
-                    Placement Resume (PDF)
-                  </h3>
-
-                  <!-- Current Resume Status -->
-                  <div style="background: var(--surface-low); border: 1px dashed var(--secondary); border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 20px;">
-                    @if (profile()!.resumePath) {
-                      <span class="material-symbols-outlined" style="font-size: 36px; color: var(--success); margin-bottom: 8px;">check_circle</span>
-                      <p style="font-size: 13px; font-weight: 700; color: var(--text-dark); margin: 0 0 4px;">Resume Uploaded Successfully</p>
-                      <a [href]="'http://localhost:5000' + profile()!.resumePath" target="_blank" style="font-size: 12px; color: var(--secondary); font-weight: 700; text-decoration: underline;">
-                        View Current Resume (PDF)
+              
+              <div>
+                <h5 style="margin: 0; font-size: 13px; font-weight: 750; color: var(--text-dark);">
+                  {{ s.eventType }} Round
+                </h5>
+                <span style="font-size: 11.5px; color: var(--text-secondary); font-weight: 600; display: block; margin-top: 2px;">
+                  Drive: {{ s.driveTitle }}
+                </span>
+                <span style="font-size: 11.5px; color: var(--text-secondary); font-weight: 600; display: block; margin-top: 1px;">
+                  Time: {{ s.timeSlot }} | Loc: {{ s.location }}
+                </span>
+                <div style="display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; align-items: center;">
+                  @if (s.meetingUrl) {
+                    @if (isTodayOrPast(s.date)) {
+                      <a [href]="s.meetingUrl" target="_blank" style="color: var(--secondary); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 2px; text-decoration: none;">
+                        <span class="material-symbols-outlined" style="font-size: 13px;">link</span>
+                        <span>Join Meeting</span>
                       </a>
                     } @else {
-                      <span class="material-symbols-outlined" style="font-size: 36px; color: var(--warning); margin-bottom: 8px;">warning</span>
-                      <p style="font-size: 13px; font-weight: 700; color: var(--text-dark); margin: 0 0 4px;">No Resume Uploaded</p>
-                      <p style="font-size: 11px; color: var(--text-muted); margin: 0;">You must upload a PDF resume before you can apply to drives.</p>
+                      <span style="color: var(--text-muted); font-size: 10.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 2px; font-style: italic;" title="Meeting link will unlock on {{ s.date | date:'mediumDate' }}">
+                        <span class="material-symbols-outlined" style="font-size: 12px;">lock</span>
+                        <span>Link unlocks on {{ s.date | date:'mediumDate' }}</span>
+                      </span>
                     }
-                  </div>
-
-                  <!-- Upload input -->
-                  <div class="file-upload-wrapper" style="position: relative; overflow: hidden; display: inline-block; width: 100%;">
-                    <button class="btn-refresh-status" style="width: 100%; height: 40px; margin: 0; background: white; color: var(--primary); border: 1.5px solid var(--border);" [disabled]="isUploadingResume()">
-                      <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle; margin-right: 4px;">upload_file</span>
-                      {{ isUploadingResume() ? 'Uploading...' : 'Choose PDF File' }}
-                    </button>
-                    <input type="file" (change)="onResumeFileSelected($event)" accept="application/pdf"
-                      style="position: absolute; font-size: 100px; right: 0; top: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;" />
-                  </div>
-
-                  @if (uploadSuccessMsg()) {
-                    <div style="color: var(--success); font-size: 12px; font-weight: 600; margin-top: 10px; display: flex; align-items: center; gap: 4px;">
-                      <span class="material-symbols-outlined" style="font-size: 16px;">check</span>
-                      {{ uploadSuccessMsg() }}
-                    </div>
                   }
-
-                  @if (uploadErrorMsg()) {
-                    <div style="color: var(--danger); font-size: 12px; font-weight: 600; margin-top: 10px; display: flex; align-items: center; gap: 4px;">
-                      <span class="material-symbols-outlined" style="font-size: 16px;">error</span>
-                      {{ uploadErrorMsg() }}
-                    </div>
-                  }
+                  <button type="button" (click)="addToGoogleCalendar(s)" style="background: none; border: none; padding: 0; color: var(--primary); font-size: 11px; font-weight: 750; cursor: pointer; display: inline-flex; align-items: center; gap: 2px;" title="Add to Google Calendar">
+                    <span class="material-symbols-outlined" style="font-size: 13px;">calendar_month</span>
+                    <span>+ Google Cal</span>
+                  </button>
+                  <button type="button" (click)="downloadScheduleICS(s)" style="background: none; border: none; padding: 0; color: #1B4F72; font-size: 11px; font-weight: 750; cursor: pointer; display: inline-flex; align-items: center; gap: 2px;" title="Download .ics file">
+                    <span class="material-symbols-outlined" style="font-size: 13px;">download</span>
+                    <span>.ics</span>
+                  </button>
                 </div>
-
               </div>
-            }
-
-          </section>
-
+            </div>
+          }
         </div>
       }
+    </div>
 
-    }
-
-  </main>
+  </div>
 
 </div>
+
+<!-- Student XAI Feedback Modal Overlay -->
+@if (isXaiModalOpen() && selectedXaiApp()) {
+<div class="modal-overlay" (click)="closeXaiModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()" style="max-width: 600px; width: 100%;">
+    <div class="modal-header">
+      <div>
+        <h3 style="margin: 0 0 4px 0; font-size: 17px; font-weight: 800; color: var(--primary);">AI Match Analysis &
+          Feedback</h3>
+        <span style="font-size: 13px; color: var(--text-muted); font-weight: 600;">
+          Drive: <strong>{{ selectedXaiApp()?.driveId?.title }}</strong>
+        </span>
+      </div>
+      <button class="btn-close" (click)="closeXaiModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+
+      <!-- AI Score Badge -->
+      <div
+        style="background: var(--surface-low); border: 1.5px solid rgba(26,82,118,0.1); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-weight: 700; color: var(--text-dark); font-size: 14px;">Overall Match Score</span>
+        <span class="ai-score-pill-large" [class]="getScoreColorClass(selectedXaiApp()?.aiMatchScore)">
+          {{ formatMatchScore(selectedXaiApp()?.aiMatchScore) }}% Match
+        </span>
+      </div>
+
+      <!-- What Helped -->
+      <div>
+        <h4 class="modal-section-title text-green"
+          style="display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; text-transform: uppercase;">
+          <span class="material-symbols-outlined">add_circle</span>
+          <span>What Helped Your Application</span>
+        </h4>
+        <ul class="feedback-list"
+          style="padding-left: 20px; display: flex; flex-direction: column; gap: 6px; margin: 0;">
+          @if (selectedXaiApp()?.xai?.positiveSentences && selectedXaiApp()!.xai!.positiveSentences!.length > 0) {
+          @for (sent of selectedXaiApp()?.xai?.positiveSentences; track sent) {
+          <li style="font-size: 12.5px; line-height: 1.4; font-weight: 600; color: var(--text-dark);">{{ sent }}</li>
+          }
+          } @else {
+          <li class="no-feedback-item" style="list-style: none; font-style: italic; color: var(--text-muted);">No
+            positive feedback points mapped.</li>
+          }
+        </ul>
+      </div>
+
+      <!-- What Hurt -->
+      <div>
+        <h4 class="modal-section-title text-red"
+          style="display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; text-transform: uppercase;">
+          <span class="material-symbols-outlined">remove_circle</span>
+          <span> Areas of Improvement</span>
+        </h4>
+        <ul class="feedback-list"
+          style="padding-left: 20px; display: flex; flex-direction: column; gap: 6px; margin: 0;">
+          @if (selectedXaiApp()?.xai?.negativeSentences && selectedXaiApp()!.xai!.negativeSentences!.length > 0) {
+          @for (sent of selectedXaiApp()?.xai?.negativeSentences; track sent) {
+          <li style="font-size: 12.5px; line-height: 1.4; font-weight: 600; color: var(--text-dark);">{{ sent }}</li>
+          }
+          } @else {
+          <li class="no-feedback-item" style="list-style: none; font-style: italic; color: var(--text-muted);">No
+            negative feedback points mapped.</li>
+          }
+        </ul>
+      </div>
+
+      <!-- Skill Gaps -->
+      <div>
+        <h4 class="modal-section-title text-warning"
+          style="display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; text-transform: uppercase; color: #D68910;">
+          <span class="material-symbols-outlined">school</span>
+          <span>Missing Skills / Gaps detected</span>
+        </h4>
+        <div class="skills-container-xai" style="display: flex; flex-wrap: wrap; gap: 8px;">
+          @if (selectedXaiApp()?.xai?.skillGaps && selectedXaiApp()!.xai!.skillGaps!.length > 0) {
+          @for (skill of selectedXaiApp()?.xai?.skillGaps; track skill) {
+          <span class="skill-gap-chip"
+            style="background: #FADBD8; color: var(--danger); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase;">{{
+            skill }}</span>
+          }
+          } @else {
+          <span style="font-size: 12px; color: var(--text-muted); font-style: italic;">No skill gaps detected. Your
+            profile fits all keywords!</span>
+          }
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer"
+      style="padding: 16px 24px; background: #F8F9FA; display: flex; justify-content: flex-end;">
+      <button class="btn-cancel"
+        style="width: 100px; height: 38px; border-radius: 8px; border: 1px solid var(--border); background: white; font-weight: 650; cursor: pointer;"
+        (click)="closeXaiModal()">Close</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- Job Description Modal -->
+@if (isJdModalOpen() && selectedDriveForJd()) {
+<div class="modal-overlay"
+  style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+  <div class="modal-card"
+    style="background: white; border-radius: 12px; max-width: 580px; width: 90%; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); animation: modalFadeIn 0.3s ease;">
+    
+    <!-- Modal Header -->
+    <header class="modal-header"
+      style="padding: 20px 24px; border-bottom: 1.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #F8F9FA;">
+      <div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 850; color: var(--primary);">
+          Job Description
+        </h3>
+        <span style="font-size: 12px; color: var(--text-muted); font-weight: 600; margin-top: 2px; display: block;">
+          {{ selectedDriveForJd()!.companyName }} — {{ selectedDriveForJd()!.title }}
+        </span>
+      </div>
+      <button (click)="closeJdModal()"
+        style="background: none; border: none; font-size: 20px; font-weight: bold; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center;">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+
+    <!-- Modal Body -->
+    <div class="modal-body"
+      style="padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
+      
+      <!-- Key Parameters row -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; background: #F4F6F7; border-radius: 8px; padding: 12px;">
+        <div style="text-align: center;">
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 2px;">CTC Offer</span>
+          <strong style="font-size: 13.5px; color: var(--primary);">{{ getCTCInLpa(selectedDriveForJd()!.ctc) }}</strong>
+        </div>
+        <div style="text-align: center; border-left: 1.5px solid var(--border); border-right: 1.5px solid var(--border);">
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 2px;">Min CGPA</span>
+          <strong style="font-size: 13.5px; color: var(--text-dark);">{{ selectedDriveForJd()!.minCGPA }}</strong>
+        </div>
+        <div style="text-align: center;">
+          <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 2px;">Apply Limit</span>
+          <strong style="font-size: 11.5px; color: var(--danger);">{{ selectedDriveForJd()!.applicationDeadline | date:'shortDate' }}</strong>
+        </div>
+      </div>
+
+      <!-- Full JD Body -->
+      <div>
+        <h4 style="margin: 0 0 8px 0; font-size: 13.5px; font-weight: 800; color: var(--primary);">Detailed Job Specifications</h4>
+        <div style="font-family: inherit; font-size: 13px; line-height: 1.6; color: #2C3E50; white-space: pre-wrap; word-break: break-word; background: #FAFBFB; border: 1px solid var(--border); border-radius: 8px; padding: 16px; max-height: 280px; overflow-y: auto;">{{ selectedDriveForJd()!.description }}</div>
+      </div>
+
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer"
+      style="padding: 16px 24px; background: #F8F9FA; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border);">
+      <button class="btn-cancel"
+        style="width: 100px; height: 38px; border-radius: 8px; border: 1px solid var(--border); background: white; font-weight: 650; cursor: pointer;"
+        (click)="closeJdModal()">Close</button>
+      
+      @if (!hasApplied(selectedDriveForJd()!._id)) {
+        <button class="btn-primary"
+          style="padding: 0 20px; height: 38px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: 750; cursor: pointer;"
+          [disabled]="!isEligible(selectedDriveForJd()!)"
+          (click)="applyToDrive(selectedDriveForJd()!._id); closeJdModal();">
+          Apply Now
+        </button>
+      }
+    </div>
+  </div>
+</div>
+}

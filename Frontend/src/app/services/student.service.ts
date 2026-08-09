@@ -17,6 +17,7 @@ export interface StudentProfile {
   passoutYear: number;
   activeBacklogs: number;
   resumePath?: string;
+  profilePicPath?: string;
   isProfileComplete: boolean;
 }
 
@@ -30,6 +31,10 @@ export interface Drive {
   maxBacklogs: number;
   applicationDeadline: string;
   status: string;
+  hasAptitudeTest?: boolean;
+  hasGD?: boolean;
+  companyName?: string;
+  companyLogo?: string;
 }
 
 export interface Application {
@@ -41,7 +46,38 @@ export interface Application {
     status: string;
     ctc?: number;
     feedback?: string;
+    uploadedDate?: string | Date;
+    acceptedAt?: string | Date;
+    declinedAt?: string | Date;
+    declineReason?: string;
   };
+  aptitude?: {
+    status: string;
+    score?: number | null;
+    feedback?: string | null;
+    markedAt?: string | Date | null;
+  };
+  gd?: {
+    status: string;
+    score?: number | null;
+    feedback?: string | null;
+    markedAt?: string | Date | null;
+  };
+  interview?: {
+    status: string;
+    result?: string;
+    score?: number | null;
+    feedback?: string | null;
+    markedAt?: string | Date | null;
+  };
+  xai?: {
+    matchScore: number | null;
+    positiveSentences?: string[];
+    negativeSentences?: string[];
+    skillGaps?: string[];
+    strongSkills?: string[];
+  };
+  aiMatchScore?: number | null;
   createdAt: string;
 }
 
@@ -65,9 +101,12 @@ export class StudentService {
     });
   }
 
-  updateProfile(data: Partial<StudentProfile>): Observable<{ profile: StudentProfile }> {
+  updateProfile(data: any): Observable<{ profile: StudentProfile }> {
+    const headers = data instanceof FormData
+      ? this.getAuthHeaders()
+      : this.getAuthHeaders().set('Content-Type', 'application/json');
     return this.http.put<{ profile: StudentProfile }>(`${this.apiUrl}/profile`, data, {
-      headers: this.getAuthHeaders().set('Content-Type', 'application/json'),
+      headers,
     });
   }
 
@@ -106,5 +145,11 @@ export class StudentService {
         headers: this.getAuthHeaders(),
       }
     );
+  }
+
+  getSchedule(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/schedule`, {
+      headers: this.getAuthHeaders(),
+    });
   }
 }

@@ -38,6 +38,10 @@ const studentSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    profilePicPath: {
+      type: String,
+      default: null,
+    },
     isProfileComplete: {
       type: Boolean,
       default: false,

@@ -12,7 +12,14 @@ const {
   markGDResult,
   markInterviewResult,
   scheduleStage,
+  scheduleEvent,
+  getAvailableStudentsForSlot,
   updateRecruiterProfile,
+  requestReapproval,
+  getResumeText,
+  declareAptitudeResults,
+  declareGDResults,
+  declareInterviewResults,
 } = require("../controllers/recruiterController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const { uploadImage } = require("../middleware/uploadMiddleware");
@@ -23,16 +30,22 @@ router.use(protect, authorizeRoles("Recruiter"));
 
 router.get("/profile", getRecruiterProfile);
 router.put("/profile", uploadImage.single("logo"), updateRecruiterProfile);
+router.post("/request-reapproval", requestReapproval);
 router.post("/drive", createJobDrive);
 router.get("/drives", getRecruiterDrives);
 router.get("/drive/:id", getJobDriveById);
 router.put("/drive/:id", updateJobDrive);
 router.put("/drive/:id/close", closeJobDrive);
 router.get("/applications/:driveId", getDriveApplications);
+router.get("/drives/:driveId/applications", getDriveApplications);
 router.put("/application/:applicationId/status", updateApplicationStatus);
-router.put("/result/aptitude", markAptitudeResult);
-router.put("/result/gd", markGDResult);
-router.put("/result/interview", markInterviewResult);
+router.get("/application/:applicationId/resume-text", getResumeText);
+router.put("/result/aptitude", declareAptitudeResults);
+router.put("/result/gd", declareGDResults);
+router.put("/result/interview", declareInterviewResults);
 router.post("/schedule/:driveId", scheduleStage);
+router.post("/schedule", scheduleEvent);
+router.post("/check-availability", getAvailableStudentsForSlot);
 
 module.exports = router;
+
