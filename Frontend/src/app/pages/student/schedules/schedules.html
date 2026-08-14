@@ -1,13 +1,13 @@
 <div class="schedule-page-container">
   <div class="page-header">
     <h2>📅 Placement Schedule & Calendar</h2>
-    <p>Track your upcoming test rounds, group discussions, interviews, and past event history.</p>
+    <p>Track your test rounds, group discussions, and interviews organized by Current, Upcoming, and Finished events.</p>
   </div>
 
   @if (isLoading()) {
     <div class="loading-state">
       <div class="spinner"></div>
-      <p>Loading your schedule...</p>
+      <p>Loading your placement schedules...</p>
     </div>
   } @else if (errorMessage()) {
     <div class="error-banner">
@@ -15,20 +15,84 @@
       <span>{{ errorMessage() }}</span>
     </div>
   } @else {
-    @if (upcomingEvents().length === 0 && pastEvents().length === 0) {
+    @if (currentlyEvents().length === 0 && upcomingEvents().length === 0 && finishedEvents().length === 0) {
       <div class="empty-state-card">
         <span class="material-symbols-outlined empty-icon">event_available</span>
-        <h3>🎉 No upcoming events scheduled. Check back later!</h3>
-        <p>You currently have no upcoming or past placement rounds scheduled.</p>
+        <h3>🎉 No events scheduled yet</h3>
+        <p>You currently have no active, upcoming, or finished placement rounds scheduled.</p>
       </div>
     }
 
-    <!-- Upcoming Events Section -->
+    <!-- 1. Currently Active / Today's Schedules Section -->
+    @if (currentlyEvents().length > 0) {
+      <div class="section-container active-section-glow">
+        <h3 class="section-title text-active">
+          <span class="material-symbols-outlined icon-pulse">today</span>
+          <span>🔴 Currently Active / Today's Schedules ({{ currentlyEvents().length }})</span>
+        </h3>
+
+        <div class="events-grid">
+          @for (event of currentlyEvents(); track event.scheduleId || event._id) {
+            <div class="event-card active-card" [style.borderLeftColor]="getEventColor(event.eventType)">
+              <div class="event-card-header">
+                <span class="event-badge active-badge" [style.backgroundColor]="getEventColor(event.eventType)">
+                  {{ event.eventType }} Round
+                </span>
+                <span class="live-now-tag">
+                  <span class="pulse-dot"></span>
+                  <span>TODAY</span>
+                </span>
+              </div>
+
+              <div class="event-card-body">
+                <h4 class="company-drive-title">
+                  {{ event.drive?.companyName || event.companyName || 'Campus Recruiter' }} — 
+                  <span class="drive-name">{{ event.drive?.title || event.driveTitle || 'Placement Drive' }}</span>
+                </h4>
+
+                <div class="details-row">
+                  <div class="detail-item">
+                    <span class="material-symbols-outlined detail-icon text-active">calendar_month</span>
+                    <strong class="detail-text text-active">Today ({{ event.date | date:'mediumDate' }})</strong>
+                  </div>
+                  <div class="detail-item">
+                    <span class="material-symbols-outlined detail-icon text-active">schedule</span>
+                    <span class="detail-text font-code text-active">{{ event.timeSlot || 'Time TBD' }}</span>
+                  </div>
+                </div>
+
+                <div class="location-box active-loc-box">
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <span class="material-symbols-outlined detail-icon">location_on</span>
+                    <span class="location-text">📍 {{ event.location || 'Online' }}</span>
+                  </div>
+
+                  @if (event.meetingUrl) {
+                    <a [href]="event.meetingUrl" target="_blank" class="btn-join-meeting-active">
+                      <span class="material-symbols-outlined" style="font-size: 16px;">videocam</span>
+                      <span>Join Test / Meeting</span>
+                      <span class="material-symbols-outlined" style="font-size: 14px;">open_in_new</span>
+                    </a>
+                  }
+                  
+                  <button type="button" class="btn-download-ics-link" (click)="downloadICS(event)" title="Add to Calendar">
+                    <span class="material-symbols-outlined" style="font-size: 14px;">calendar_add_on</span>
+                    <span>Add to Calendar</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- 2. Upcoming Schedules Section -->
     @if (upcomingEvents().length > 0) {
-      <div class="section-container">
+      <div class="section-container" style="margin-top: 32px;">
         <h3 class="section-title">
           <span class="material-symbols-outlined" style="color: var(--secondary);">event_upcoming</span>
-          <span>📅 Upcoming Schedule ({{ upcomingEvents().length }})</span>
+          <span>📅 Upcoming Schedules ({{ upcomingEvents().length }})</span>
         </h3>
 
         <div class="events-grid">
@@ -68,18 +132,10 @@
                   </div>
 
                   @if (event.meetingUrl) {
-                    @if (isTodayOrPast(event.date)) {
-                      <a [href]="event.meetingUrl" target="_blank" class="btn-join-meeting">
-                        <span class="material-symbols-outlined" style="font-size: 16px;">videocam</span>
-                        <span>Join Meeting</span>
-                        <span class="material-symbols-outlined" style="font-size: 14px;">open_in_new</span>
-                      </a>
-                    } @else {
-                      <span class="meeting-locked-tag" title="Meeting link will unlock on the date of the test">
-                        <span class="material-symbols-outlined" style="font-size: 13px;">lock</span>
-                        <span>Link unlocks on {{ event.date | date:'mediumDate' }}</span>
-                      </span>
-                    }
+                    <span class="meeting-locked-tag" title="Meeting link will unlock on the date of the test">
+                      <span class="material-symbols-outlined" style="font-size: 13px;">lock</span>
+                      <span>Link unlocks on {{ event.date | date:'mediumDate' }}</span>
+                    </span>
                   }
                 </div>
               </div>
@@ -89,16 +145,16 @@
       </div>
     }
 
-    <!-- Past Events Section -->
-    @if (pastEvents().length > 0) {
+    <!-- 3. Finished / Completed Schedules Section -->
+    @if (finishedEvents().length > 0) {
       <div class="section-container" style="margin-top: 36px;">
         <h3 class="section-title text-muted">
           <span class="material-symbols-outlined">task_alt</span>
-          <span>✅ Completed Events ({{ pastEvents().length }})</span>
+          <span>✅ Finished / Completed Schedules ({{ finishedEvents().length }})</span>
         </h3>
 
         <div class="events-grid">
-          @for (event of pastEvents(); track event.scheduleId || event._id) {
+          @for (event of finishedEvents(); track event.scheduleId || event._id) {
             <div class="event-card past-card">
               <div class="event-card-header">
                 <span class="event-badge past-badge">
@@ -106,7 +162,7 @@
                 </span>
                 <span class="completed-tag">
                   <span class="material-symbols-outlined" style="font-size: 14px;">check_circle</span>
-                  <span>Completed</span>
+                  <span>Finished</span>
                 </span>
               </div>
 

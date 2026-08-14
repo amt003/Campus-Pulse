@@ -93,7 +93,8 @@ const applicationSchema = new mongoose.Schema(
         enum: ["Sent", "Viewed", "Downloaded", "Accepted", "Declined", "Expired", "Not Sent"],
         default: "Not Sent",
       },
-      fileId: { type: String, default: null }, // GridFS PDF file ID
+      fileId: { type: String, default: null },
+      filePath: { type: String, default: null },
       fileName: { type: String, default: null },
       uploadedDate: { type: Date, default: null },
       expiryDate: { type: Date, default: null },

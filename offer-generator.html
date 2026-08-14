@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offer Letter Generator - CampusPulse</title>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <style>
+      /* --- Existing styles (keep as before) --- */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f0f2f5;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .container {
+        max-width: 1000px;
+        width: 100%;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+      }
+      h1 {
+        text-align: center;
+        color: #1a3c5e;
+        margin-bottom: 20px;
+        font-weight: 600;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px 30px;
+        margin-bottom: 25px;
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .form-group label {
+        font-weight: 600;
+        font-size: 14px;
+        color: #333;
+        margin-bottom: 4px;
+      }
+      .form-group input {
+        padding: 10px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border 0.3s;
+      }
+      .form-group input:focus {
+        border-color: #1a73e8;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+      }
+      .full-width {
+        grid-column: span 2;
+      }
+      .btn-group {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin: 15px 0 25px 0;
+      }
+      .btn {
+        padding: 12px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .btn-primary {
+        background: #1a73e8;
+        color: white;
+      }
+      .btn-primary:hover {
+        background: #1557b0;
+      }
+      .btn-success {
+        background: #28a745;
+        color: white;
+      }
+      .btn-success:hover {
+        background: #1e7e34;
+      }
+      .btn-secondary {
+        background: #6c757d;
+        color: white;
+      }
+      .btn-secondary:hover {
+        background: #5a6268;
+      }
+
+      #offer-preview {
+        display: none;
+        margin-top: 20px;
+        border: 2px dashed #ccc;
+        padding: 20px;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+      .offer-letter {
+        font-family: "Times New Roman", Times, serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px 50px;
+        background: white;
+        border: 1px solid #ddd;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        line-height: 1.6;
+        color: #1e1e1e;
+      }
+      .offer-letter .company-name {
+        font-size: 28px;
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: 2px;
+        color: #1a3c5e;
+        border-bottom: 3px double #1a3c5e;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+      }
+      .offer-letter .company-tagline {
+        text-align: center;
+        font-size: 14px;
+        color: #555;
+        margin-top: -10px;
+        margin-bottom: 30px;
+      }
+      .offer-letter .date {
+        text-align: right;
+        font-size: 16px;
+        margin-bottom: 25px;
+      }
+      .offer-letter .subject {
+        font-weight: 700;
+        font-size: 18px;
+        margin-bottom: 20px;
+        text-decoration: underline;
+      }
+      .offer-letter .greeting {
+        font-size: 17px;
+        margin-bottom: 15px;
+      }
+      .offer-letter .body-text {
+        font-size: 16px;
+        margin-bottom: 15px;
+        text-align: justify;
+      }
+      .offer-letter .terms {
+        margin: 20px 0 25px 0;
+        padding-left: 20px;
+        border-left: 4px solid #1a3c5e;
+      }
+      .offer-letter .terms li {
+        margin-bottom: 8px;
+        font-size: 15px;
+        list-style-type: disc;
+      }
+      .offer-letter .signature {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #ccc;
+      }
+      .offer-letter .signature .name {
+        font-weight: 700;
+        font-size: 17px;
+      }
+      .offer-letter .signature .designation {
+        font-style: italic;
+        color: #444;
+      }
+      .offer-letter .footer-note {
+        margin-top: 25px;
+        font-size: 13px;
+        text-align: center;
+        color: #666;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+      }
+
+      @media print {
+        body {
+          background: white !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        .container {
+          box-shadow: none !important;
+          padding: 0 !important;
+          border-radius: 0 !important;
+          max-width: 100% !important;
+        }
+        .form-grid,
+        .btn-group,
+        h1,
+        .no-print {
+          display: none !important;
+        }
+        #offer-preview {
+          display: block !important;
+          border: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        .offer-letter {
+          border: none !important;
+          box-shadow: none !important;
+          padding: 40px 50px !important;
+          max-width: 100% !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>📄 CampusPulse — Offer Letter Generator</h1>
+
+      <!-- Input Form -->
+      <div class="form-grid no-print">
+        <div class="form-group">
+          <label>Student Full Name *</label>
+          <input
+            type="text"
+            id="studentName"
+            placeholder="e.g. Rahul Sharma"
+            value="Rahul Sharma"
+          />
+        </div>
+        <div class="form-group">
+          <label>Roll Number *</label>
+          <input
+            type="text"
+            id="rollNumber"
+            placeholder="e.g. 2021CS101"
+            value="2021CS101"
+          />
+        </div>
+        <div class="form-group">
+          <label>Job Title / Role *</label>
+          <input
+            type="text"
+            id="jobRole"
+            placeholder="e.g. Software Engineer"
+            value="Software Development Engineer"
+          />
+        </div>
+        <div class="form-group">
+          <label>Annual CTC (INR) *</label>
+          <input
+            type="text"
+            id="ctc"
+            placeholder="e.g. 12,00,000"
+            value="12,00,000"
+          />
+        </div>
+        <div class="form-group">
+          <label>Joining Date *</label>
+          <input
+            type="text"
+            id="joiningDate"
+            placeholder="e.g. 1st August 2026"
+            value="1st August 2026"
+          />
+        </div>
+        <div class="form-group">
+          <label>Company Name *</label>
+          <input
+            type="text"
+            id="companyName"
+            placeholder="e.g. Google India"
+            value="Google India"
+          />
+        </div>
+        <div class="form-group full-width">
+          <label>Top Skill / Strength (Optional)</label>
+          <input
+            type="text"
+            id="topSkill"
+            placeholder="e.g. Full Stack Development"
+            value="Full Stack Development"
+          />
+        </div>
+        <div class="form-group full-width">
+          <label>✍️ Draw Your Signature</label>
+          <div
+            style="
+              border: 2px solid #ccc;
+              border-radius: 8px;
+              width: 100%;
+              max-width: 400px;
+              background: white;
+            "
+          >
+            <canvas
+              id="signaturePad"
+              width="400"
+              height="150"
+              style="width: 100%; height: auto; touch-action: none"
+            ></canvas>
+          </div>
+          <div style="margin-top: 8px">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              onclick="clearSignature()"
+              style="padding: 6px 15px; font-size: 13px"
+            >
+              Clear Signature
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="btn-group no-print">
+        <button class="btn btn-primary" onclick="generateOffer()">
+          📝 Generate Offer Letter
+        </button>
+        <button class="btn btn-success" onclick="saveAsPDF()">
+          💾 Save as PDF
+        </button>
+        <button class="btn btn-secondary" onclick="clearForm()">
+          🔄 Clear
+        </button>
+      </div>
+
+      <!-- Offer Letter Preview -->
+      <div id="offer-preview">
+        <div class="offer-letter" id="offer-content">
+          <!-- Dynamically filled -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let signaturePad;
+
+      function initSignaturePad() {
+        const canvas = document.getElementById("signaturePad");
+        signaturePad = new SignaturePad(canvas, {
+          backgroundColor: "rgb(255, 255, 255)",
+          penColor: "rgb(26, 60, 94)",
+        });
+      }
+
+      function clearSignature() {
+        if (signaturePad) {
+          signaturePad.clear();
+        }
+      }
+
+      function generateOffer() {
+        const name =
+          document.getElementById("studentName").value || "[Student Name]";
+        const roll =
+          document.getElementById("rollNumber").value || "[Roll Number]";
+        const role = document.getElementById("jobRole").value || "[Job Title]";
+        const ctc = document.getElementById("ctc").value || "[CTC]";
+        const joining =
+          document.getElementById("joiningDate").value || "[Joining Date]";
+        const company =
+          document.getElementById("companyName").value || "[Company Name]";
+        const skill =
+          document.getElementById("topSkill").value ||
+          "your technical expertise";
+        const today = new Date().toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+
+        // Get signature as image
+        let signatureHTML = "";
+        if (signaturePad && !signaturePad.isEmpty()) {
+          const signatureDataURL = signaturePad.toDataURL("image/png");
+          signatureHTML = `<img src="${signatureDataURL}" alt="Signature" style="max-width: 200px; height: auto; margin-top: 5px;">`;
+        } else {
+          signatureHTML = `<div style="border-bottom: 1px solid #333; width: 200px; margin-top: 5px;"></div>`;
+        }
+
+        const html = `
+      <div class="company-name">${company}</div>
+      <div class="company-tagline">Excellence in Innovation & Technology</div>
+
+      <div class="date"><strong>Date:</strong> ${today}</div>
+
+      <div class="greeting"><strong>To,</strong><br>
+        ${name}<br>
+        Roll No: ${roll}<br>
+        Final Year, Computer Science & Engineering<br>
+        CampusPulse University
+      </div>
+
+      <div class="subject">Subject: Offer of Employment – ${role}</div>
+
+      <div class="body-text">
+        Dear <strong>${name}</strong>,
+      </div>
+
+      <div class="body-text">
+        We are pleased to inform you that, based on your outstanding performance during the campus recruitment drive, we are delighted to offer you the position of <strong>${role}</strong> at <strong>${company}</strong>.
+      </div>
+
+      <div class="body-text">
+        We were highly impressed by your skills in <strong>${skill}</strong> and your excellent academic track record. We believe you will be a valuable asset to our growing team.
+      </div>
+
+      <div class="terms">
+        <strong>📌 Terms and Conditions of the Offer:</strong>
+        <ul>
+          <li><strong>Joining Date:</strong> ${joining}</li>
+          <li><strong>Annual CTC:</strong> INR ${ctc} per annum (includes Basic Pay, HRA, Special Allowance, and Performance Bonus).</li>
+          <li><strong>Probation Period:</strong> 6 months from the date of joining.</li>
+          <li><strong>Work Location:</strong> Bengaluru, Karnataka (Primary office).</li>
+          <li><strong>Documents Required:</strong> Original Degree Certificates, Last Semester Marksheets, Government ID Proof (Aadhar/PAN), and 2 Passport-sized photographs.</li>
+        </ul>
+      </div>
+
+      <div class="body-text">
+        <strong>Acceptance of Offer:</strong><br>
+        Please confirm your acceptance of this offer by signing the acceptance copy and returning it to us within 7 days via the CampusPulse portal.
+      </div>
+
+      <div class="body-text">
+        We look forward to welcoming you to the <strong>${company}</strong> family and wish you a long and successful career with us.
+      </div>
+
+      <div class="signature">
+        <div>Yours sincerely,</div>
+        <br><br>
+        ${signatureHTML}
+        <div class="name">[Authorized Signatory]</div>
+        <div class="designation">Head of Human Resources</div>
+        <div style="font-size:14px; margin-top:5px;">${company}</div>
+        <div style="font-size:13px; color:#555;">hr@${company.toLowerCase().replace(/ /g, "")}.com | +91-98765-43210</div>
+      </div>
+
+      <div class="footer-note">
+        This is a system-generated demo offer letter for CampusPulse project demonstration purposes only.
+      </div>
+    `;
+
+        document.getElementById("offer-content").innerHTML = html;
+        document.getElementById("offer-preview").style.display = "block";
+        document
+          .getElementById("offer-preview")
+          .scrollIntoView({ behavior: "smooth" });
+      }
+
+      function saveAsPDF() {
+        if (document.getElementById("offer-preview").style.display === "none") {
+          alert(
+            'Please generate the offer letter first by clicking "Generate Offer Letter".',
+          );
+          return;
+        }
+        window.print();
+      }
+
+      function clearForm() {
+        document.getElementById("studentName").value = "";
+        document.getElementById("rollNumber").value = "";
+        document.getElementById("jobRole").value = "";
+        document.getElementById("ctc").value = "";
+        document.getElementById("joiningDate").value = "";
+        document.getElementById("companyName").value = "";
+        document.getElementById("topSkill").value = "";
+        clearSignature();
+        document.getElementById("offer-preview").style.display = "none";
+        document.getElementById("offer-content").innerHTML = "";
+      }
+
+      window.onload = function () {
+        initSignaturePad();
+        generateOffer();
+      };
+    </script>
+  </body>
+</html>

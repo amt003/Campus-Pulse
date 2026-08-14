@@ -12,8 +12,10 @@ import { StudentService } from '../../../services/student.service';
 export class StudentSchedulesComponent implements OnInit {
   private readonly studentService = inject(StudentService);
 
+  protected currentlyEvents = signal<any[]>([]);
   protected upcomingEvents = signal<any[]>([]);
-  protected pastEvents = signal<any[]>([]);
+  protected finishedEvents = signal<any[]>([]);
+  
   protected isLoading = signal<boolean>(true);
   protected errorMessage = signal<string>('');
 
@@ -28,11 +30,41 @@ export class StudentSchedulesComponent implements OnInit {
     this.studentService.getSchedule().subscribe({
       next: (res) => {
         if (res && res.success && res.data) {
-          this.upcomingEvents.set(res.data.upcoming || []);
-          this.pastEvents.set(res.data.past || []);
+          const data = res.data;
+          
+          if (data.currently || data.finished) {
+            this.currentlyEvents.set(data.currently || []);
+            this.upcomingEvents.set(data.upcoming || []);
+            this.finishedEvents.set(data.finished || data.past || []);
+          } else {
+            // Client-side categorization fallback
+            const allUpcoming = data.upcoming || [];
+            const allPast = data.past || [];
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const curr: any[] = [];
+            const up: any[] = [];
+
+            allUpcoming.forEach((evt: any) => {
+              const d = new Date(evt.date);
+              d.setHours(0, 0, 0, 0);
+              if (d.getTime() === today.getTime()) {
+                curr.push(evt);
+              } else {
+                up.push(evt);
+              }
+            });
+
+            this.currentlyEvents.set(curr);
+            this.upcomingEvents.set(up);
+            this.finishedEvents.set(allPast);
+          }
         } else {
+          this.currentlyEvents.set([]);
           this.upcomingEvents.set([]);
-          this.pastEvents.set([]);
+          this.finishedEvents.set([]);
         }
         this.isLoading.set(false);
       },

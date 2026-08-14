@@ -47,19 +47,34 @@ export class RecruiterDashboardComponent implements OnInit {
   protected activeDrivesCount = signal<number>(0);
   protected totalApplicationsCount = signal<number>(0);
   protected shortlistedCount = signal<number>(0);
-  protected offerAcceptanceRate = signal<number>(91);
+  protected offerAcceptanceRate = signal<number>(0);
 
-  protected upcomingInterviews = signal<any[]>([
-    { dateStr: 'TODAY @ 2:30 PM', studentName: 'Ananya Sharma', role: 'SDE Intern' },
-    { dateStr: 'TOMORROW @ 10:00 AM', studentName: 'Rahul Varma', role: 'Data Scientist' }
-  ]);
+  protected upcomingInterviews = signal<any[]>([]);
 
-  protected pipelineStats = computed(() => {
-    const applied = this.totalApplicationsCount() || 120;
-    const screening = Math.round(applied * 0.62) || 75;
-    const interview = this.shortlistedCount() || 45;
-    const offer = Math.round(interview * 0.27) || 12;
-    return { applied, screening, interview, offer };
+  protected pipelineData = signal<{ applied: number; screening: number; interview: number; offer: number }>({
+    applied: 0,
+    screening: 0,
+    interview: 0,
+    offer: 0
+  });
+
+  protected pipelineHeights = computed(() => {
+    const data = this.pipelineData();
+    const maxVal = Math.max(data.applied, data.screening, data.interview, data.offer);
+    if (maxVal === 0) {
+      return {
+        appliedHeight: 8,
+        screeningHeight: 8,
+        interviewHeight: 8,
+        offerHeight: 8,
+      };
+    }
+    return {
+      appliedHeight: data.applied > 0 ? Math.max(12, Math.round((data.applied / maxVal) * 85)) : 8,
+      screeningHeight: data.screening > 0 ? Math.max(12, Math.round((data.screening / maxVal) * 85)) : 8,
+      interviewHeight: data.interview > 0 ? Math.max(12, Math.round((data.interview / maxVal) * 85)) : 8,
+      offerHeight: data.offer > 0 ? Math.max(12, Math.round((data.offer / maxVal) * 85)) : 8,
+    };
   });
 
   // Create Drive Modal / Form placeholder
@@ -136,11 +151,42 @@ export class RecruiterDashboardComponent implements OnInit {
         this.drives.set(driveList);
         this.activeDrivesCount.set(driveList.filter((d) => d.status === 'Open').length);
         this.totalApplicationsCount.set(driveList.reduce((acc, d) => acc + (d.applicationsCount || 0), 0));
+        this.fetchAnalytics();
       },
       error: (err) => {
         console.error('Failed to fetch drives:', err);
+        this.fetchAnalytics();
       },
     });
+  }
+
+  protected fetchAnalytics(): void {
+    this.recruiterService.getAnalytics().subscribe({
+      next: (res) => {
+        if (res && res.analytics) {
+          if (res.analytics.pipeline) {
+            this.pipelineData.set(res.analytics.pipeline);
+            this.shortlistedCount.set(res.analytics.pipeline.interview || 0);
+          }
+          if (res.analytics.offerAcceptanceRate !== undefined) {
+            this.offerAcceptanceRate.set(res.analytics.offerAcceptanceRate);
+          }
+          this.upcomingInterviews.set(res.analytics.upcomingInterviews || []);
+        }
+      },
+      error: (err) => {
+        console.error('Failed to fetch recruiter analytics:', err);
+      }
+    });
+  }
+
+  protected navigateToSchedules(): void {
+    const drivesList = this.drives();
+    if (drivesList.length > 0) {
+      this.router.navigate(['/recruiter/applications', drivesList[0]._id]);
+    } else {
+      this.router.navigate(['/recruiter/drives']);
+    }
   }
 
   protected refreshStatus(): void {
@@ -260,5 +306,35 @@ export class RecruiterDashboardComponent implements OnInit {
     this.isApplicationsModalOpen.set(false);
     this.selectedApplication.set(null);
     this.applications.set([]);
+  }
+
+  protected exportDrivesToCSV(): void {
+    const drivesList = this.drives();
+    if (drivesList.length === 0) return;
+
+    // Header row
+    const headers = ['Drive ID', 'Title', 'Status', 'Applications Count', 'CTC (LPA)', 'Min CGPA', 'Deadline', 'Has Aptitude', 'Has GD'];
+    const rows = drivesList.map((d) => [
+      d._id,
+      `"${d.title.replace(/"/g, '""')}"`,
+      d.status,
+      d.applicationsCount,
+      (d.ctc / 100000).toFixed(2),
+      d.minCGPA,
+      new Date(d.applicationDeadline).toLocaleDateString(),
+      d.hasAptitudeTest ? 'Yes' : 'No',
+      d.hasGD ? 'Yes' : 'No'
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Job_Drives_Analytics_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 }

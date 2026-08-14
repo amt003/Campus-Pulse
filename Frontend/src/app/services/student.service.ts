@@ -152,4 +152,31 @@ export class StudentService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  getOfferDetails(applicationId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/offer/${applicationId}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  getOfferPdfUrl(applicationId: string): string {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+    return `${this.apiUrl}/offer/${applicationId}/pdf?token=${token}`;
+  }
+
+  acceptOffer(applicationId: string): Observable<any> {
+    return this.http.put<any>(
+      `${this.apiUrl}/offer/${applicationId}/accept`,
+      {},
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  declineOffer(applicationId: string, reason: string): Observable<any> {
+    return this.http.put<any>(
+      `${this.apiUrl}/offer/${applicationId}/decline`,
+      { reason },
+      { headers: this.getAuthHeaders() }
+    );
+  }
 }

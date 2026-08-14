@@ -3,6 +3,11 @@ const Application = require("../models/Application");
 const Schedule = require("../models/Schedule");
 const Recruiter = require("../models/Recruiter");
 const User = require("../models/User");
+const Student = require("../models/Student");
+const socketService = require("../services/socketService");
+const sendEmail = require("../utils/sendEmail");
+const emailTemplates = require("../utils/emailTemplates");
+const { isStudentPlaced, getStudentPlacementStatus } = require("../utils/studentStatus");
 
 const ALL_STATUSES = [
   "Applied",
@@ -94,6 +99,31 @@ const getDriveApplications = async (req, res) => {
       })
       .sort({ aiMatchScore: -1 }); // Highest score first
 
+    // Batch check placed students elsewhere with company name
+    const studentIds = applications.map(app => app.studentId?._id).filter(Boolean);
+    const placedAppsElsewhere = await Application.find({
+      studentId: { $in: studentIds },
+      driveId: { $ne: driveId },
+      $or: [
+        { status: { $in: ["Placed", "Offer Accepted"] } },
+        { "offer.status": "Accepted" }
+      ]
+    }).populate("driveId");
+
+    const recruiterUserIds = placedAppsElsewhere.map(p => p.driveId?.recruiterId).filter(Boolean);
+    const recruiters = await Recruiter.find({ userId: { $in: recruiterUserIds } });
+    const recruiterMap = new Map();
+    recruiters.forEach(r => {
+      recruiterMap.set(r.userId.toString(), r.companyName);
+    });
+
+    const placedCompanyMap = new Map();
+    placedAppsElsewhere.forEach(p => {
+      const recUserId = p.driveId?.recruiterId?.toString();
+      const compName = recUserId ? recruiterMap.get(recUserId) : null;
+      placedCompanyMap.set(p.studentId.toString(), compName || "another company");
+    });
+
     return res.status(200).json({
       success: true,
       data: {
@@ -104,18 +134,27 @@ const getDriveApplications = async (req, res) => {
         companyName: recruiter.companyName,
         applications: applications.map(app => {
           const studentObj = app.studentId;
+          const placementCompany = studentObj ? placedCompanyMap.get(studentObj._id.toString()) || null : null;
+          const isPlaced = !!placementCompany;
+
           return {
             applicationId: app._id,
             appliedDate: app.appliedDate,
             status: app.status,
             aiMatchScore: app.aiMatchScore,
+            isPlacedGlobally: isPlaced,
+            isPlaced,
+            placementCompany,
             student: studentObj ? {
               _id: studentObj._id,
               rollNumber: studentObj.rollNumber,
               cgpa: studentObj.cgpa,
               branch: studentObj.branch,
               resumePath: studentObj.resumePath,
-              name: studentObj.userId ? studentObj.userId.name : "N/A"
+              name: studentObj.userId ? studentObj.userId.name : "N/A",
+              isPlacedGlobally: isPlaced,
+              isPlaced,
+              placementCompany,
             } : null,
             xai: app.xai,
             aptitude: app.aptitude,
@@ -526,6 +565,14 @@ const scheduleStage = async (req, res) => {
 
     // No conflicts detected — proceed to schedule eligible candidates
     for (const studentId of studentIds) {
+      const placementStatus = await getStudentPlacementStatus(studentId, drive._id);
+      if (placementStatus.isPlaced) {
+        return res.status(409).json({
+          success: false,
+          message: `Cannot schedule candidate. This student has already been placed at ${placementStatus.companyName}.`,
+        });
+      }
+
       const application = await Application.findOne({ studentId, driveId: drive._id });
 
       if (application) {
@@ -580,6 +627,21 @@ const scheduleStage = async (req, res) => {
         }
 
         await application.save();
+
+        const studentDoc = await Student.findById(studentId).populate("userId");
+        if (studentDoc && studentDoc.userId && studentDoc.userId.email) {
+          await sendEmail({
+            to: studentDoc.userId.email,
+            ...emailTemplates.studentScheduled({
+              studentName: studentDoc.userId.name,
+              companyName: recruiter ? recruiter.companyName : "Recruiter",
+              roundType: eventType,
+              date: scheduledDate,
+              time: timeSlot,
+              location: location || "Online",
+            }),
+          });
+        }
       }
     }
 
@@ -624,11 +686,22 @@ const scheduleEvent = async (req, res) => {
     for (const appId of applicationIds) {
       const app = await Application.findById(appId).populate({
         path: "studentId",
-        populate: { path: "userId", select: "name" }
+        populate: { path: "userId", select: "name email" }
       });
 
       if (!app) {
         return res.status(404).json({ success: false, message: `Application ${appId} not found` });
+      }
+
+      if (app.studentId) {
+        const placementStatus = await getStudentPlacementStatus(app.studentId._id, app.driveId);
+        if (placementStatus.isPlaced) {
+          const studentName = app.studentId.userId ? app.studentId.userId.name : "Student";
+          return res.status(409).json({
+            success: false,
+            message: `Cannot schedule ${studentName}. This student has already been placed at ${placementStatus.companyName}.`,
+          });
+        }
       }
 
       applications.push(app);
@@ -719,6 +792,28 @@ const scheduleEvent = async (req, res) => {
       }
 
       await app.save();
+
+      if (app.studentId && app.studentId.userId) {
+        await socketService.sendRealTimeNotification(app.studentId.userId._id, {
+          title: `New Schedule: ${eventType} Round 📅`,
+          message: `You have been scheduled for the ${eventType} round of ${recruiter ? recruiter.companyName : "Recruiter"} on ${new Date(scheduledDate).toDateString()} at ${timeSlot}.`,
+          type: "info",
+        });
+
+        if (app.studentId.userId.email) {
+          await sendEmail({
+            to: app.studentId.userId.email,
+            ...emailTemplates.studentScheduled({
+              studentName: app.studentId.userId.name,
+              companyName: recruiter ? recruiter.companyName : "Recruiter",
+              roundType: eventType,
+              date: scheduledDate,
+              time: timeSlot,
+              location: location || "Online",
+            }),
+          });
+        }
+      }
     }
 
     if (createdSchedules.length === 0) {
@@ -986,6 +1081,14 @@ const declareAptitudeResults = async (req, res) => {
         });
       }
 
+      const placementStatus = await getStudentPlacementStatus(app.studentId, app.driveId);
+      if (placementStatus.isPlaced) {
+        return res.status(409).json({
+          success: false,
+          message: `Cannot mark results for candidate(s) who have already been placed at ${placementStatus.companyName}.`,
+        });
+      }
+
       if (app.status !== "Aptitude Scheduled" && app.status !== "Aptitude Completed") {
         return res.status(400).json({
           success: false,
@@ -1006,6 +1109,23 @@ const declareAptitudeResults = async (req, res) => {
       }
       app.status = "Aptitude Completed";
       await app.save();
+
+      const studentDoc = await Student.findById(app.studentId);
+      if (studentDoc) {
+        const title = result === "Passed" ? "Aptitude Test Passed 🎉" : "Aptitude Test Update 📝";
+        const message = result === "Passed"
+          ? `Congratulations! You passed the Aptitude round for ${app.driveId ? app.driveId.title : "Placement Drive"}.`
+          : `Thank you for participating. You were not shortlisted in the Aptitude round for ${app.driveId ? app.driveId.title : "Placement Drive"}.`;
+        await socketService.sendRealTimeNotification(studentDoc.userId, {
+          title,
+          message,
+          type: result === "Passed" ? "success" : "info",
+        });
+      }
+      await Schedule.updateMany(
+        { applicationId: app._id, eventType: "Aptitude" },
+        { status: "Completed" }
+      );
     }
 
     return res.status(200).json({
@@ -1072,6 +1192,14 @@ const declareGDResults = async (req, res) => {
         });
       }
 
+      const placementStatus = await getStudentPlacementStatus(app.studentId, app.driveId);
+      if (placementStatus.isPlaced) {
+        return res.status(409).json({
+          success: false,
+          message: `Cannot mark results for candidate(s) who have already been placed at ${placementStatus.companyName}.`,
+        });
+      }
+
       if (app.status !== "GD Scheduled" && app.status !== "GD Completed") {
         return res.status(400).json({
           success: false,
@@ -1092,6 +1220,23 @@ const declareGDResults = async (req, res) => {
       }
       app.status = "GD Completed";
       await app.save();
+
+      const studentDoc = await Student.findById(app.studentId);
+      if (studentDoc) {
+        const title = result === "Shortlisted" ? "GD Round Shortlisted 👥" : "GD Round Update 📝";
+        const message = result === "Shortlisted"
+          ? `Congratulations! You passed the Group Discussion round for ${app.driveId ? app.driveId.title : "Placement Drive"}.`
+          : `Thank you for participating. You were not shortlisted in the Group Discussion round for ${app.driveId ? app.driveId.title : "Placement Drive"}.`;
+        await socketService.sendRealTimeNotification(studentDoc.userId, {
+          title,
+          message,
+          type: result === "Shortlisted" ? "success" : "info",
+        });
+      }
+      await Schedule.updateMany(
+        { applicationId: app._id, eventType: "GD" },
+        { status: "Completed" }
+      );
     }
 
     return res.status(200).json({
@@ -1158,6 +1303,14 @@ const declareInterviewResults = async (req, res) => {
         });
       }
 
+      const placementStatus = await getStudentPlacementStatus(app.studentId, app.driveId);
+      if (placementStatus.isPlaced) {
+        return res.status(409).json({
+          success: false,
+          message: `Cannot mark results for candidate(s) who have already been placed at ${placementStatus.companyName}.`,
+        });
+      }
+
       if (app.status !== "Interview Scheduled" && app.status !== "Interview Completed") {
         return res.status(400).json({
           success: false,
@@ -1179,6 +1332,27 @@ const declareInterviewResults = async (req, res) => {
       }
       app.status = "Interview Completed";
       await app.save();
+
+      const studentDoc = await Student.findById(app.studentId);
+      if (studentDoc) {
+        let title = "Interview Completed 💬";
+        let message = `Your Interview results have been declared for ${app.driveId ? app.driveId.title : "Placement Drive"}. Status: ${result}`;
+        let type = "info";
+        if (result === "Selected") {
+          title = "Selected for Placement! 🏆";
+          message = `Congratulations! You have been selected in the Interview round for ${app.driveId ? app.driveId.title : "Placement Drive"}! Prepare for the official offer.`;
+          type = "success";
+        }
+        await socketService.sendRealTimeNotification(studentDoc.userId, {
+          title,
+          message,
+          type,
+        });
+      }
+      await Schedule.updateMany(
+        { applicationId: app._id, eventType: "Interview" },
+        { status: "Completed" }
+      );
     }
 
     return res.status(200).json({
@@ -1230,6 +1404,447 @@ const requestReapproval = async (req, res) => {
   }
 };
 
+// POST /api/recruiter/application/:applicationId/offer
+const uploadOfferLetter = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Please upload an offer letter PDF file",
+      });
+    }
+
+    const application = await Application.findById(applicationId).populate("driveId");
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found",
+      });
+    }
+
+    const recruiter = await Recruiter.findOne({ userId: req.user._id });
+    if (!recruiter) {
+      return res.status(403).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    const placementStatus = await getStudentPlacementStatus(application.studentId, application.driveId);
+    if (placementStatus.isPlaced) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot send offer. This student has already been placed at ${placementStatus.companyName}.`,
+      });
+    }
+
+    // Security check: verify recruiter owns this drive
+    if (application.driveId && application.driveId.recruiterId.toString() !== recruiter._id.toString() && application.driveId.recruiterId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to upload offer letters for this drive",
+      });
+    }
+
+    const now = new Date();
+    const expiry = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days expiry
+
+    application.offer.status = "Sent";
+    application.offer.fileId = req.file.filename;
+    application.offer.filePath = `/uploads/offers/${req.file.filename}`;
+    application.offer.fileName = req.file.originalname;
+    application.offer.uploadedDate = now;
+    application.offer.expiryDate = expiry;
+    application.status = "Offer Sent";
+
+    await application.save();
+
+    const studentDoc = await Student.findById(application.studentId).populate("userId");
+    if (studentDoc) {
+      await socketService.sendRealTimeNotification(studentDoc.userId._id || studentDoc.userId, {
+        title: "Official Job Offer Received! ✉️",
+        message: `Congratulations! ${recruiter.companyName} has sent you an official job offer letter for the drive: "${application.driveId ? application.driveId.title : "Job Drive"}". Please check your Offers tab.`,
+        type: "success",
+      });
+
+      if (studentDoc.userId && studentDoc.userId.email) {
+        await sendEmail({
+          to: studentDoc.userId.email,
+          ...emailTemplates.offerUploaded({
+            studentName: studentDoc.userId.name,
+            companyName: recruiter.companyName,
+          }),
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Offer letter uploaded and sent to candidate successfully",
+      offer: application.offer,
+      application,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to upload offer letter",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/recruiter/application/:applicationId/offer-template
+const getOfferTemplateData = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+
+    const application = await Application.findById(applicationId)
+      .populate({
+        path: "studentId",
+        populate: { path: "userId", select: "name email phone" },
+      })
+      .populate("driveId");
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found",
+      });
+    }
+
+    const recruiter = await Recruiter.findOne({ userId: req.user._id });
+
+    // Format ctc into INR locale representation
+    const rawCtc = application.driveId?.ctc || 1200000;
+    const formattedCtc = typeof rawCtc === "number" ? rawCtc.toLocaleString("en-IN") : rawCtc;
+
+    const studentName = application.studentId?.userId?.name || application.studentId?.name || "Candidate";
+    const rollNumber = application.studentId?.rollNumber || "N/A";
+    const branch = application.studentId?.branch || "Computer Science & Engineering";
+    const jobRole = application.driveId?.title || application.driveId?.role || "Software Development Engineer";
+    const companyName = recruiter?.companyName || application.driveId?.companyName || "Campus Recruiter";
+    const topSkill = (application.studentId?.skills && application.studentId.skills[0]) || "Software Engineering";
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        applicationId: application._id,
+        studentName,
+        rollNumber,
+        branch,
+        jobRole,
+        ctc: formattedCtc,
+        companyName,
+        officialEmail: recruiter?.officialEmail || recruiter?.email || "",
+        website: recruiter?.website || "",
+        companyLogo: recruiter?.companyLogo || null,
+        topSkill,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch offer template data",
+      error: error.message,
+    });
+  }
+};
+
+// POST /api/recruiter/drive/:driveId/bulk-aptitude
+const bulkUploadAptitudeScores = async (req, res) => {
+  try {
+    const { driveId } = req.params;
+    const { cutoffScore, scores, csvContent } = req.body;
+
+    if (cutoffScore === undefined || cutoffScore === null || isNaN(cutoffScore)) {
+      return res.status(400).json({
+        success: false,
+        message: "Cutoff score is required and must be a valid number",
+      });
+    }
+
+    let parsedScores = Array.isArray(scores) ? scores : [];
+
+    // If csvContent string was passed, parse it line by line
+    if (!parsedScores.length && typeof csvContent === "string") {
+      const lines = csvContent.split(/\r?\n/);
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.toLowerCase().startsWith("roll")) continue;
+        const parts = trimmed.split(/[,;\t\s]+/);
+        if (parts.length >= 2) {
+          const rollNumber = parts[0].trim();
+          const scoreNum = parseFloat(parts[1].trim());
+          if (rollNumber && !isNaN(scoreNum)) {
+            parsedScores.push({ rollNumber, score: scoreNum });
+          }
+        }
+      }
+    }
+
+    if (parsedScores.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid student scores found in batch data. Expected format: RollNumber, Score",
+      });
+    }
+
+    const drive = await JobDrive.findById(driveId);
+    if (!drive) {
+      return res.status(404).json({ success: false, message: "Job drive not found" });
+    }
+
+    const recruiter = await Recruiter.findOne({ userId: req.user._id });
+    if (!recruiter || drive.recruiterId.toString() !== recruiter._id.toString() && drive.recruiterId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: "Unauthorized to manage this drive" });
+    }
+
+    // Fetch all applications for this drive
+    const applications = await Application.find({ driveId }).populate("studentId");
+
+    // Build map of Roll Number (and email) to Application
+    const appMap = new Map();
+    applications.forEach((app) => {
+      if (app.studentId) {
+        if (app.studentId.rollNumber) {
+          appMap.set(app.studentId.rollNumber.trim().toLowerCase(), app);
+        }
+        if (app.studentId.email) {
+          appMap.set(app.studentId.email.trim().toLowerCase(), app);
+        }
+      }
+    });
+
+    let passedCount = 0;
+    let failedCount = 0;
+    const skippedList = [];
+
+    const cutoff = Number(cutoffScore);
+
+    for (const item of parsedScores) {
+      const rollKey = (item.rollNumber || "").trim().toLowerCase();
+      const app = appMap.get(rollKey);
+
+      if (!app) {
+        skippedList.push({
+          rollNumber: item.rollNumber,
+          score: item.score,
+          reason: "Candidate not found in drive applications",
+        });
+        continue;
+      }
+
+      // NEW VALIDATION STEP: Only update candidates whose status is "Aptitude Scheduled" (or "Aptitude Completed" for re-imports)
+      if (app.status !== "Aptitude Scheduled" && app.status !== "Aptitude Completed") {
+        skippedList.push({
+          rollNumber: item.rollNumber,
+          score: item.score,
+          reason: `Not scheduled for Aptitude (Current status: ${app.status})`,
+        });
+        continue;
+      }
+
+      const scoreNum = Number(item.score);
+      const isPassed = scoreNum >= cutoff;
+
+      app.aptitude.score = scoreNum;
+      app.aptitude.status = isPassed ? "Passed" : "Failed";
+      app.aptitude.result = isPassed ? "Passed" : "Failed";
+      app.aptitude.feedback = isPassed
+        ? `Passed Aptitude Test (Score: ${scoreNum}, Cutoff: ${cutoff})`
+        : `Below Cutoff Score (Score: ${scoreNum}, Cutoff: ${cutoff})`;
+      app.aptitude.markedBy = recruiter._id;
+      app.aptitude.markedAt = new Date();
+
+      if (isPassed) {
+        app.status = "Aptitude Completed";
+        passedCount++;
+      } else {
+        app.status = "Rejected";
+        failedCount++;
+      }
+
+      await app.save();
+      await Schedule.updateMany(
+        { applicationId: app._id, eventType: "Aptitude" },
+        { status: "Completed" }
+      );
+    }
+
+    const updatedCount = passedCount + failedCount;
+
+    return res.status(200).json({
+      success: true,
+      message: "Bulk Aptitude score processing completed with status validation",
+      summary: {
+        totalRows: parsedScores.length,
+        updated: updatedCount,
+        skipped: skippedList.length,
+        passed: passedCount,
+        failed: failedCount,
+        cutoffScore: cutoff,
+        skippedDetails: skippedList,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to process bulk aptitude scores",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/recruiter/analytics — Dashboard pipeline stats & upcoming interviews
+const getRecruiterAnalytics = async (req, res) => {
+  try {
+    const recruiter = await Recruiter.findOne({ userId: req.user._id });
+    const recruiterIdFilter = recruiter ? recruiter._id : req.user._id;
+
+    // Find all job drives by this recruiter
+    const drives = await JobDrive.find({
+      $or: [{ recruiterId: recruiterIdFilter }, { recruiterId: req.user._id }],
+    });
+    const driveIds = drives.map((d) => d._id);
+
+    // Fetch all applications
+    const applications = await Application.find({ driveId: { $in: driveIds } });
+
+    let appliedCount = applications.length;
+    let screeningCount = 0;
+    let interviewCount = 0;
+    let offerCount = 0;
+
+    let totalOffersCount = 0;
+    let acceptedOffersCount = 0;
+
+    const screeningStatuses = [
+      "Under Review",
+      "Aptitude Scheduled",
+      "Aptitude Completed",
+      "GD Scheduled",
+      "GD Completed",
+    ];
+    const interviewStatuses = [
+      "Interview Scheduled",
+      "Interview Completed",
+      "Selected",
+      "Waitlisted",
+    ];
+    const offerStatuses = [
+      "Offer Sent",
+      "Offer Accepted",
+      "Offer Declined",
+      "Placed",
+    ];
+
+    applications.forEach((app) => {
+      const isAccepted =
+        app.status === "Offer Accepted" ||
+        app.status === "Placed" ||
+        app.offer?.status === "Accepted";
+      const isDeclined =
+        app.status === "Offer Declined" || app.offer?.status === "Declined";
+      const isOfferSent =
+        app.status === "Offer Sent" ||
+        app.offer?.status === "Sent" ||
+        app.offer?.status === "Viewed";
+
+      if (isAccepted || isDeclined || isOfferSent) {
+        totalOffersCount++;
+        if (isAccepted) {
+          acceptedOffersCount++;
+        }
+      }
+
+      if (screeningStatuses.includes(app.status)) {
+        screeningCount++;
+      } else if (interviewStatuses.includes(app.status)) {
+        interviewCount++;
+      } else if (offerStatuses.includes(app.status)) {
+        offerCount++;
+      }
+    });
+
+    const offerAcceptanceRate =
+      totalOffersCount > 0
+        ? Number(((acceptedOffersCount / totalOffersCount) * 100).toFixed(1))
+        : 0;
+
+    // Fetch upcoming interview schedules
+    const upcomingSchedules = await Schedule.find({
+      $or: [{ recruiterId: recruiterIdFilter }, { recruiterId: req.user._id }],
+      eventType: "Interview",
+      status: "Scheduled",
+    })
+      .populate({
+        path: "studentId",
+        populate: { path: "userId", select: "name" },
+      })
+      .populate("driveId", "title")
+      .sort({ date: 1 })
+      .limit(5);
+
+    const formattedInterviews = upcomingSchedules.map((sch) => {
+      const studentName =
+        sch.studentId && sch.studentId.userId
+          ? sch.studentId.userId.name
+          : "Candidate";
+      const role = sch.driveId ? sch.driveId.title : "SDE Intern";
+
+      const schDate = new Date(sch.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const schDay = new Date(schDate);
+      schDay.setHours(0, 0, 0, 0);
+
+      let dateStr = "";
+      if (schDay.getTime() === today.getTime()) {
+        dateStr = `TODAY @ ${sch.timeSlot}`;
+      } else if (schDay.getTime() === tomorrow.getTime()) {
+        dateStr = `TOMORROW @ ${sch.timeSlot}`;
+      } else {
+        const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+        dateStr = `${schDate.getDate()} ${monthNames[schDate.getMonth()]} @ ${sch.timeSlot}`;
+      }
+
+      return {
+        dateStr,
+        studentName,
+        role,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      analytics: {
+        pipeline: {
+          applied: appliedCount,
+          screening: screeningCount,
+          interview: interviewCount,
+          offer: offerCount,
+        },
+        offerAcceptanceRate,
+        totalOffers: totalOffersCount,
+        acceptedOffers: acceptedOffersCount,
+        upcomingInterviews: formattedInterviews,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch recruiter analytics",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getRecruiterProfile,
   getDriveApplications,
@@ -1251,5 +1866,9 @@ module.exports = {
   declareAptitudeResults,
   declareGDResults,
   declareInterviewResults,
+  uploadOfferLetter,
+  getOfferTemplateData,
+  bulkUploadAptitudeScores,
+  getRecruiterAnalytics,
 };
 

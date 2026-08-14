@@ -9,6 +9,10 @@ const {
   getStudentApplications,
   getApplicationById,
   getStudentSchedule,
+  acceptOffer,
+  declineOffer,
+  getOfferDetails,
+  getOfferPdf,
 } = require("../controllers/studentController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
@@ -26,5 +30,11 @@ router.post("/apply/:driveId", applyToDrive);
 router.get("/applications", getStudentApplications);
 router.get("/application/:id", getApplicationById);
 router.get("/schedule", getStudentSchedule);
+
+// Offer Routes
+router.get("/offer/:applicationId", getOfferDetails);
+router.get("/offer/:applicationId/pdf", getOfferPdf);
+router.put("/offer/:applicationId/accept", acceptOffer);
+router.put("/offer/:applicationId/decline", declineOffer);
 
 module.exports = router;

@@ -1,83 +1,221 @@
-<div class="tab-content-panel">
-  <h2 style="font-size: 20px; font-weight: 800; color: var(--primary); margin: 0 0 20px 0;">My Job Offers</h2>
+<div class="offers-page-container">
 
-  @if (isLoading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading your offers...</p>
+  @if (isSingleOfferMode()) {
+    <!-- Single Offer Letter Details View -->
+    <div class="single-offer-wrapper">
+      
+      <!-- Back Navigation Header -->
+      <div class="offer-nav-header">
+        <a routerLink="/student/dashboard" class="btn-back-dashboard">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Back to Dashboard</span>
+        </a>
+        
+        <div class="company-drive-headline">
+          <h2>{{ driveDetails()?.companyName || 'Placement Recruiter' }}</h2>
+          <span class="drive-title-tag">{{ driveDetails()?.title || 'Job Drive' }}</span>
+        </div>
+      </div>
+
+      @if (isLoading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading offer letter details...</p>
+        </div>
+      } @else if (errorMessage()) {
+        <div class="error-banner">
+          <span class="material-symbols-outlined">error</span>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      } @else {
+        
+        @if (successMessage()) {
+          <div class="success-banner">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span>{{ successMessage() }}</span>
+          </div>
+        }
+
+        <!-- Status Banner -->
+        @let status = offerDetails()?.status;
+        @let appStatus = selectedApplication()?.status;
+
+        @if (status === 'Accepted' || appStatus === 'Placed') {
+          <div class="status-banner banner-accepted">
+            <span class="material-symbols-outlined banner-icon">verified</span>
+            <div>
+              <h3>🎉 Offer Accepted! You are Officially Placed!</h3>
+              <p>Accepted on {{ (offerDetails()?.acceptedAt || selectedApplication()?.updatedAt) | date:'mediumDate' }}. The university training and placement cell has been notified.</p>
+            </div>
+          </div>
+        } @else if (status === 'Declined' || appStatus === 'Offer Declined') {
+          <div class="status-banner banner-declined">
+            <span class="material-symbols-outlined banner-icon">cancel</span>
+            <div>
+              <h3>❌ Offer Declined</h3>
+              <p>Declined on {{ (offerDetails()?.declinedAt || selectedApplication()?.updatedAt) | date:'mediumDate' }}. Reason: <strong>{{ offerDetails()?.declineReason || 'Personal Reasons' }}</strong></p>
+            </div>
+          </div>
+        } @else {
+          <div class="status-banner banner-pending">
+            <span class="material-symbols-outlined banner-icon">hourglass_top</span>
+            <div>
+              <h3>⏳ Action Required: Job Offer Received</h3>
+              <p>Please review your offer letter below. This offer expires in 
+                <strong [style.color]="getDaysRemaining(offerDetails()?.expiryDate) <= 2 ? '#E74C3C' : '#D4AC0D'">
+                  {{ getDaysRemaining(offerDetails()?.expiryDate) }} day(s)
+                </strong> 
+                ({{ offerDetails()?.expiryDate | date:'mediumDate' }}).
+              </p>
+            </div>
+          </div>
+        }
+
+        <!-- Action Control Buttons (Only if pending response) -->
+        @if (status === 'Sent' || status === 'Viewed' || status === 'Downloaded') {
+          <div class="offer-actions-bar">
+            <button type="button" class="btn-action-accept" [disabled]="isSubmittingAction()" (click)="acceptOffer()">
+              <span class="material-symbols-outlined">check_circle</span>
+              <span>{{ isSubmittingAction() ? 'Processing...' : '✅ Accept Offer' }}</span>
+            </button>
+            
+            <button type="button" class="btn-action-decline" [disabled]="isSubmittingAction()" (click)="openDeclineModal()">
+              <span class="material-symbols-outlined">cancel</span>
+              <span>❌ Decline Offer</span>
+            </button>
+          </div>
+        }
+
+        <!-- PDF Document Viewer -->
+        <div class="pdf-viewer-card">
+          <div class="pdf-viewer-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="material-symbols-outlined text-red">picture_as_pdf</span>
+              <strong style="font-size: 14px; color: var(--primary);">{{ offerDetails()?.fileName || 'Offer_Letter.pdf' }}</strong>
+            </div>
+            
+            @if (safePdfUrl) {
+              <a [href]="safePdfUrl" target="_blank" class="btn-download-pdf-direct">
+                <span class="material-symbols-outlined" style="font-size: 16px;">download</span>
+                <span>Download Original PDF</span>
+              </a>
+            }
+          </div>
+
+          <div class="pdf-container">
+            @if (safePdfUrl) {
+              <iframe [src]="safePdfUrl" type="application/pdf" class="pdf-iframe" title="Offer Letter PDF">
+                <p>Your browser does not support inline PDF viewing. <a [href]="safePdfUrl" target="_blank">Click here to download the PDF</a>.</p>
+              </iframe>
+            } @else {
+              <div class="pdf-unavailable-box">
+                <span class="material-symbols-outlined" style="font-size: 40px; color: var(--text-muted);">description</span>
+                <p>Offer letter PDF unavailable. Please contact the Training & Placement Officer (TPO).</p>
+              </div>
+            }
+          </div>
+        </div>
+
+      }
+
     </div>
   } @else {
-    @if (studentOffers().length === 0) {
-      <div class="empty-drives">
-        <span class="material-symbols-outlined empty-icon">workspace_premium</span>
-        <p>No active job offers released yet. Keep applying and doing your best!</p>
+    <!-- All Offers Received Overview -->
+    <div class="offers-list-wrapper">
+      <div class="page-header">
+        <h2>🎉 Received Job Offers</h2>
+        <p>Review and respond to job offer letters issued by recruiters for your campus placement drives.</p>
       </div>
-    }
 
-    @if (studentOffers().length > 0) {
-      <div class="offers-grid">
-        @for (app of studentOffers(); track app._id) {
-        <div class="offer-card">
-          <!-- Offer Card Header -->
-          <div class="offer-header">
-            <div>
-              <h4 class="offer-title">{{ app.driveId?.title || 'Job Offer' }}</h4>
-              <p class="offer-company">{{ app.driveId?.companyName || 'Campus Recruitment Program' }}</p>
-            </div>
-            <span class="status-pill" 
-              [class.pill-open]="app.offer?.status === 'Accepted' || app.status === 'Placed'"
-              [class.pill-closed]="app.offer?.status === 'Declined'"
-              [class.pill-pending]="app.offer?.status === 'Sent' || app.offer?.status === 'Released' || app.offer?.status === 'Viewed'">
-              {{ app.offer?.status === 'Sent' || app.offer?.status === 'Released' || app.offer?.status === 'Viewed' ? 'Pending Action' : app.offer?.status }}
-            </span>
-          </div>
-
-          <!-- CTC / Value -->
-          <div class="ctc-box">
-            <span class="ctc-label">Offered CTC</span>
-            <strong class="ctc-value">₹{{ getCTCInLpa(app.driveId?.ctc || 0) }}</strong>
-          </div>
-
-          <!-- Details -->
-          <div class="details-box">
-            <div class="detail-row">
-              <span>Released Date:</span>
-              <strong>{{ (app.offer?.uploadedDate || app.createdAt) | date:'mediumDate' }}</strong>
-            </div>
-            @if (app.offer?.acceptedAt) {
-              <div class="detail-row">
-                <span>Accepted Date:</span>
-                <strong style="color: var(--success);">{{ app.offer.acceptedAt | date:'mediumDate' }}</strong>
-              </div>
-            }
-            @if (app.offer?.declinedAt) {
-              <div class="detail-row">
-                <span>Declined Date:</span>
-                <strong style="color: var(--danger);">{{ app.offer.declinedAt | date:'mediumDate' }}</strong>
-              </div>
-            }
-            @if (app.offer?.declineReason) {
-              <div class="decline-box">
-                <span style="font-weight: 700;">Decline Reason:</span>
-                <span>{{ app.offer.declineReason }}</span>
-              </div>
-            }
-          </div>
-
-          <!-- Action buttons -->
-          @if (app.offer?.status === 'Sent' || app.offer?.status === 'Released' || app.offer?.status === 'Viewed') {
-            <div class="action-buttons">
-              <button type="button" class="btn-decline" (click)="declineSimulatedOffer(app._id)">
-                Decline
-              </button>
-              <button type="button" class="btn-accept" (click)="acceptSimulatedOffer(app._id)">
-                Accept Offer
-              </button>
-            </div>
-          }
+      @if (isLoading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading your job offers...</p>
         </div>
+      } @else {
+        @if (allOffers().length === 0) {
+          <div class="empty-state-card">
+            <span class="material-symbols-outlined empty-icon">workspace_premium</span>
+            <h3>No Job Offers Received Yet</h3>
+            <p>Once recruiters select your profile and issue official offer letters, they will appear here for your review.</p>
+          </div>
+        } @else {
+          <div class="offers-grid">
+            @for (app of allOffers(); track app._id) {
+              <div class="offer-summary-card">
+                <div class="card-top-header">
+                  <span class="company-name">{{ (app.driveId && app.driveId.companyName) || 'Campus Recruiter' }}</span>
+                  <span class="offer-status-badge" [class]="'badge-' + (app.offer?.status || app.status).toLowerCase()">
+                    {{ app.offer?.status === 'Accepted' || app.status === 'Placed' ? 'Placed 🎉' : (app.offer?.status === 'Declined' ? 'Declined' : 'Offer Received') }}
+                  </span>
+                </div>
+
+                <h3 class="drive-title">{{ app.driveId?.title || 'Job Drive' }}</h3>
+
+                <div class="meta-info-row">
+                  <div>
+                    <span class="label">ROLE / CTC</span>
+                    <strong class="val">{{ app.driveId?.role || 'SDE' }} ({{ app.driveId?.ctc ? (app.driveId.ctc / 100000).toFixed(1) + ' LPA' : 'As per policy' }})</strong>
+                  </div>
+                  <div>
+                    <span class="label">DATE SENT</span>
+                    <span class="val">{{ app.offer?.uploadedDate | date:'mediumDate' }}</span>
+                  </div>
+                </div>
+
+                <div class="card-actions">
+                  <a [routerLink]="['/student/offer', app._id]" class="btn-view-full-offer">
+                    <span>View Offer Letter</span>
+                    <span class="material-symbols-outlined" style="font-size: 16px;">arrow_forward</span>
+                  </a>
+                </div>
+              </div>
+            }
+          </div>
         }
-      </div>
-    }
+      }
+    </div>
   }
+
+  <!-- Decline Reason Modal -->
+  @if (isDeclineModalOpen()) {
+    <div class="modal-overlay" (click)="closeDeclineModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()" style="max-width: 440px; width: 100%;">
+        <div class="modal-header">
+          <h3>Decline Job Offer</h3>
+          <button class="btn-close" (click)="closeDeclineModal()">&times;</button>
+        </div>
+        
+        <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+          <p style="font-size: 13px; color: var(--text-dark); margin: 0; line-height: 1.5;">
+            Please select your reason for declining this job offer. This information will be shared with the Placement Cell.
+          </p>
+
+          <div class="form-group">
+            <label style="font-weight: 700; font-size: 13px; color: var(--text-dark); margin-bottom: 6px; display: block;">
+              Reason for Declining *
+            </label>
+            <select 
+              class="form-control"
+              [ngModel]="selectedDeclineReason()"
+              (ngModelChange)="selectedDeclineReason.set($event)"
+              style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 600;"
+            >
+              @for (reason of declineReasons; track reason) {
+                <option [value]="reason">{{ reason }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="padding: 16px 24px; background: #F8F9FA;">
+          <button class="btn-cancel" [disabled]="isSubmittingAction()" (click)="closeDeclineModal()">Cancel</button>
+          <button class="btn-submit" style="background: #E74C3C; border-color: #E74C3C; color: white;" [disabled]="isSubmittingAction()" (click)="confirmDeclineOffer()">
+            {{ isSubmittingAction() ? 'Submitting...' : 'Confirm Decline' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
 </div>

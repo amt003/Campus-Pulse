@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl, SafeHtml } from '@angular/platform-browser';
 import { forkJoin } from 'rxjs';
 import { RecruiterService } from '../../../services/recruiter.service';
@@ -48,12 +48,15 @@ export interface ApplicationInfo {
     strongSkills?: string[];
     isOfflineFallback?: boolean;
   };
+  isPlacedGlobally?: boolean;
+  isPlaced?: boolean;
+  placementCompany?: string | null;
 }
 
 @Component({
   selector: 'app-recruiter-applications',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './applications.html',
   styleUrl: './applications.css',
 })
@@ -314,6 +317,7 @@ export class RecruiterApplicationsComponent implements OnInit {
     const visible = this.filteredApplications();
 
     visible.forEach(app => {
+      if (app.isPlacedGlobally) return;
       if (checked) {
         currentSet.add(app.applicationId);
       } else {
@@ -325,6 +329,9 @@ export class RecruiterApplicationsComponent implements OnInit {
   }
 
   protected toggleSelectApp(appId: string): void {
+    const app = this.applications().find(a => a.applicationId === appId);
+    if (app && app.isPlacedGlobally) return;
+
     const currentSet = new Set(this.selectedIds());
     if (currentSet.has(appId)) {
       currentSet.delete(appId);
@@ -529,6 +536,164 @@ export class RecruiterApplicationsComponent implements OnInit {
   }
 
   protected resumeTextError = signal<string | null>(null);
+
+  // --- Offer Modal Control ---
+  protected isOfferModalOpen = signal<boolean>(false);
+  protected selectedOfferApp = signal<ApplicationInfo | null>(null);
+  protected offerFile: File | null = null;
+  protected offerIsSubmitting = signal<boolean>(false);
+
+  protected openOfferModal(app: ApplicationInfo): void {
+    this.selectedOfferApp.set(app);
+    this.offerFile = null;
+    this.isOfferModalOpen.set(true);
+  }
+
+  protected closeOfferModal(): void {
+    this.selectedOfferApp.set(null);
+    this.offerFile = null;
+    this.isOfferModalOpen.set(false);
+  }
+
+  protected onOfferFileSelected(event: any): void {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      this.offerFile = file;
+    } else if (file) {
+      this.errorMessage.set('Please select a valid PDF document (.pdf).');
+      setTimeout(() => this.errorMessage.set(null), 4000);
+      event.target.value = '';
+    }
+  }
+
+  protected submitOfferLetter(): void {
+    const app = this.selectedOfferApp();
+    if (!app || !this.offerFile) return;
+
+    this.offerIsSubmitting.set(true);
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+
+    this.recruiterService.uploadOfferLetter(app.applicationId, this.offerFile).subscribe({
+      next: (res) => {
+        this.offerIsSubmitting.set(false);
+        this.closeOfferModal();
+        this.successMessage.set(`Offer letter uploaded and sent to ${app.student?.name || 'candidate'} successfully! 🎉`);
+        this.fetchApplications();
+        setTimeout(() => this.successMessage.set(null), 4000);
+      },
+      error: (err) => {
+        this.offerIsSubmitting.set(false);
+        this.errorMessage.set(err.error?.message || 'Failed to upload offer letter.');
+      }
+    });
+  }
+
+  // --- Bulk Aptitude Modal Control ---
+  protected isBulkAptitudeModalOpen = signal<boolean>(false);
+  protected bulkCutoffScore = signal<number>(70);
+  protected bulkCsvContent = signal<string>('');
+  protected parsedCandidateScores = signal<{ rollNumber: string; score: number; status: 'Passed' | 'Failed' }[]>([]);
+  protected bulkAptitudeIsSubmitting = signal<boolean>(false);
+  protected bulkAptitudeSummary = signal<any | null>(null);
+
+  protected openBulkAptitudeModal(): void {
+    this.bulkCutoffScore.set(70);
+    this.bulkCsvContent.set('');
+    this.parsedCandidateScores.set([]);
+    this.bulkAptitudeSummary.set(null);
+    this.isBulkAptitudeModalOpen.set(true);
+  }
+
+  protected closeBulkAptitudeModal(): void {
+    this.isBulkAptitudeModalOpen.set(false);
+    this.bulkAptitudeSummary.set(null);
+  }
+
+  protected onBulkCutoffChange(cutoff: number): void {
+    this.bulkCutoffScore.set(cutoff);
+    this.parseCsvData();
+  }
+
+  protected onBulkCsvFileSelected(event: any): void {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      const text = e.target.result || '';
+      this.bulkCsvContent.set(text);
+      this.parseCsvData();
+    };
+    reader.readAsText(file);
+  }
+
+  protected onCsvTextInput(text: string): void {
+    this.bulkCsvContent.set(text);
+    this.parseCsvData();
+  }
+
+  protected parseCsvData(): void {
+    const text = this.bulkCsvContent().trim();
+    if (!text) {
+      this.parsedCandidateScores.set([]);
+      return;
+    }
+
+    const cutoff = Number(this.bulkCutoffScore()) || 0;
+    const lines = text.split(/\r?\n/);
+    const parsed: { rollNumber: string; score: number; status: 'Passed' | 'Failed' }[] = [];
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.toLowerCase().startsWith('roll')) continue;
+      const parts = trimmed.split(/[,;\t\s]+/);
+      if (parts.length >= 2) {
+        const rollNumber = parts[0].trim();
+        const scoreNum = parseFloat(parts[1].trim());
+        if (rollNumber && !isNaN(scoreNum)) {
+          parsed.push({
+            rollNumber,
+            score: scoreNum,
+            status: scoreNum >= cutoff ? 'Passed' : 'Failed',
+          });
+        }
+      }
+    }
+
+    this.parsedCandidateScores.set(parsed);
+  }
+
+  protected submitBulkAptitudeEvaluation(): void {
+    const driveId = this.driveId;
+    if (!driveId) return;
+
+    const scores = this.parsedCandidateScores();
+    const cutoff = this.bulkCutoffScore();
+    const csv = this.bulkCsvContent();
+
+    if (!scores.length && !csv.trim()) {
+      this.errorMessage.set('Please provide valid CSV scores or upload a CSV file.');
+      return;
+    }
+
+    this.bulkAptitudeIsSubmitting.set(true);
+    this.errorMessage.set(null);
+
+    this.recruiterService.bulkUploadAptitudeScores(driveId, cutoff, scores, csv).subscribe({
+      next: (res) => {
+        this.bulkAptitudeIsSubmitting.set(false);
+        if (res && res.summary) {
+          this.bulkAptitudeSummary.set(res.summary);
+          this.fetchApplications();
+        }
+      },
+      error: (err) => {
+        this.bulkAptitudeIsSubmitting.set(false);
+        this.errorMessage.set(err.error?.message || 'Failed to process bulk aptitude scores.');
+      }
+    });
+  }
 
   // --- XAI Modal Control ---
   protected openXaiModal(app: ApplicationInfo): void {
@@ -844,5 +1009,34 @@ export class RecruiterApplicationsComponent implements OnInit {
     if (this.currentPage() < this.totalPages()) {
       this.currentPage.set(this.currentPage() + 1);
     }
+  }
+
+  protected exportCandidatesToCSV(): void {
+    const apps = this.applications();
+    if (apps.length === 0) return;
+
+    // Header row
+    const headers = ['Roll Number', 'Name', 'Email', 'Branch', 'CGPA', 'AI Fit Score (%)', 'Status', 'Applied Date'];
+    const rows = apps.map((a) => [
+      a.student ? a.student.rollNumber : '',
+      a.student ? `"${a.student.name.replace(/"/g, '""')}"` : '',
+      a.student ? (a.student as any).userId?.email || '' : '',
+      a.student ? a.student.branch : '',
+      a.student ? a.student.cgpa : '',
+      a.aiMatchScore !== null && a.aiMatchScore !== undefined ? a.aiMatchScore : '',
+      a.status,
+      a.appliedDate ? new Date(a.appliedDate).toLocaleDateString() : ''
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Candidates_${this.driveTitle().replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 }

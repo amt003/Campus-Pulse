@@ -1,12 +1,15 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { StudentService, StudentProfile, Drive, Application } from '../../../services/student.service';
+
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-student-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -19,6 +22,7 @@ export class StudentDashboardComponent implements OnInit {
   protected allDrives = signal<Drive[]>([]);
   protected applications = signal<Application[]>([]);
   protected filterEligibleOnly = signal<boolean>(false);
+  protected isAlreadyPlaced = signal<boolean>(false);
   
   protected selectedApplication = signal<any | null>(null);
   protected schedules = signal<any[]>([]);
@@ -175,15 +179,64 @@ export class StudentDashboardComponent implements OnInit {
     });
   }
 
+  protected isScheduleCompleted(s: any, app: Application): boolean {
+    if (!s) return false;
+    if (s.status === 'Completed') return true;
+    if (!app) return false;
+
+    if (s.eventType === 'Aptitude') {
+      if (app.aptitude?.status === 'Passed' || app.aptitude?.status === 'Failed' || (app.aptitude?.score !== null && app.aptitude?.score !== undefined)) {
+        return true;
+      }
+      if (['Aptitude Completed', 'GD Scheduled', 'GD Completed', 'Interview Scheduled', 'Interview Completed', 'Selected', 'Placed', 'Offer Sent', 'Offer Accepted', 'Rejected'].includes(app.status)) {
+        return true;
+      }
+    } else if (s.eventType === 'GD') {
+      if (app.gd?.status === 'Shortlisted' || app.gd?.status === 'Rejected' || app.gd?.status === 'Completed' || (app.gd?.score !== null && app.gd?.score !== undefined)) {
+        return true;
+      }
+      if (['GD Completed', 'Interview Scheduled', 'Interview Completed', 'Selected', 'Placed', 'Offer Sent', 'Offer Accepted', 'Rejected'].includes(app.status)) {
+        return true;
+      }
+    } else if (s.eventType === 'Interview') {
+      if (app.interview?.result === 'Selected' || app.interview?.result === 'Rejected' || app.interview?.result === 'Waitlisted' || app.interview?.status === 'Completed') {
+        return true;
+      }
+      if (['Interview Completed', 'Selected', 'Placed', 'Offer Sent', 'Offer Accepted'].includes(app.status)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   protected fetchDrivesAndApplications(): void {
     forkJoin({
-      drives: this.studentService.getEligibleDrives(),
+      drives: this.studentService.getEligibleDrives().pipe(
+        catchError(err => {
+          if (err.status === 403) {
+            this.isAlreadyPlaced.set(true);
+          }
+          return of({ drives: [], isForbidden: true });
+        })
+      ),
       apps: this.studentService.getApplications()
     }).subscribe({
       next: (result) => {
         this.allDrives.set(result.drives.drives || []);
         const apps = result.apps.applications || [];
         this.applications.set(apps);
+
+        // Check if student has accepted an offer or has been marked Placed
+        const hasPlacedApp = apps.some(app =>
+          ['Placed', 'Offer Accepted'].includes(app.status) ||
+          app.offer?.status === 'Accepted'
+        );
+
+        if (hasPlacedApp || (this.profile() as any)?.isPlaced) {
+          this.isAlreadyPlaced.set(true);
+          this.allDrives.set([]);
+        }
 
         // Pre-select first application for timeline if available
         if (apps.length > 0) {
@@ -198,17 +251,36 @@ export class StudentDashboardComponent implements OnInit {
           forkJoin(appRequests).subscribe({
             next: (detailsList: any[]) => {
               let allSchedules: any[] = [];
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+
               detailsList.forEach((details, index) => {
                 const app = apps[index];
+                const compName = details.application?.driveId?.companyName || (app.driveId as any)?.companyName || 'Placement Recruiter';
                 const mapped = (details.schedules || []).map((s: any) => ({
                   ...s,
+                  applicationId: app._id,
                   driveTitle: app.driveId?.title || 'Job Drive',
-                  companyName: (app.driveId as any)?.companyName || 'Company'
+                  companyName: compName
                 }));
                 allSchedules = allSchedules.concat(mapped);
               });
-              allSchedules.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-              this.schedules.set(allSchedules);
+
+              // Filter out finished / completed schedules or past date schedules for the Upcoming widget
+              const activeUpcomingSchedules = allSchedules.filter((s: any) => {
+                const schDate = new Date(s.date);
+                schDate.setHours(0, 0, 0, 0);
+                if (schDate.getTime() < today.getTime()) return false;
+
+                const matchingApp = apps.find(a => a._id === s.applicationId);
+                if (matchingApp && this.isScheduleCompleted(s, matchingApp)) return false;
+                if (s.status === 'Completed' || s.status === 'Cancelled') return false;
+
+                return true;
+              });
+
+              activeUpcomingSchedules.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+              this.schedules.set(activeUpcomingSchedules);
               this.isLoading.set(false);
             },
             error: (err) => {
@@ -246,10 +318,34 @@ export class StudentDashboardComponent implements OnInit {
     this.filterEligibleOnly.set(!this.filterEligibleOnly());
   }
 
+  protected isCardFlipped = signal<boolean>(false);
+
   protected selectActiveApplication(driveId: string): void {
-    const app = this.applications().find(a => a.driveId?._id === driveId);
+    const app = this.applications().find(a => a.driveId?._id === driveId || (a.driveId as any) === driveId);
     if (app) {
+      this.triggerCardFlip(app);
+    }
+  }
+
+  protected onApplicationSelectChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const appId = target.value;
+    const app = this.applications().find(a => a._id === appId);
+    if (app) {
+      this.triggerCardFlip(app);
+    }
+  }
+
+  protected triggerCardFlip(app: any): void {
+    this.isCardFlipped.set(true);
+    setTimeout(() => {
       this.selectedApplication.set(app);
+      this.isCardFlipped.set(false);
+    }, 150);
+
+    const el = document.getElementById('application-status-card');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }
 
@@ -284,78 +380,138 @@ export class StudentDashboardComponent implements OnInit {
     }
   }
 
-  // Stepper helper
+  // Rich Real-time Stepper Journey helper
   protected getTimelineSteps(app: Application): any[] {
+    if (!app) return [];
+
     const steps = [];
-    const hasAptitude = app.driveId?.hasAptitudeTest !== false; // Default to true if not explicitly false
-    const hasGD = app.driveId?.hasGD !== false; // Default to true if not explicitly false
-
-    // Map each status to a numeric progress level:
-    // 0: Applied, Under Review
-    // 1: Aptitude Scheduled
-    // 2: Aptitude Completed
-    // 3: GD Scheduled
-    // 4: GD Completed
-    // 5: Interview Scheduled
-    // 6: Interview Completed
-    // 7: Selected, Waitlisted, Offer Sent, Offer Accepted, Placed
-    // -1: Rejected
-    
-    let currentLevel = 0;
     const status = app.status;
-
-    if (status === 'Applied' || status === 'Under Review') currentLevel = 0;
-    else if (status === 'Aptitude Scheduled') currentLevel = 1;
-    else if (status === 'Aptitude Completed') currentLevel = 2;
-    else if (status === 'GD Scheduled') currentLevel = 3;
-    else if (status === 'GD Completed') currentLevel = 4;
-    else if (status === 'Interview Scheduled') currentLevel = 5;
-    else if (status === 'Interview Completed') currentLevel = 6;
-    else if (['Selected', 'Placed', 'Offer Sent', 'Offer Accepted', 'Waitlisted'].includes(status)) currentLevel = 7;
-    else if (status === 'Rejected') currentLevel = -1;
+    const hasAptitude = app.driveId?.hasAptitudeTest !== false;
+    const hasGD = app.driveId?.hasGD !== false;
 
     // Step 1: Applied
     steps.push({
+      key: 'applied',
       label: 'Applied',
       date: app.createdAt ? new Date(app.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : '',
       completed: true,
-      current: currentLevel === 0
+      current: status === 'Applied' || status === 'Under Review',
+      statusText: 'Application Received & Under Review'
     });
 
-    // Step 2: Aptitude Test (Conditional)
+    // Step 2: Aptitude Test (if applicable)
     if (hasAptitude) {
+      const isPassed = app.aptitude?.status === 'Passed' || app.aptitude?.status === 'Completed';
+      const isFailed = app.aptitude?.status === 'Failed' || (status === 'Rejected' && app.aptitude?.status === 'Failed');
+      const isScheduled = status === 'Aptitude Scheduled';
+      const isCompleted = isPassed || ['Aptitude Completed', 'GD Scheduled', 'GD Completed', 'Interview Scheduled', 'Interview Completed', 'Selected', 'Placed', 'Offer Sent', 'Offer Accepted'].includes(status);
+
+      let statusText = 'Pending Schedule';
+      if (isCompleted || isPassed) {
+        statusText = app.aptitude?.score !== null && app.aptitude?.score !== undefined 
+          ? `Score: ${app.aptitude.score} pts (Passed Cutoff)` 
+          : 'Aptitude Test Passed ✓';
+      } else if (isFailed) {
+        statusText = app.aptitude?.score !== null && app.aptitude?.score !== undefined 
+          ? `Score: ${app.aptitude.score} pts (Below Cutoff)` 
+          : 'Did Not Clear Aptitude';
+      } else if (isScheduled) {
+        statusText = 'Aptitude Round Scheduled';
+      }
+
       steps.push({
+        key: 'aptitude',
         label: 'Aptitude Test',
-        date: '',
-        completed: currentLevel > 2,
-        current: currentLevel === 1 || currentLevel === 2
+        date: app.aptitude?.markedAt ? new Date(app.aptitude.markedAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : '',
+        completed: isCompleted,
+        current: isScheduled,
+        rejected: isFailed,
+        statusText,
+        score: app.aptitude?.score,
+        feedback: app.aptitude?.feedback
       });
     }
 
-    // Step 3: Group Discussion (Conditional)
+    // Step 3: Group Discussion (if applicable)
     if (hasGD) {
+      const isPassed = app.gd?.status === 'Shortlisted' || app.gd?.status === 'Completed';
+      const isFailed = app.gd?.status === 'Rejected';
+      const isScheduled = status === 'GD Scheduled';
+      const isCompleted = isPassed || ['GD Completed', 'Interview Scheduled', 'Interview Completed', 'Selected', 'Placed', 'Offer Sent', 'Offer Accepted'].includes(status);
+
+      let statusText = 'Pending Schedule';
+      if (isCompleted || isPassed) {
+        statusText = app.gd?.score !== null && app.gd?.score !== undefined 
+          ? `Score: ${app.gd.score} pts (Shortlisted)` 
+          : 'GD Round Shortlisted ✓';
+      } else if (isFailed) {
+        statusText = 'Not Shortlisted in GD';
+      } else if (isScheduled) {
+        statusText = 'Group Discussion Scheduled';
+      }
+
       steps.push({
+        key: 'gd',
         label: 'Group Discussion',
-        date: '',
-        completed: currentLevel > 4,
-        current: currentLevel === 3 || currentLevel === 4
+        date: app.gd?.markedAt ? new Date(app.gd.markedAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : '',
+        completed: isCompleted,
+        current: isScheduled,
+        rejected: isFailed,
+        statusText,
+        score: app.gd?.score,
+        feedback: app.gd?.feedback
       });
     }
 
-    // Step 4: Technical Round
+    // Step 4: Technical & HR Interview
+    const isInterviewPassed = app.interview?.result === 'Selected' || ['Selected', 'Placed', 'Offer Sent', 'Offer Accepted'].includes(status);
+    const isInterviewFailed = app.interview?.result === 'Rejected' || (status === 'Rejected' && app.interview?.result === 'Rejected');
+    const isInterviewScheduled = status === 'Interview Scheduled';
+    const isInterviewCompleted = isInterviewPassed || status === 'Interview Completed';
+
+    let intStatusText = 'Pending Schedule';
+    if (isInterviewPassed) {
+      intStatusText = 'Selected in Interview Round 🎉';
+    } else if (isInterviewFailed) {
+      intStatusText = 'Not Selected in Interview';
+    } else if (isInterviewScheduled) {
+      intStatusText = 'Interview Round Scheduled';
+    } else if (status === 'Interview Completed') {
+      intStatusText = 'Interview Completed — Awaiting Result';
+    }
+
     steps.push({
-      label: 'Technical Round',
-      date: '',
-      completed: currentLevel > 6,
-      current: currentLevel === 5 || currentLevel === 6
+      key: 'interview',
+      label: 'Technical & HR Interview',
+      date: app.interview?.markedAt ? new Date(app.interview.markedAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : '',
+      completed: isInterviewCompleted,
+      current: isInterviewScheduled || status === 'Interview Completed',
+      rejected: isInterviewFailed,
+      statusText: intStatusText,
+      score: app.interview?.score,
+      feedback: app.interview?.feedback
     });
 
-    // Step 5: Interview / Placement
+    // Step 5: Offer & Placement Selection
+    const isPlaced = status === 'Placed' || status === 'Selected' || app.offer?.status === 'Accepted';
+    const isOfferSent = status === 'Offer Sent' || app.offer?.status === 'Sent' || app.offer?.status === 'Viewed';
+
+    let offerStatusText = 'Awaiting Final Results';
+    if (isPlaced) {
+      offerStatusText = 'Placed 🎉 (Offer Accepted)';
+    } else if (isOfferSent) {
+      offerStatusText = 'Official Offer Letter Sent! ✉️';
+    } else if (app.offer?.status === 'Declined') {
+      offerStatusText = 'Offer Declined';
+    }
+
     steps.push({
-      label: 'Placement Selection',
-      date: '',
-      completed: currentLevel === 7,
-      current: false
+      key: 'offer',
+      label: 'Offer & Placement',
+      date: app.offer?.acceptedAt ? new Date(app.offer.acceptedAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) : '',
+      completed: isPlaced,
+      current: isOfferSent,
+      statusText: offerStatusText
     });
 
     return steps;

@@ -912,6 +912,24 @@
 
 .btn-reject-sm:hover { background: rgba(211, 47, 47, 0.08); }
 
+.btn-hold-sm {
+  background: #FDF2E9;
+  color: #D35400;
+  border: 1px solid #F5CBA7;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-hold-sm:hover {
+  background: #FADBD8;
+  border-color: #E74C3C;
+  color: #A04000;
+}
+
 /* =============================================
    6. Modal Styling
    ============================================= */

@@ -251,3 +251,84 @@
   align-items: center;
   gap: 4px;
 }
+
+/* Active / Today Schedule Styles */
+.active-section-glow {
+  background: #FDF2E9;
+  border: 1.5px solid #F5CBA7;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.text-active {
+  color: #D35400 !important;
+}
+
+.active-card {
+  border-left-width: 6px;
+  box-shadow: 0 4px 16px rgba(211, 84, 0, 0.12);
+  border-color: #FEDBB9;
+}
+
+.live-now-tag {
+  background: #E67E22;
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  background: white;
+  border-radius: 50%;
+  animation: pulse-ring 1.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+  100% { transform: scale(0.95); opacity: 1; }
+}
+
+.active-loc-box {
+  background: #FEF5ED;
+  border-color: #F5CBA7;
+}
+
+.btn-join-meeting-active {
+  background: #D35400;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(211, 84, 0, 0.25);
+  transition: background 0.2s;
+}
+
+.btn-join-meeting-active:hover {
+  background: #A04000;
+}
+
+.btn-download-ics-link {
+  background: none;
+  border: none;
+  color: #1B4F72;
+  font-size: 11.5px;
+  font-weight: 750;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+}

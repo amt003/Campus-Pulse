@@ -95,6 +95,13 @@ img {
   flex-shrink: 0;
 }
 
+.nav .nav-brand-icon {
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  margin: -8px 0;
+}
+
 .nav-brand-icon svg {
   width: 18px;
   height: 18px;
@@ -371,9 +378,17 @@ img {
 }
 
 @keyframes pulse-glow {
-  0% { box-shadow: 0 0 0 0 rgba(0, 100, 151, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(0, 100, 151, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 100, 151, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 100, 151, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 100, 151, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 100, 151, 0);
+  }
 }
 
 .hero-title {
@@ -408,13 +423,25 @@ img {
 }
 
 @keyframes typing {
-  from { width: 0; }
-  to { width: 14ch; }
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 14ch;
+  }
 }
 
 @keyframes blink-caret {
-  from, to { border-color: transparent; }
-  50% { border-color: #006497; }
+
+  from,
+  to {
+    border-color: transparent;
+  }
+
+  50% {
+    border-color: #006497;
+  }
 }
 
 .hero-subtitle {
@@ -502,8 +529,15 @@ img {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-14px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-14px);
+  }
 }
 
 .hero-divider {
@@ -699,12 +733,10 @@ img {
   left: 16.67%;
   right: 16.67%;
   height: 2px;
-  background: linear-gradient(
-    to right,
-    rgba(0, 59, 90, 0.2),
-    rgba(0, 100, 151, 0.2),
-    rgba(0, 59, 90, 0.2)
-  );
+  background: linear-gradient(to right,
+      rgba(0, 59, 90, 0.2),
+      rgba(0, 100, 151, 0.2),
+      rgba(0, 59, 90, 0.2));
   z-index: 0;
 }
 

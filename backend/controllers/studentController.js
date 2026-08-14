@@ -5,6 +5,7 @@ const Schedule = require("../models/Schedule");
 const User = require("../models/User");
 const Recruiter = require("../models/Recruiter");
 const aiService = require("../services/aiService");
+const socketService = require("../services/socketService");
 
 const createStudentProfile = async (req, res) => {
   try {
@@ -180,6 +181,22 @@ const getEligibleDrives = async (req, res) => {
       });
     }
 
+    // 2. CRITICAL CHECK: Check if student is already placed or accepted an offer
+    const placedApplication = await Application.findOne({
+      studentId: profile._id,
+      $or: [
+        { status: { $in: ["Placed", "Offer Accepted"] } },
+        { "offer.status": "Accepted" },
+      ],
+    });
+
+    if (profile.isPlaced || placedApplication) {
+      return res.status(403).json({
+        success: false,
+        message: "You have already been placed. You cannot apply to other drives.",
+      });
+    }
+
     const currentDate = new Date();
     const drives = await JobDrive.find({
       status: "Open",
@@ -228,6 +245,22 @@ const applyToDrive = async (req, res) => {
     if (!profile) {
       return res.status(404).json({
         message: "Student profile not found",
+      });
+    }
+
+    // 1. PLACEMENT CHECK (Critical Safeguard)
+    const placedApplication = await Application.findOne({
+      studentId: profile._id,
+      $or: [
+        { status: { $in: ["Placed", "Offer Accepted"] } },
+        { "offer.status": "Accepted" },
+      ],
+    });
+
+    if (profile.isPlaced || placedApplication) {
+      return res.status(403).json({
+        success: false,
+        message: "You are already placed. Cannot apply to new drives.",
       });
     }
 
@@ -378,9 +411,30 @@ const getApplicationById = async (req, res) => {
       appObj.driveId.companyLogo = rec ? rec.companyLogo : null;
     }
 
-    const schedules = await Schedule.find({
+    const rawSchedules = await Schedule.find({
       applicationId: application._id,
     }).sort({ date: 1 });
+
+    const schedules = await Promise.all(
+      rawSchedules.map(async (sch) => {
+        let isDone = sch.status === "Completed";
+        if (!isDone) {
+          if (sch.eventType === "Aptitude" && (appObj.aptitude?.status === "Passed" || appObj.aptitude?.status === "Failed" || (appObj.aptitude?.score !== null && appObj.aptitude?.score !== undefined) || appObj.status === "Aptitude Completed")) {
+            isDone = true;
+          } else if (sch.eventType === "GD" && (appObj.gd?.status === "Shortlisted" || appObj.gd?.status === "Rejected" || appObj.gd?.status === "Completed" || appObj.status === "GD Completed")) {
+            isDone = true;
+          } else if (sch.eventType === "Interview" && (appObj.interview?.result === "Selected" || appObj.interview?.result === "Rejected" || appObj.interview?.result === "Waitlisted" || appObj.status === "Interview Completed")) {
+            isDone = true;
+          }
+
+          if (isDone) {
+            sch.status = "Completed";
+            await Schedule.findByIdAndUpdate(sch._id, { status: "Completed" });
+          }
+        }
+        return sch.toObject();
+      })
+    );
 
     return res.status(200).json({
       application: appObj,
@@ -410,6 +464,7 @@ const getStudentSchedule = async (req, res) => {
         path: "driveId",
         select: "title recruiterId companyName",
       })
+      .populate("applicationId")
       .sort({ date: 1 });
 
     const formattedSchedules = await Promise.all(
@@ -424,6 +479,21 @@ const getStudentSchedule = async (req, res) => {
           }
         }
 
+        let schStatus = sch.status;
+        const app = sch.applicationId;
+        if (app && schStatus !== "Completed") {
+          if (sch.eventType === "Aptitude" && (app.aptitude?.status === "Passed" || app.aptitude?.status === "Failed" || (app.aptitude?.score !== null && app.aptitude?.score !== undefined) || app.status === "Aptitude Completed")) {
+            schStatus = "Completed";
+            await Schedule.findByIdAndUpdate(sch._id, { status: "Completed" });
+          } else if (sch.eventType === "GD" && (app.gd?.status === "Shortlisted" || app.gd?.status === "Rejected" || app.gd?.status === "Completed" || app.status === "GD Completed")) {
+            schStatus = "Completed";
+            await Schedule.findByIdAndUpdate(sch._id, { status: "Completed" });
+          } else if (sch.eventType === "Interview" && (app.interview?.result === "Selected" || app.interview?.result === "Rejected" || app.interview?.result === "Waitlisted" || app.status === "Interview Completed")) {
+            schStatus = "Completed";
+            await Schedule.findByIdAndUpdate(sch._id, { status: "Completed" });
+          }
+        }
+
         return {
           scheduleId: sch._id,
           _id: sch._id,
@@ -432,7 +502,7 @@ const getStudentSchedule = async (req, res) => {
           timeSlot: sch.timeSlot,
           location: sch.location,
           meetingUrl: sch.meetingUrl,
-          status: sch.status,
+          status: schStatus,
           drive: {
             title: sch.driveId ? sch.driveId.title : "Placement Drive",
             companyName,
@@ -446,31 +516,228 @@ const getStudentSchedule = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const currently = [];
     const upcoming = [];
-    const past = [];
+    const finished = [];
 
     for (const item of formattedSchedules) {
       const schDate = new Date(item.date);
       schDate.setHours(0, 0, 0, 0);
 
-      if (schDate >= today && item.status !== "Completed") {
-        upcoming.push(item);
+      if (item.status === "Completed" || schDate.getTime() < today.getTime()) {
+        finished.push(item);
+      } else if (schDate.getTime() === today.getTime()) {
+        currently.push(item);
       } else {
-        past.push(item);
+        upcoming.push(item);
       }
     }
 
     return res.status(200).json({
       success: true,
       data: {
+        currently,
         upcoming,
-        past,
+        finished,
+        past: finished,
       },
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch student schedules",
+      error: error.message,
+    });
+  }
+};
+
+// PUT /api/student/offer/:applicationId/accept
+const acceptOffer = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+
+    const student = await Student.findOne({ userId: req.user._id });
+    if (!student) {
+      return res.status(404).json({ success: false, message: "Student profile not found" });
+    }
+
+    const application = await Application.findById(applicationId).populate("driveId");
+    if (!application || application.studentId.toString() !== student._id.toString()) {
+      return res.status(404).json({ success: false, message: "Application not found or unauthorized" });
+    }
+
+    if (application.offer.status === "Accepted") {
+      return res.status(400).json({ success: false, message: "Offer has already been accepted" });
+    }
+
+    if (application.offer.status === "Declined") {
+      return res.status(400).json({ success: false, message: "Cannot accept a previously declined offer" });
+    }
+
+    // Update Offer & Application Status
+    application.offer.status = "Accepted";
+    application.offer.acceptedAt = new Date();
+    application.status = "Placed";
+
+    await application.save();
+
+    // Update Student placement status
+    student.isPlaced = true;
+    await student.save();
+
+    // Send Real-time notification to recruiter
+    if (application.driveId) {
+      await socketService.sendRealTimeNotification(application.driveId.recruiterId, {
+        title: "Job Offer Accepted 🎉",
+        message: `${req.user.name} has accepted your job offer for the drive: "${application.driveId.title}".`,
+        type: "success",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Congratulations! Offer accepted and placement status updated to Placed 🎉",
+      application,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to accept offer",
+      error: error.message,
+    });
+  }
+};
+
+// PUT /api/student/offer/:applicationId/decline
+const declineOffer = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const { reason } = req.body;
+
+    const student = await Student.findOne({ userId: req.user._id });
+    if (!student) {
+      return res.status(404).json({ success: false, message: "Student profile not found" });
+    }
+
+    const application = await Application.findById(applicationId).populate("driveId");
+    if (!application || application.studentId.toString() !== student._id.toString()) {
+      return res.status(404).json({ success: false, message: "Application not found or unauthorized" });
+    }
+
+    if (application.offer.status === "Accepted") {
+      return res.status(400).json({ success: false, message: "Cannot decline an already accepted offer" });
+    }
+
+    application.offer.status = "Declined";
+    application.offer.declinedAt = new Date();
+    application.offer.declineReason = reason || "Personal Reasons";
+    application.status = "Offer Declined";
+
+    await application.save();
+
+    // Send Real-time notification to recruiter
+    if (application.driveId) {
+      await socketService.sendRealTimeNotification(application.driveId.recruiterId, {
+        title: "Job Offer Declined ❌",
+        message: `${req.user.name} has declined your job offer for the drive: "${application.driveId.title}". Reason: ${reason || "Personal Reasons"}`,
+        type: "warning",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Offer declined successfully",
+      application,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to decline offer",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/student/offer/:applicationId
+const getOfferDetails = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+
+    const student = await Student.findOne({ userId: req.user._id });
+    if (!student) {
+      return res.status(404).json({ success: false, message: "Student profile not found" });
+    }
+
+    const application = await Application.findById(applicationId).populate("driveId");
+    if (!application || application.studentId.toString() !== student._id.toString()) {
+      return res.status(404).json({ success: false, message: "Application not found or unauthorized" });
+    }
+
+    const rec = await Recruiter.findOne({ userId: application.driveId?.recruiterId });
+    const appObj = application.toObject();
+    if (appObj.driveId) {
+      appObj.driveId.companyName = rec ? rec.companyName : "Campus Recruiter";
+      appObj.driveId.companyLogo = rec ? rec.companyLogo : null;
+    }
+
+    // Mark as Viewed if Sent
+    if (application.offer.status === "Sent") {
+      application.offer.status = "Viewed";
+      application.offer.viewedAt = new Date();
+      await application.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      application: appObj,
+      offer: appObj.offer,
+      drive: appObj.driveId,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch offer details",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/student/offer/:applicationId/pdf
+const getOfferPdf = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const fs = require("fs");
+    const path = require("path");
+
+    const student = await Student.findOne({ userId: req.user._id });
+    if (!student) {
+      return res.status(404).json({ success: false, message: "Student profile not found" });
+    }
+
+    const application = await Application.findById(applicationId);
+    if (!application || application.studentId.toString() !== student._id.toString()) {
+      return res.status(404).json({ success: false, message: "Application not found or unauthorized" });
+    }
+
+    if (!application.offer || (!application.offer.filePath && !application.offer.fileId)) {
+      return res.status(404).json({ success: false, message: "Offer letter file not found" });
+    }
+
+    const relativePath = application.offer.filePath || `/uploads/offers/${application.offer.fileId}`;
+    const absolutePath = path.join(__dirname, "..", relativePath);
+
+    if (!fs.existsSync(absolutePath)) {
+      return res.status(404).json({ success: false, message: "Offer letter file missing on server disk" });
+    }
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="${application.offer.fileName || 'OfferLetter.pdf'}"`);
+
+    return res.sendFile(absolutePath);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve offer PDF",
       error: error.message,
     });
   }
@@ -486,4 +753,8 @@ module.exports = {
   getStudentApplications,
   getApplicationById,
   getStudentSchedule,
+  acceptOffer,
+  declineOffer,
+  getOfferDetails,
+  getOfferPdf,
 };

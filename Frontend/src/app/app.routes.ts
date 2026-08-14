@@ -10,6 +10,7 @@ import { RecruiterDashboardComponent } from './pages/recruiter/dashboard/dashboa
 import { RecruiterLayoutComponent } from './pages/recruiter/layout/layout.component';
 import { RecruiterProfileComponent } from './pages/recruiter/profile/profile';
 import { RecruiterApplicationsComponent } from './pages/recruiter/applications/applications';
+import { OfferGeneratorComponent } from './pages/recruiter/offer-generator/offer-generator.component';
 import { ProfileOnHoldComponent } from './pages/recruiter/profile-on-hold/profile-on-hold.component';
 import { StudentLayoutComponent } from './pages/student/layout/layout.component';
 import { StudentDashboardComponent } from './pages/student/dashboard/dashboard';
@@ -96,6 +97,10 @@ export const routes: Routes = [
         path: 'applications/:driveId',
         component: RecruiterApplicationsComponent,
       },
+      {
+        path: 'offer/:applicationId',
+        component: OfferGeneratorComponent,
+      },
     ],
   },
   {
@@ -123,6 +128,10 @@ export const routes: Routes = [
       },
       {
         path: 'offers',
+        component: StudentOffersComponent,
+      },
+      {
+        path: 'offer/:applicationId',
         component: StudentOffersComponent,
       },
       {

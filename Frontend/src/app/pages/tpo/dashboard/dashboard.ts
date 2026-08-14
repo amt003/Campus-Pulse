@@ -50,6 +50,14 @@ export class TpoDashboardComponent implements OnInit, OnDestroy {
   protected isApproving = signal<string | null>(null);
   protected isRejecting = signal<string | null>(null);
 
+  // On Hold Modal state
+  protected isHoldModalOpen = signal<boolean>(false);
+  protected selectedRecruiterForHold = signal<PendingRecruiter | null>(null);
+  protected holdFeedbackInput = signal<string>('');
+  protected holdSuggestionsInput = signal<string>('');
+  protected isSubmittingHold = signal<boolean>(false);
+  protected holdErrorMsg = signal<string | null>(null);
+
   // Bulk Import state
   protected isImportModalOpen = signal<boolean>(false);
   protected importRawInput = signal<string>('');
@@ -193,15 +201,46 @@ export class TpoDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  protected rejectRecruiter(id: string): void {
-    this.isRejecting.set(id);
-    this.tpoService.rejectRecruiter(id).subscribe({
+  protected openHoldModal(rec: PendingRecruiter): void {
+    this.selectedRecruiterForHold.set(rec);
+    this.holdFeedbackInput.set('');
+    this.holdSuggestionsInput.set('');
+    this.holdErrorMsg.set(null);
+    this.isHoldModalOpen.set(true);
+  }
+
+  protected closeHoldModal(): void {
+    this.isHoldModalOpen.set(false);
+    this.selectedRecruiterForHold.set(null);
+  }
+
+  protected submitPutOnHold(): void {
+    const rec = this.selectedRecruiterForHold();
+    if (!rec) return;
+
+    const feedback = this.holdFeedbackInput().trim();
+    if (!feedback) {
+      this.holdErrorMsg.set('Please enter feedback explaining why this recruiter account is being put on hold.');
+      return;
+    }
+
+    this.isSubmittingHold.set(true);
+    this.holdErrorMsg.set(null);
+
+    this.tpoService.putRecruiterOnHold(rec._id, {
+      feedback,
+      suggestions: this.holdSuggestionsInput().trim()
+    }).subscribe({
       next: () => {
-        this.isRejecting.set(null);
-        this.pendingRecruiters.set(this.pendingRecruiters().filter((r) => r._id !== id));
+        this.isSubmittingHold.set(false);
+        this.pendingRecruiters.set(this.pendingRecruiters().filter((r) => r._id !== rec._id));
+        this.closeHoldModal();
         this.loadAllDashboardData(false);
       },
-      error: () => this.isRejecting.set(null),
+      error: (err) => {
+        this.isSubmittingHold.set(false);
+        this.holdErrorMsg.set(err?.error?.message || 'Failed to put recruiter on hold.');
+      }
     });
   }
 
@@ -340,6 +379,51 @@ export class TpoDashboardComponent implements OnInit, OnDestroy {
       'Placed': 'linear-gradient(90deg, #2e7d32, #43a047)',
     };
     return map[stage] || 'linear-gradient(90deg, #003b5a, #006497)';
+  }
+
+  protected exportDashboardStatsToCSV(): void {
+    const stats = this.branchStats();
+    if (stats.length === 0) return;
+
+    const csvRows: string[] = [];
+
+    // Section 1: General Placement Cell Overview
+    csvRows.push('=== GENERAL PLACEMENT CELL OVERVIEW ===');
+    csvRows.push('Metric,Value');
+    const ann = this.analytics() || this.zeroAnalytics;
+    csvRows.push(`Total Registered Students,${ann.totalStudents}`);
+    csvRows.push(`Total Placed Students,${ann.totalPlaced}`);
+    csvRows.push(`Unplaced Students,${ann.totalUnplaced}`);
+    csvRows.push(`Overall Placement Rate (%),${ann.placementPercentage}%`);
+    csvRows.push(`Active Placement Drives,${ann.activeDrives}`);
+    csvRows.push('');
+
+    // Section 2: Recruitment Pipeline Funnel
+    csvRows.push('=== RECRUITMENT PIPELINE FUNNEL ===');
+    csvRows.push('Evaluation Stage,Candidates Count');
+    const funnel = this.funnelData();
+    funnel.forEach((f) => {
+      csvRows.push(`"${f.stage}",${f.count}`);
+    });
+    csvRows.push('');
+
+    // Section 3: Branch-wise Statistics
+    csvRows.push('=== BRANCH-WISE PLACEMENT STATISTICS ===');
+    csvRows.push('Branch,Total Students,Placed Students,Placement Rate (%)');
+    stats.forEach((b) => {
+      csvRows.push(`"${b.branch}",${b.total},${b.placed},${b.percentage}%`);
+    });
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `TPO_Placement_Cell_Stats_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   ngOnDestroy(): void {

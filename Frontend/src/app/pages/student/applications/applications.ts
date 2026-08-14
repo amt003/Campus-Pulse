@@ -34,6 +34,39 @@ export class StudentApplicationsComponent implements OnInit {
     return testDate.getTime() <= today.getTime();
   }
 
+  protected isScheduleCompleted(s: any): boolean {
+    if (!s) return false;
+    if (s.status === 'Completed') return true;
+
+    const app = this.selectedApp();
+    if (!app) return false;
+
+    if (s.eventType === 'Aptitude') {
+      if (app.aptitude?.status === 'Passed' || app.aptitude?.status === 'Failed' || (app.aptitude?.score !== null && app.aptitude?.score !== undefined)) {
+        return true;
+      }
+      if (app.status === 'Aptitude Completed' || app.status === 'GD Scheduled' || app.status === 'GD Completed' || app.status === 'Interview Scheduled' || app.status === 'Interview Completed' || app.status === 'Selected' || app.status === 'Placed' || app.status === 'Rejected') {
+        return true;
+      }
+    } else if (s.eventType === 'GD') {
+      if (app.gd?.status === 'Shortlisted' || app.gd?.status === 'Rejected' || app.gd?.status === 'Completed' || (app.gd?.score !== null && app.gd?.score !== undefined)) {
+        return true;
+      }
+      if (app.status === 'GD Completed' || app.status === 'Interview Scheduled' || app.status === 'Interview Completed' || app.status === 'Selected' || app.status === 'Placed' || app.status === 'Rejected') {
+        return true;
+      }
+    } else if (s.eventType === 'Interview') {
+      if (app.interview?.result === 'Selected' || app.interview?.result === 'Rejected' || app.interview?.result === 'Waitlisted' || app.interview?.status === 'Completed') {
+        return true;
+      }
+      if (app.status === 'Interview Completed' || app.status === 'Selected' || app.status === 'Placed') {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   ngOnInit(): void {
     this.loadApplications();
   }
@@ -109,48 +142,54 @@ export class StudentApplicationsComponent implements OnInit {
 
   protected getTimelineSteps(app: Application): any[] {
     const steps = [];
+    const status = app.status;
+    const hasAptitude = app.driveId?.hasAptitudeTest !== false;
+    const hasGD = app.driveId?.hasGD !== false;
+
+    const aptDone = app.aptitude?.status === 'Passed' || app.aptitude?.status === 'Failed' || (app.aptitude?.score !== null && app.aptitude?.score !== undefined) || ['Aptitude Completed', 'GD Scheduled', 'GD Completed', 'Interview Scheduled', 'Interview Completed', 'Selected', 'Placed', 'Offer Sent', 'Offer Accepted'].includes(status);
+
+    const gdDone = app.gd?.status === 'Shortlisted' || app.gd?.status === 'Rejected' || app.gd?.status === 'Completed' || (app.gd?.score !== null && app.gd?.score !== undefined) || ['GD Completed', 'Interview Scheduled', 'Interview Completed', 'Selected', 'Placed', 'Offer Sent', 'Offer Accepted'].includes(status);
+
+    const intDone = app.interview?.result === 'Selected' || app.interview?.result === 'Rejected' || app.interview?.result === 'Waitlisted' || app.interview?.status === 'Completed' || ['Interview Completed', 'Selected', 'Placed', 'Offer Sent', 'Offer Accepted'].includes(status);
 
     // Step 1: Applied
     steps.push({
       label: 'Applied',
       completed: true,
-      current: app.status === 'Applied'
+      current: status === 'Applied' || status === 'Under Review'
     });
 
     // Step 2: Aptitude
-    if (app.driveId?.hasAptitudeTest) {
-      const hasPassed = app.aptitude?.status === 'Passed' || app.aptitude?.status === 'Completed';
+    if (hasAptitude) {
       steps.push({
         label: 'Aptitude',
-        completed: hasPassed,
-        current: app.status === 'Aptitude Scheduled'
+        completed: aptDone,
+        current: status === 'Aptitude Scheduled'
       });
     }
 
     // Step 3: GD
-    if (app.driveId?.hasGD) {
-      const hasPassed = app.gd?.status === 'Shortlisted' || app.gd?.status === 'Completed';
+    if (hasGD) {
       steps.push({
         label: 'GD',
-        completed: hasPassed,
-        current: app.status === 'GD Scheduled'
+        completed: gdDone,
+        current: status === 'GD Scheduled'
       });
     }
 
     // Step 4: Interview
-    const hasPassedInterview = app.interview?.result === 'Selected';
     steps.push({
       label: 'Interview',
-      completed: hasPassedInterview,
-      current: app.status === 'Interview Scheduled' || app.status === 'Interview Completed'
+      completed: intDone,
+      current: status === 'Interview Scheduled'
     });
 
     // Step 5: Offer
-    const isPlaced = app.status === 'Placed' || app.status === 'Selected' || app.offer?.status === 'Accepted';
+    const isPlaced = status === 'Placed' || status === 'Selected' || app.offer?.status === 'Accepted';
     steps.push({
       label: 'Offer',
       completed: isPlaced,
-      current: app.offer?.status === 'Sent'
+      current: status === 'Offer Sent' || app.offer?.status === 'Sent'
     });
 
     return steps;

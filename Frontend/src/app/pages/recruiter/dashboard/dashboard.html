@@ -110,10 +110,16 @@
           <h1 style="font-size: 26px; font-weight: 850; color: var(--primary); margin: 0 0 6px 0; letter-spacing: -0.5px;">Recruiter Command Center</h1>
           <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Manage your active recruitment drives and track student applications for the Placement Cycle.</p>
         </div>
-        <button class="btn-create-drive-pill" (click)="openCreateModal()" style="display: flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 9999px; border: none; background: var(--primary); color: white; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(26, 82, 118, 0.2); transition: all 0.2s;">
-          <span class="material-symbols-outlined" style="font-size: 18px;">add_circle</span>
-          <span>Create New Drive</span>
-        </button>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <button (click)="exportDrivesToCSV()" style="display: flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 9999px; border: 1.5px solid #27AE60; background: white; color: #27AE60; font-size: 13px; font-weight: 750; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 6px rgba(39,174,96,0.05);">
+            <span class="material-symbols-outlined" style="font-size: 18px;">file_download</span>
+            <span>Export Analytics CSV</span>
+          </button>
+          <button class="btn-create-drive-pill" (click)="openCreateModal()" style="display: flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 9999px; border: none; background: var(--primary); color: white; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(26, 82, 118, 0.2); transition: all 0.2s;">
+            <span class="material-symbols-outlined" style="font-size: 18px;">add_circle</span>
+            <span>Create New Drive</span>
+          </button>
+        </div>
       </div>
 
       <!-- Stats Grid -->
@@ -274,78 +280,94 @@
         </div>
       }
 
-      <!-- Bottom Section Layout -->
+      <!-- Bottom Section Layout (Talent Pipeline Overview & Upcoming Interviews) -->
       <div style="display: grid; grid-template-columns: 1.8fr 1fr; gap: 24px; margin-bottom: 24px;">
         
-        <!-- Left: Talent Pipeline Overview -->
+        <!-- Left: Talent Pipeline Overview Bar Chart -->
         <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.015);">
-          <h4 style="font-size: 15px; font-weight: 800; color: var(--primary); margin: 0 0 20px 0;">Talent Pipeline Overview</h4>
+          <h4 style="font-size: 16px; font-weight: 800; color: #1B4F72; margin: 0 0 24px 0;">Talent Pipeline Overview</h4>
           
-          <div style="display: flex; align-items: flex-end; justify-content: space-around; height: 220px; border-bottom: 2px solid var(--border); padding-bottom: 12px;">
+          <div style="display: flex; align-items: flex-end; justify-content: space-around; height: 190px; border-bottom: 1.5px solid #EAECEE; padding-bottom: 8px; margin-bottom: 14px;">
             
             <!-- Applied Bar -->
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; height: 100%; justify-content: flex-end;">
-              <div [style.height.%]="100" style="width: 48px; background: linear-gradient(180deg, var(--secondary) 0%, var(--primary) 100%); border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; transition: height 0.3s ease; position: relative;">
-                <span style="color: white; font-size: 11px; font-weight: 700; position: absolute; top: -20px; color: var(--text-dark);">
-                  {{ pipelineStats().applied }}
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; height: 100%; justify-content: flex-end;">
+              <div [style.height.%]="pipelineHeights().appliedHeight" style="width: 52px; background: linear-gradient(180deg, #1B4F72 0%, #154360 100%); border-radius: 8px 8px 4px 4px; display: flex; align-items: flex-start; justify-content: center; transition: height 0.3s ease; position: relative; box-shadow: 0 4px 10px rgba(27, 79, 114, 0.25);">
+                <span style="font-size: 12px; font-weight: 850; color: #2C3E50; position: absolute; top: -22px;">
+                  {{ pipelineData().applied }}
                 </span>
               </div>
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Applied</span>
             </div>
 
             <!-- Screening Bar -->
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; height: 100%; justify-content: flex-end;">
-              <div [style.height.%]="62" style="width: 48px; background: linear-gradient(180deg, rgba(26, 82, 118, 0.7) 0%, var(--secondary) 100%); border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; transition: height 0.3s ease; position: relative;">
-                <span style="color: white; font-size: 11px; font-weight: 700; position: absolute; top: -20px; color: var(--text-dark);">
-                  {{ pipelineStats().screening }}
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; height: 100%; justify-content: flex-end;">
+              <div [style.height.%]="pipelineHeights().screeningHeight" style="width: 52px; background: linear-gradient(180deg, #2E86C1 0%, #1F618D 100%); border-radius: 8px 8px 4px 4px; display: flex; align-items: flex-start; justify-content: center; transition: height 0.3s ease; position: relative; box-shadow: 0 4px 10px rgba(46, 134, 193, 0.25);">
+                <span style="font-size: 12px; font-weight: 850; color: #2C3E50; position: absolute; top: -22px;">
+                  {{ pipelineData().screening }}
                 </span>
               </div>
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Screening</span>
             </div>
 
             <!-- Interview Bar -->
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; height: 100%; justify-content: flex-end;">
-              <div [style.height.%]="37" style="width: 48px; background: linear-gradient(180deg, var(--warning) 0%, rgba(243, 156, 18, 0.7) 100%); border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; transition: height 0.3s ease; position: relative;">
-                <span style="color: white; font-size: 11px; font-weight: 700; position: absolute; top: -20px; color: var(--text-dark);">
-                  {{ pipelineStats().interview }}
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; height: 100%; justify-content: flex-end;">
+              <div [style.height.%]="pipelineHeights().interviewHeight" style="width: 52px; background: linear-gradient(180deg, #F39C12 0%, #D68910 100%); border-radius: 8px 8px 4px 4px; display: flex; align-items: flex-start; justify-content: center; transition: height 0.3s ease; position: relative; box-shadow: 0 4px 10px rgba(243, 156, 18, 0.25);">
+                <span style="font-size: 12px; font-weight: 850; color: #2C3E50; position: absolute; top: -22px;">
+                  {{ pipelineData().interview }}
                 </span>
               </div>
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Interview</span>
             </div>
 
             <!-- Offer Bar -->
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; height: 100%; justify-content: flex-end;">
-              <div [style.height.%]="12" style="width: 48px; background: linear-gradient(180deg, var(--success) 0%, rgba(39, 174, 96, 0.7) 100%); border-radius: 6px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; transition: height 0.3s ease; position: relative;">
-                <span style="color: white; font-size: 11px; font-weight: 700; position: absolute; top: -20px; color: var(--text-dark);">
-                  {{ pipelineStats().offer }}
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; height: 100%; justify-content: flex-end;">
+              <div [style.height.%]="pipelineHeights().offerHeight" style="width: 52px; background: linear-gradient(180deg, #27AE60 0%, #1E8449 100%); border-radius: 8px 8px 4px 4px; display: flex; align-items: flex-start; justify-content: center; transition: height 0.3s ease; position: relative; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.25);">
+                <span style="font-size: 12px; font-weight: 850; color: #2C3E50; position: absolute; top: -22px;">
+                  {{ pipelineData().offer }}
                 </span>
               </div>
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Offer</span>
             </div>
 
           </div>
+
+          <!-- Bar Labels -->
+          <div style="display: flex; justify-content: space-around; text-align: center;">
+            <span style="font-size: 12px; font-weight: 750; color: #5D6D7E; flex: 1;">Applied</span>
+            <span style="font-size: 12px; font-weight: 750; color: #5D6D7E; flex: 1;">Screening</span>
+            <span style="font-size: 12px; font-weight: 750; color: #5D6D7E; flex: 1;">Interview</span>
+            <span style="font-size: 12px; font-weight: 750; color: #5D6D7E; flex: 1;">Offer</span>
+          </div>
         </div>
 
-        <!-- Right: Upcoming Interviews -->
-        <div style="background: var(--surface-low); border: 1px solid rgba(26, 82, 118, 0.1); border-radius: 16px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.01); display: flex; flex-direction: column;">
-          <h4 style="font-size: 15px; font-weight: 800; color: var(--primary); margin: 0 0 20px 0;">Upcoming Interviews</h4>
+        <!-- Right: Upcoming Interviews Widget -->
+        <div style="background: #EBF3FA; border: 1px solid #D4E6F1; border-radius: 16px; padding: 22px; display: flex; flex-direction: column;">
+          <h4 style="font-size: 16px; font-weight: 800; color: #1B4F72; margin: 0 0 18px 0;">Upcoming Interviews</h4>
           
           <div style="display: flex; flex-direction: column; gap: 14px; flex: 1;">
-            @for (item of upcomingInterviews(); track item.studentName) {
-              <div style="background: white; border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.015);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <span style="font-size: 10px; font-weight: 800; color: var(--secondary); background: rgba(0, 100, 151, 0.08); padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">
-                    {{ item.dateStr }}
-                  </span>
-                  <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-muted);">schedule</span>
-                </div>
-                <strong style="font-size: 14px; color: var(--text-dark); display: block; margin-bottom: 4px;">{{ item.studentName }}</strong>
-                <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Role: {{ item.role }}</span>
+            @if (upcomingInterviews().length === 0) {
+              <div style="background: white; border-radius: 12px; padding: 24px 16px; text-align: center; color: #7F8C8D; border: 1px solid rgba(0,0,0,0.03);">
+                <span class="material-symbols-outlined" style="font-size: 32px; color: #BDC3C7; margin-bottom: 6px; display: block;">event_busy</span>
+                <span style="font-size: 12.5px; font-weight: 700; color: #2C3E50; display: block;">No upcoming interviews scheduled</span>
+                <span style="font-size: 11px; color: #7F8C8D;">Scheduled interview rounds will appear here.</span>
               </div>
+            } @else {
+              @for (item of upcomingInterviews(); track item.studentName) {
+                <div style="background: white; border: 1px solid rgba(0,0,0,0.03); border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 10.5px; font-weight: 850; color: #1B4F72; background: #D4E6F1; padding: 3px 10px; border-radius: 4px; letter-spacing: 0.4px; text-transform: uppercase;">
+                      {{ item.dateStr }}
+                    </span>
+                    <span class="material-symbols-outlined" style="font-size: 18px; color: #7F8C8D;">schedule</span>
+                  </div>
+                  <h5 style="margin: 8px 0 3px 0; font-size: 15px; font-weight: 800; color: #2C3E50;">{{ item.studentName }}</h5>
+                  <span style="font-size: 12px; color: #7F8C8D; font-weight: 600;">Role: {{ item.role }}</span>
+                </div>
+              }
             }
           </div>
 
-          <button class="btn-refresh-status" style="margin-top: 20px; width: 100%; height: 38px; border: 1.5px solid rgba(26, 82, 118, 0.2); background: transparent; color: var(--primary); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+          <button 
+            type="button"
+            (click)="navigateToSchedules()"
+            style="margin-top: 18px; width: 100%; height: 42px; border: 1.5px solid #D4E6F1; background: white; color: #1B4F72; border-radius: 10px; font-size: 13.5px; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.02);"
+          >
             View All Schedule
           </button>
         </div>

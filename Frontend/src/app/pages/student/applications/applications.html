@@ -15,9 +15,10 @@
         <h2 style="font-size: 20px; font-weight: 800; color: var(--primary); margin: 0 0 20px 0;">My Applications</h2>
 
         @if (applications().length === 0) {
-          <div class="empty-drives">
-            <span class="material-symbols-outlined empty-icon">assignment_late</span>
-            <p>You have not submitted any applications to campus drives yet.</p>
+          <div class="empty-state-card" style="margin-top: 24px;">
+            <span class="material-symbols-outlined empty-icon-large" style="color: var(--border);">assignment_late</span>
+            <h3>📝 No applications submitted yet</h3>
+            <p>You have not submitted any applications to campus drives yet. Go to your Dashboard to explore active drives and apply.</p>
           </div>
         } @else {
           <div class="apps-grid-cards">
@@ -145,7 +146,13 @@
                           <span class="material-symbols-outlined" style="font-size: 18px; color: var(--warning); vertical-align: middle; margin-right: 6px;">rate_review</span>
                           <span>{{ s.eventType }} Round</span>
                         </h4>
-                        <span class="badge-scheduled">{{ s.status || 'SCHEDULED' }}</span>
+                        @if (isScheduleCompleted(s)) {
+                          <span style="background: #E8F8F5; color: #117A65; border: 1px solid #A3E4D7; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 11px; text-transform: uppercase;">
+                            Completed ✓
+                          </span>
+                        } @else {
+                          <span class="badge-scheduled">{{ s.status || 'SCHEDULED' }}</span>
+                        }
                       </div>
 
                       <!-- 3 Boxes Grid -->
@@ -161,7 +168,11 @@
                         <div class="round-details-box">
                           <span class="box-label">MODE / LOCATION</span>
                           @if (s.meetingUrl) {
-                            @if (isTodayOrPast(s.date)) {
+                            @if (isScheduleCompleted(s)) {
+                              <span class="box-value" style="display: inline-flex; align-items: center; gap: 4px; color: #7F8C8D; font-weight: 700;">
+                                <span>{{ s.location || 'Online' }}</span>
+                              </span>
+                            } @else if (isTodayOrPast(s.date)) {
                               <a [href]="s.meetingUrl" target="_blank" class="box-value" style="display: inline-flex; align-items: center; gap: 4px; color: var(--secondary); text-decoration: none; font-weight: 800;">
                                 <span>{{ s.location || 'Online' }}</span>
                                 <span class="material-symbols-outlined" style="font-size: 14px;">open_in_new</span>
@@ -187,14 +198,21 @@
                       @if (s.meetingUrl || (s.location && (s.location.includes('Meet') || s.location.includes('zoom') || s.location.includes('Online')))) {
                         <div class="alert-calendar-banner" style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
                           <p class="alert-note-text" style="margin: 0; flex: 1; min-width: 200px;">
-                            @if (s.meetingUrl && !isTodayOrPast(s.date)) {
+                            @if (isScheduleCompleted(s)) {
+                              "✅ This round has been completed. Review your scores and recruiter feedback below."
+                            } @else if (s.meetingUrl && !isTodayOrPast(s.date)) {
                               "⚠️ Meeting link is locked and will automatically unlock on the test date ({{ s.date | date:'mediumDate' }})."
                             } @else {
                               "Please ensure you have a stable internet connection and a quiet environment."
                             }
                           </p>
-                          <div style="display: flex; gap: 8px;">
-                            @if (s.meetingUrl) {
+                          <div style="display: flex; gap: 8px; align-items: center;">
+                            @if (isScheduleCompleted(s)) {
+                              <span style="background: #E8F8F5; border: 1px solid #A3E4D7; color: #117A65; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+                                <span class="material-symbols-outlined" style="font-size: 16px; color: #27AE60;">check_circle</span>
+                                <span>Round Completed</span>
+                              </span>
+                            } @else if (s.meetingUrl) {
                               @if (isTodayOrPast(s.date)) {
                                 <a [href]="s.meetingUrl" target="_blank" class="btn-add-calendar" style="background: var(--secondary); border-color: var(--secondary); color: white; display: inline-flex; align-items: center; gap: 4px; text-decoration: none; font-weight: 750;">
                                   <span class="material-symbols-outlined" style="font-size: 16px;">videocam</span>
@@ -223,8 +241,8 @@
                 }
               </div>
 
-              <!-- Completed Stage 1: Group Discussion (Show only if applicable) -->
-              @if (selectedApp()!.driveId?.hasGD && selectedApp()!.gd?.status !== 'Not Applicable') {
+              <!-- Completed Stage 1: Group Discussion (Show only if evaluated/completed) -->
+              @if (selectedApp()!.driveId?.hasGD && selectedApp()!.gd?.status && selectedApp()!.gd?.status !== 'Not Applicable' && (selectedApp()!.gd?.score !== null && selectedApp()!.gd?.score !== undefined || selectedApp()!.gd?.status === 'Shortlisted' || selectedApp()!.gd?.status === 'Rejected' || selectedApp()!.gd?.status === 'Completed')) {
                 <div style="height: 1px; background: var(--border); margin: 20px 0;"></div>
 
                 <div class="completed-stage-block" style="margin-bottom: 20px;">
@@ -262,8 +280,8 @@
                 </div>
               }
 
-              <!-- Completed Stage 2: Aptitude Test (Show only if applicable) -->
-              @if (selectedApp()!.driveId?.hasAptitudeTest && selectedApp()!.aptitude?.status !== 'Not Applicable') {
+              <!-- Completed Stage 2: Aptitude Test (Show only if evaluated/completed) -->
+              @if (selectedApp()!.driveId?.hasAptitudeTest && selectedApp()!.aptitude?.status && selectedApp()!.aptitude?.status !== 'Not Applicable' && (selectedApp()!.aptitude?.score !== null && selectedApp()!.aptitude?.score !== undefined || selectedApp()!.aptitude?.status === 'Passed' || selectedApp()!.aptitude?.status === 'Failed' || selectedApp()!.status === 'Aptitude Completed')) {
                 <div style="height: 1px; background: var(--border); margin: 20px 0;"></div>
 
                 <div class="completed-stage-block">

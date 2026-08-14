@@ -13,6 +13,7 @@ export interface RecruiterProfile {
   trustScore?: number;
   tpoSuggestions?: { suggestion: string; sentAt?: string }[];
   user: {
+    _id?: string;
     name: string;
     email: string;
   };
@@ -147,6 +148,39 @@ export class RecruiterService {
 
   declareInterviewResults(applicationIds: string[], result: string, score?: number, feedback?: string): Observable<any> {
     return this.http.put(`${this.apiUrl}/result/interview`, { applicationIds, result, score, feedback }, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  uploadOfferLetter(applicationId: string, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('offerLetter', file);
+    return this.http.post(`${this.apiUrl}/application/${applicationId}/offer`, formData, {
+      headers: this.getMultipartHeaders(),
+    });
+  }
+
+  getOfferTemplate(applicationId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/application/${applicationId}/offer-template`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  bulkUploadAptitudeScores(
+    driveId: string,
+    cutoffScore: number,
+    scores?: { rollNumber: string; score: number }[],
+    csvContent?: string
+  ): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/drive/${driveId}/bulk-aptitude`,
+      { cutoffScore, scores, csvContent },
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getAnalytics(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/analytics`, {
       headers: this.getAuthHeaders(),
     });
   }

@@ -157,6 +157,14 @@ export class TpoService {
     );
   }
 
+  getOnHoldRecruiters(): Observable<PendingRecruiter[]> {
+    return this.http.get<any>(`${this.apiUrl}/recruiters/on-hold`, {
+      headers: this.getAuthHeaders(),
+    }).pipe(
+      map(res => (Array.isArray(res) ? res : res.data || []))
+    );
+  }
+
   getApprovedRecruiters(): Observable<PendingRecruiter[]> {
     return this.http.get<any>(`${this.apiUrl}/recruiters/approved`, {
       headers: this.getAuthHeaders(),

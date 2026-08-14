@@ -1,51 +1,63 @@
 const cron = require("node-cron");
 const Schedule = require("../models/Schedule");
 const sendEmail = require("./sendEmail");
+const emailTemplates = require("./emailTemplates");
 
 const initCronScheduler = () => {
-  // Run every hour to check for upcoming interviews in the next 24 hours
+  // Run every hour to check for upcoming interviews scheduled for tomorrow
   cron.schedule("0 * * * *", async () => {
     try {
-      console.log("[Cron] Checking for upcoming drive interview reminders...");
-      const now = new Date();
-      const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      console.log("[Cron] Running reminder cron job to check for tomorrow's placement round schedules...");
 
+      // Calculate 24 hours from now to define the window for "tomorrow"
+      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const startOfDay = new Date(tomorrow);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(tomorrow);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      // Query schedules for tomorrow that have not had reminders sent yet
       const upcomingSchedules = await Schedule.find({
         status: "Scheduled",
         reminderSent: false,
-        date: { $gte: now, $lte: in24Hours },
+        date: { $gte: startOfDay, $lte: endOfDay },
       })
         .populate({
           path: "studentId",
           populate: { path: "userId", select: "name email" },
         })
-        .populate("driveId", "title");
+        .populate("driveId", "title")
+        .populate("recruiterId", "companyName");
+
+      console.log(`[Cron] Found ${upcomingSchedules.length} schedules for tomorrow.`);
 
       for (const schedule of upcomingSchedules) {
-        if (schedule.studentId && schedule.studentId.userId && schedule.studentId.userId.email) {
+        if (
+          schedule.studentId &&
+          schedule.studentId.userId &&
+          schedule.studentId.userId.email
+        ) {
           const userEmail = schedule.studentId.userId.email;
           const studentName = schedule.studentId.userId.name;
           const driveTitle = schedule.driveId ? schedule.driveId.title : "Placement Drive";
+          const companyName = schedule.recruiterId ? schedule.recruiterId.companyName : "Campus Recruiter";
 
           await sendEmail({
             to: userEmail,
-            subject: `Reminder: Upcoming ${schedule.eventType} for ${driveTitle}`,
-            html: `
-              <h3>CampusPulse Interview Reminder</h3>
-              <p>Hi <strong>${studentName}</strong>,</p>
-              <p>This is a reminder for your upcoming <strong>${schedule.eventType}</strong> round.</p>
-              <ul>
-                <li><strong>Drive:</strong> ${driveTitle}</li>
-                <li><strong>Date:</strong> ${new Date(schedule.date).toDateString()}</li>
-                <li><strong>Time Slot:</strong> ${schedule.timeSlot}</li>
-                <li><strong>Location:</strong> ${schedule.location}</li>
-              </ul>
-              <p>Good luck!</p>
-            `,
+            ...emailTemplates.reminder({
+              studentName,
+              companyName,
+              roundType: schedule.eventType,
+              driveTitle,
+              date: schedule.date,
+              time: schedule.timeSlot,
+              location: schedule.location || "Online",
+            }),
           });
 
           schedule.reminderSent = true;
           await schedule.save();
+          console.log(`[Cron] Reminder sent to ${userEmail} for ${companyName} (${schedule.eventType})`);
         }
       }
     } catch (error) {

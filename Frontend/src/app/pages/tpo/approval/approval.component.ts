@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { TpoService, PendingRecruiter } from '../../../services/tpo.service';
 
 @Component({
@@ -46,38 +47,23 @@ export class TpoApprovalComponent implements OnInit {
     if (isInitial) this.isLoading.set(true);
     this.isRefreshing.set(true);
 
-    this.tpoService.getPendingRecruiters().subscribe({
-      next: (pendingData) => {
-        // Categorize pending vs on-hold based on registrationStatus or legacy isApproved/status
-        const pending = (pendingData || []).filter(
-          r => r.registrationStatus === 'pending' || (!r.registrationStatus && !r.isApproved && r.status !== 'OnHold' && r.status !== 'Rejected')
-        );
-        const onHold = (pendingData || []).filter(
-          r => r.registrationStatus === 'on_hold' || r.status === 'OnHold' || r.status === 'Rejected'
-        );
-        
-        this.pendingList.set(pending);
-        this.onHoldList.set(onHold);
-
-        // Fetch approved recruiters
-        this.tpoService.getApprovedRecruiters().subscribe({
-          next: (approvedData) => {
-            this.approvedList.set(approvedData || []);
-            this.isLoading.set(false);
-            this.isRefreshing.set(false);
-          },
-          error: (err) => {
-            console.error('Failed to load approved recruiters:', err);
-            this.isLoading.set(false);
-            this.isRefreshing.set(false);
-          }
-        });
-      },
-      error: (err) => {
-        console.error('Failed to load pending recruiters:', err);
+    forkJoin({
+      pending: this.tpoService.getPendingRecruiters(),
+      onHold: this.tpoService.getOnHoldRecruiters(),
+      approved: this.tpoService.getApprovedRecruiters()
+    }).subscribe({
+      next: (res) => {
+        this.pendingList.set(res.pending || []);
+        this.onHoldList.set(res.onHold || []);
+        this.approvedList.set(res.approved || []);
         this.isLoading.set(false);
         this.isRefreshing.set(false);
       },
+      error: (err) => {
+        console.error('Failed to load recruiters:', err);
+        this.isLoading.set(false);
+        this.isRefreshing.set(false);
+      }
     });
   }
 

@@ -4,6 +4,9 @@ const Recruiter = require("../models/Recruiter");
 const JobDrive = require("../models/JobDrive");
 const Application = require("../models/Application");
 const verificationService = require("../services/verificationService");
+const socketService = require("../services/socketService");
+const sendEmail = require("../utils/sendEmail");
+const emailTemplates = require("../utils/emailTemplates");
 
 // 0. GET /api/tpo/students — Full students list with filters & pagination
 const getStudentsList = async (req, res) => {
@@ -96,7 +99,11 @@ const getDashboardAnalytics = async (req, res) => {
       Student.countDocuments(),
       Application.distinct("studentId", { status: "Placed" }),
       JobDrive.countDocuments({ status: "Open" }),
-      Recruiter.countDocuments({ isApproved: false }),
+      Recruiter.countDocuments({
+        isApproved: false,
+        status: { $nin: ["OnHold", "Rejected"] },
+        registrationStatus: { $ne: "on_hold" },
+      }),
     ]);
 
     const totalPlaced = placedApplications.length;
@@ -223,7 +230,11 @@ const getOfferAcceptanceTrends = async (req, res) => {
 // 5. GET /api/tpo/recruiters/pending (Enhanced with verification details)
 const getPendingRecruiters = async (req, res) => {
   try {
-    const pendingRecruiters = await Recruiter.find({ isApproved: false })
+    const pendingRecruiters = await Recruiter.find({
+      isApproved: false,
+      status: { $nin: ["OnHold", "Rejected"] },
+      registrationStatus: { $ne: "on_hold" },
+    })
       .populate("userId", "name email phone isActive createdAt")
       .sort({ createdAt: -1 });
 
@@ -255,6 +266,32 @@ const getApprovedRecruiters = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch approved recruiters",
+      error: error.message,
+    });
+  }
+};
+
+// 5.6 GET /api/tpo/recruiters/on-hold
+const getOnHoldRecruiters = async (req, res) => {
+  try {
+    const onHoldRecruiters = await Recruiter.find({
+      $or: [
+        { status: "OnHold" },
+        { registrationStatus: "on_hold" },
+        { status: "Rejected" },
+      ],
+    })
+      .populate("userId", "name email phone isActive createdAt")
+      .sort({ updatedAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: onHoldRecruiters,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch on-hold recruiters",
       error: error.message,
     });
   }
@@ -319,6 +356,11 @@ const approveRecruiter = async (req, res) => {
 
     if (recruiter.userId) {
       await User.findByIdAndUpdate(recruiter.userId, { isActive: true });
+      await socketService.sendRealTimeNotification(recruiter.userId, {
+        title: "Account Approved ⭐",
+        message: `Congratulations! The TPO has approved your recruiter account for ${recruiter.companyName}. You can now start posting job drives.`,
+        type: "success",
+      });
     }
 
     return res.status(200).json({
@@ -405,6 +447,11 @@ const putRecruiterOnHold = async (req, res) => {
     // Keep user account active so they can access the edit-profile page
     if (recruiter.userId) {
       await User.findByIdAndUpdate(recruiter.userId, { isActive: true });
+      await socketService.sendRealTimeNotification(recruiter.userId, {
+        title: "Account On Hold ⚠️",
+        message: `TPO Review Required: "${feedback.trim()}"`,
+        type: "warning",
+      });
     }
 
     return res.status(200).json({
@@ -701,6 +748,7 @@ module.exports = {
   getOfferAcceptanceTrends,
   getPendingRecruiters,
   getApprovedRecruiters,
+  getOnHoldRecruiters,
   getRecruiterVerificationDetails,
   approveRecruiter,
   rejectRecruiter,

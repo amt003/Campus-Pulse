@@ -5,6 +5,7 @@ const {
   getStudentsList,
   getPendingRecruiters,
   getApprovedRecruiters,
+  getOnHoldRecruiters,
   getRecruiterVerificationDetails,
   approveRecruiter,
   rejectRecruiter,
@@ -42,6 +43,7 @@ router.get('/students', getStudentsList);
 
 // Recruiter management routes
 router.get('/recruiters/pending', getPendingRecruiters);
+router.get('/recruiters/on-hold', getOnHoldRecruiters);
 router.get('/recruiters/approved', getApprovedRecruiters);
 router.get('/recruiter/:id/verify', getRecruiterVerificationDetails);
 router.put('/recruiter/:id/approve', approveRecruiter);

@@ -77,19 +77,26 @@
       />
     </div>
 
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <label for="statusFilter" class="filter-label">Filter Status:</label>
-      <select 
-        id="statusFilter" 
-        class="status-dropdown" 
-        [ngModel]="statusFilter()"
-        (ngModelChange)="statusFilter.set($event)"
-      >
-        <option value="All">All Statuses</option>
-        <option value="Applied">Applied</option>
-        <option value="Shortlisted">Shortlisted</option>
-        <option value="Rejected">Rejected</option>
-      </select>
+    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <label for="statusFilter" class="filter-label">Filter Status:</label>
+        <select 
+          id="statusFilter" 
+          class="status-dropdown" 
+          [ngModel]="statusFilter()"
+          (ngModelChange)="statusFilter.set($event)"
+        >
+          <option value="All">All Statuses</option>
+          <option value="Applied">Applied</option>
+          <option value="Shortlisted">Shortlisted</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+
+      <button (click)="exportCandidatesToCSV()" style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: 1.5px solid #27AE60; background: white; color: #27AE60; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 6px rgba(39,174,96,0.05);">
+        <span class="material-symbols-outlined" style="font-size: 16px;">file_download</span>
+        <span>Export Candidates</span>
+      </button>
     </div>
   </div>
 
@@ -97,6 +104,16 @@
   <div class="bulk-actions-toolbar">
     <span class="bulk-actions-label">Bulk Actions:</span>
     @if (driveHasAptitude()) {
+      <button 
+        class="btn-bulk-schedule" 
+        style="background: #EBF5FB; color: #1B4F72; border: 1px solid #AED6F1;"
+        title="Upload CSV / Batch scores and automatically filter candidates by Cutoff Score"
+        (click)="openBulkAptitudeModal()"
+      >
+        <span class="material-symbols-outlined" style="font-size: 16px;">upload_file</span>
+        <span>📊 Bulk Upload Scores</span>
+      </button>
+
       <button 
         class="btn-bulk-schedule" 
         [disabled]="selectedIds().size === 0 || allSelectedAptitudeScheduled()"
@@ -157,31 +174,6 @@
       <span class="material-symbols-outlined" style="font-size: 18px;">task_alt</span>
       Declare Results:
     </span>
-
-    <!-- Aptitude Actions -->
-    @if (driveHasAptitude()) {
-      <div style="display: flex; gap: 6px; align-items: center; border-right: 1px solid var(--border); padding-right: 12px;">
-        <span style="font-size: 11px; font-weight: 750; color: var(--text-muted); text-transform: uppercase;">Aptitude:</span>
-        <button 
-          class="btn-bulk-schedule" 
-          style="background: #27AE60; color: white;"
-          [disabled]="selectedIds().size === 0" 
-          (click)="markBulkResult('Aptitude', 'Passed')"
-        >
-          <span class="material-symbols-outlined" style="color: white;">check_circle</span>
-          <span>Mark Passed</span>
-        </button>
-        <button 
-          class="btn-bulk-schedule" 
-          style="background: #E74C3C; color: white;"
-          [disabled]="selectedIds().size === 0" 
-          (click)="markBulkResult('Aptitude', 'Failed')"
-        >
-          <span class="material-symbols-outlined" style="color: white;">cancel</span>
-          <span>Mark Failed</span>
-        </button>
-      </div>
-    }
 
     <!-- GD Actions -->
     @if (driveHasGD()) {
@@ -286,6 +278,7 @@
               <td style="text-align: center;">
                 <input 
                   type="checkbox" 
+                  [disabled]="app.isPlacedGlobally"
                   [checked]="selectedIds().has(app.applicationId)"
                   (change)="toggleSelectApp(app.applicationId)"
                   class="rounded-checkbox"
@@ -352,19 +345,53 @@
                 </div>
               </td>
               <td>
-                <span class="status-cell-style" [class]="'status-' + getStatusClass(app).toLowerCase()">
-                  <span>{{ getStatusLabel(app) }}</span>
-                  @if (getStatusLabel(app) === 'Shortlisted') {
-                    <span class="material-symbols-outlined star-icon">star</span>
-                  } @else if (getStatusLabel(app) === 'Selected') {
-                    <span class="material-symbols-outlined star-icon" style="color: #D4AC0D;">workspace_premium</span>
-                  }
-                </span>
+                @if (app.isPlacedGlobally || app.isPlaced) {
+                  <span class="badge-placed" [title]="'This student has accepted an offer at ' + (app.placementCompany || 'another company')">
+                    ✅ Placed at {{ app.placementCompany || 'another company' }}
+                  </span>
+                } @else {
+                  <span class="status-cell-style" [class]="'status-' + getStatusClass(app).toLowerCase()">
+                    <span>{{ getStatusLabel(app) }}</span>
+                    @if (getStatusLabel(app) === 'Shortlisted') {
+                      <span class="material-symbols-outlined star-icon">star</span>
+                    } @else if (getStatusLabel(app) === 'Selected') {
+                      <span class="material-symbols-outlined star-icon" style="color: #D4AC0D;">workspace_premium</span>
+                    }
+                  </span>
+                }
               </td>
               <td style="text-align: center;">
-                <button class="btn-row-view-applicants" (click)="openXaiModal(app)" title="View XAI Details">
-                  <span class="material-symbols-outlined">visibility</span>
-                </button>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <button class="btn-row-view-applicants" (click)="openXaiModal(app)" title="View XAI Details">
+                    <span class="material-symbols-outlined">visibility</span>
+                  </button>
+
+                  @if (app.status === 'Selected' || (app.interview && app.interview.result === 'Selected')) {
+                    <a [routerLink]="['/recruiter/offer', app.applicationId]" class="btn-bulk-schedule" style="padding: 4px 10px; font-size: 11.5px; background: #EBF5FB; color: #1B4F72; border: 1px solid #AED6F1; text-decoration: none;" title="Generate & Sign Offer Letter for {{ app.student?.name }}">
+                      <span class="material-symbols-outlined" style="font-size: 14px;">edit_document</span>
+                      <span>Generate Offer</span>
+                    </a>
+                    <button class="btn-bulk-schedule" style="padding: 4px 10px; font-size: 11.5px; background: #E8F8F5; color: #117A65; border: 1px solid #A3E4D7;" (click)="openOfferModal(app)" title="Upload Offer Letter PDF for {{ app.student?.name }}">
+                      <span class="material-symbols-outlined" style="font-size: 14px;">upload_file</span>
+                      <span>Upload</span>
+                    </button>
+                  } @else if (app.status === 'Offer Sent') {
+                    <span style="font-size: 11px; font-weight: 750; color: #27AE60; background: #E8F8F5; padding: 3px 8px; border-radius: 4px; border: 1px solid #A3E4D7; display: inline-flex; align-items: center; gap: 3px;">
+                      <span class="material-symbols-outlined" style="font-size: 13px;">mark_email_read</span>
+                      <span>Offer Sent</span>
+                    </span>
+                  } @else if (app.status === 'Placed') {
+                    <span style="font-size: 11px; font-weight: 800; color: #1E8449; background: #D4EFDF; padding: 3px 8px; border-radius: 4px; border: 1px solid #27AE60; display: inline-flex; align-items: center; gap: 3px;">
+                      <span class="material-symbols-outlined" style="font-size: 13px;">verified</span>
+                      <span>Placed 🎉</span>
+                    </span>
+                  } @else if (app.status === 'Offer Declined') {
+                    <span style="font-size: 11px; font-weight: 750; color: #C0392B; background: #FDEDEC; padding: 3px 8px; border-radius: 4px; border: 1px solid #F1948A; display: inline-flex; align-items: center; gap: 3px;">
+                      <span class="material-symbols-outlined" style="font-size: 13px;">cancel</span>
+                      <span>Declined</span>
+                    </span>
+                  }
+                </div>
               </td>
             </tr>
           }
@@ -847,6 +874,233 @@
             <span>Submit Results</span>
           </button>
         </div>
+      </div>
+    </div>
+  }
+
+  <!-- Upload Offer Letter Modal -->
+  @if (isOfferModalOpen() && selectedOfferApp()) {
+    <div class="modal-overlay" (click)="closeOfferModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()" style="max-width: 500px; width: 100%;">
+        <div class="modal-header">
+          <h3>Upload Offer Letter for {{ selectedOfferApp()?.student?.name }}</h3>
+          <button class="btn-close" (click)="closeOfferModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+          
+          <div style="background: var(--surface-low); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(26,82,118,0.08); font-size: 13px; font-weight: 600; color: var(--primary);">
+            Candidate: <strong>{{ selectedOfferApp()?.student?.name }}</strong> (Roll: {{ selectedOfferApp()?.student?.rollNumber }})
+          </div>
+
+          <div class="form-group">
+            <label style="font-weight: 700; font-size: 13px; color: var(--text-dark); margin-bottom: 6px; display: block;">
+              Select Offer Letter PDF <span style="color: #E74C3C;">*</span>
+            </label>
+            <input 
+              type="file" 
+              accept="application/pdf"
+              class="form-control" 
+              (change)="onOfferFileSelected($event)"
+              style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px;"
+            />
+            <span style="font-size: 11px; color: var(--text-muted); margin-top: 4px; display: block;">
+              Accepted format: PDF (.pdf), Maximum size: 5MB
+            </span>
+          </div>
+
+          @if (offerFile) {
+            <div style="background: #E8F8F5; border: 1px solid #A3E4D7; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #117A65; display: flex; align-items: center; gap: 8px;">
+              <span class="material-symbols-outlined" style="font-size: 18px;">picture_as_pdf</span>
+              <span>Selected: <strong>{{ offerFile.name }}</strong> ({{ (offerFile.size / 1024 / 1024).toFixed(2) }} MB)</span>
+            </div>
+          }
+
+        </div>
+        <div class="modal-footer" style="padding: 16px 24px; background: #F8F9FA;">
+          <button class="btn-cancel" [disabled]="offerIsSubmitting()" (click)="closeOfferModal()">Cancel</button>
+          <button class="btn-submit" style="background: #27AE60; border-color: #27AE60; color: white;" [disabled]="!offerFile || offerIsSubmitting()" (click)="submitOfferLetter()">
+            {{ offerIsSubmitting() ? 'Uploading...' : '📤 Upload & Send Offer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Bulk Aptitude Scores & Cutoff Evaluation Modal -->
+  @if (isBulkAptitudeModalOpen()) {
+    <div class="modal-overlay" (click)="closeBulkAptitudeModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()" style="max-width: 620px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
+        
+        <div class="modal-header">
+          <h3>📊 Bulk Aptitude Scores & Cutoff Evaluation</h3>
+          <button class="btn-close" (click)="closeBulkAptitudeModal()">&times;</button>
+        </div>
+
+        @if (bulkAptitudeSummary()) {
+          <!-- Summary Report View -->
+          <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+            <div style="background: #E8F8F5; border: 1px solid #A3E4D7; border-radius: 10px; padding: 16px; text-align: center;">
+              <span class="material-symbols-outlined" style="font-size: 36px; color: #27AE60;">task_alt</span>
+              <h4 style="margin: 6px 0 2px 0; font-size: 16px; font-weight: 800; color: #1E8449;">Batch Evaluation Complete!</h4>
+              <p style="margin: 0; font-size: 13px; color: #117A65;">Cutoff Applied: <strong>{{ bulkAptitudeSummary()?.cutoffScore }} Marks</strong></p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 8px;">
+              <div style="background: #EBF5FB; border: 1px solid #AED6F1; padding: 12px; border-radius: 8px; text-align: center;">
+                <span style="display: block; font-size: 20px; font-weight: 900; color: #1B4F72;">{{ bulkAptitudeSummary()?.totalRows || bulkAptitudeSummary()?.totalProcessed }}</span>
+                <span style="font-size: 10px; font-weight: 800; color: #1B4F72; text-transform: uppercase;">Total Rows</span>
+              </div>
+
+              <div style="background: #E8F8F5; border: 1px solid #A3E4D7; padding: 12px; border-radius: 8px; text-align: center;">
+                <span style="display: block; font-size: 20px; font-weight: 900; color: #27AE60;">{{ bulkAptitudeSummary()?.passed }}</span>
+                <span style="font-size: 10px; font-weight: 800; color: #1E8449; text-transform: uppercase;">🟢 Passed</span>
+              </div>
+
+              <div style="background: #FADBD8; border: 1px solid #E74C3C; padding: 12px; border-radius: 8px; text-align: center;">
+                <span style="display: block; font-size: 20px; font-weight: 900; color: #C0392B;">{{ bulkAptitudeSummary()?.failed }}</span>
+                <span style="font-size: 10px; font-weight: 800; color: #78281F; text-transform: uppercase;">🔴 Failed</span>
+              </div>
+
+              <div style="background: #FEF9E7; border: 1px solid #F1C40F; padding: 12px; border-radius: 8px; text-align: center;">
+                <span style="display: block; font-size: 20px; font-weight: 900; color: #7D6608;">{{ bulkAptitudeSummary()?.skipped }}</span>
+                <span style="font-size: 10px; font-weight: 800; color: #7D6608; text-transform: uppercase;">⚠️ Skipped</span>
+              </div>
+            </div>
+
+            @if (bulkAptitudeSummary()?.skippedDetails?.length > 0) {
+              <div style="background: #FFFDE7; border: 1.5px solid #F39C12; border-radius: 10px; padding: 14px; margin-top: 4px;">
+                <div style="display: flex; align-items: center; gap: 6px; color: #7D6608; font-weight: 800; font-size: 13px; margin-bottom: 8px;">
+                  <span class="material-symbols-outlined" style="font-size: 18px;">warning</span>
+                  <span>Skipped Candidates Details ({{ bulkAptitudeSummary()?.skippedDetails?.length }})</span>
+                </div>
+                
+                <div style="max-height: 180px; overflow-y: auto; font-size: 12px; background: white; border: 1px solid #F5CBA7; border-radius: 6px;">
+                  <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                      <tr style="background: #FEF9E7; border-bottom: 1px solid #F5CBA7; font-weight: 800; color: #7D6608;">
+                        <th style="padding: 6px 10px;">Roll Number</th>
+                        <th style="padding: 6px 10px;">Score</th>
+                        <th style="padding: 6px 10px;">Reason Skipped</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of bulkAptitudeSummary()?.skippedDetails; track item.rollNumber) {
+                        <tr style="border-bottom: 1px dashed #FADBD8;">
+                          <td style="padding: 6px 10px; font-weight: 700; color: var(--primary);">{{ item.rollNumber }}</td>
+                          <td style="padding: 6px 10px; font-weight: 600;">{{ item.score != null ? item.score + ' pts' : '—' }}</td>
+                          <td style="padding: 6px 10px; color: #C0392B; font-weight: 650;">{{ item.reason }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="modal-footer" style="padding: 16px 24px; background: #F8F9FA;">
+            <button class="btn-submit" style="background: var(--primary); color: white;" (click)="closeBulkAptitudeModal()">
+              Done & Refresh List
+            </button>
+          </div>
+        } @else {
+          <!-- Batch Input View -->
+          <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+            
+            <!-- Cutoff Score Input -->
+            <div class="form-group">
+              <label style="font-weight: 800; font-size: 13.5px; color: var(--primary); margin-bottom: 4px; display: block;">
+                🎯 Cutoff Passing Marks *
+              </label>
+              <input 
+                type="number" 
+                min="0"
+                class="form-control" 
+                [ngModel]="bulkCutoffScore()" 
+                (ngModelChange)="onBulkCutoffChange($event)"
+                placeholder="e.g. 70" 
+                style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-weight: 700; color: #27AE60;"
+                required
+              />
+              <span style="font-size: 11px; color: var(--text-muted); margin-top: 4px; display: block;">
+                Candidates scoring &ge; {{ bulkCutoffScore() }} will automatically be marked <strong>Passed (Aptitude Cleared)</strong>. Candidates below cutoff will be marked <strong>Rejected</strong>.
+              </span>
+            </div>
+
+            <!-- Upload File OR Paste Data -->
+            <div class="form-group">
+              <label style="font-weight: 700; font-size: 13px; color: var(--text-dark); margin-bottom: 6px; display: block;">
+                Upload CSV File OR Paste Batch Data (RollNumber, Score) *
+              </label>
+              
+              <input 
+                type="file" 
+                accept=".csv,.txt"
+                class="form-control" 
+                (change)="onBulkCsvFileSelected($event)"
+                style="width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12.5px; margin-bottom: 10px;"
+              />
+
+              <textarea 
+                rows="4" 
+                class="form-control" 
+                [ngModel]="bulkCsvContent()"
+                (ngModelChange)="onCsvTextInput($event)"
+                placeholder="Or paste lines directly e.g.&#10;2021CS101, 85&#10;2021CS102, 62&#10;2021CS103, 78"
+                style="width: 100%; padding: 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12.5px; font-family: monospace;"
+              ></textarea>
+            </div>
+
+            <!-- Parsed Live Preview Table -->
+            @if (parsedCandidateScores().length > 0) {
+              <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+                <div style="background: #F8F9FA; padding: 8px 12px; font-size: 12px; font-weight: 800; color: var(--primary); display: flex; justify-content: space-between;">
+                  <span>Parsed Candidate Scores ({{ parsedCandidateScores().length }})</span>
+                  <span>Cutoff: {{ bulkCutoffScore() }}</span>
+                </div>
+                
+                <div style="max-height: 160px; overflow-y: auto; font-size: 12px;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                      <tr style="background: #FAFAFA; border-bottom: 1px solid var(--border); text-align: left;">
+                        <th style="padding: 6px 12px;">Roll Number</th>
+                        <th style="padding: 6px 12px;">Score</th>
+                        <th style="padding: 6px 12px;">Predicted Result</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of parsedCandidateScores(); track item.rollNumber) {
+                        <tr style="border-bottom: 1px solid #F0F0F0;">
+                          <td style="padding: 6px 12px; font-weight: 600;">{{ item.rollNumber }}</td>
+                          <td style="padding: 6px 12px; font-weight: 700;">{{ item.score }} pts</td>
+                          <td style="padding: 6px 12px;">
+                            <span [style.color]="item.status === 'Passed' ? '#27AE60' : '#E74C3C'" style="font-weight: 800; padding: 2px 6px; border-radius: 4px;" [style.background]="item.status === 'Passed' ? '#E8F8F5' : '#FADBD8'">
+                              {{ item.status === 'Passed' ? '🟢 Passed' : '🔴 Failed' }}
+                            </span>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            }
+
+          </div>
+
+          <div class="modal-footer" style="padding: 16px 24px; background: #F8F9FA;">
+            <button class="btn-cancel" [disabled]="bulkAptitudeIsSubmitting()" (click)="closeBulkAptitudeModal()">Cancel</button>
+            <button 
+              class="btn-submit" 
+              style="background: #27AE60; border-color: #27AE60; color: white;" 
+              [disabled]="parsedCandidateScores().length === 0 || bulkAptitudeIsSubmitting()" 
+              (click)="submitBulkAptitudeEvaluation()"
+            >
+              {{ bulkAptitudeIsSubmitting() ? 'Evaluating Batch...' : '🚀 Evaluate Batch Scores' }}
+            </button>
+          </div>
+        }
+
       </div>
     </div>
   }

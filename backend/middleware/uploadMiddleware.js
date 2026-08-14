@@ -72,5 +72,31 @@ const uploadImage = multer({
   },
 });
 
+// Ensure offers directory exists
+const offerDir = path.join(__dirname, "..", "uploads", "offers");
+if (!fs.existsSync(offerDir)) {
+  fs.mkdirSync(offerDir, { recursive: true });
+}
+
+const offerStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, offerDir);
+  },
+  filename: (req, file, cb) => {
+    const safeOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, "_");
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${uniqueSuffix}-${safeOriginalName}`);
+  },
+});
+
+const uploadOffer = multer({
+  storage: offerStorage,
+  fileFilter,
+  limits: {
+    fileSize: 20 * 1024 * 1024, // 20MB limit
+  },
+});
+
 module.exports = upload;
 module.exports.uploadImage = uploadImage;
+module.exports.uploadOffer = uploadOffer;

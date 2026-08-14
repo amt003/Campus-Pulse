@@ -14,7 +14,7 @@
         <div class="stat-body">
           <span class="stat-title">Total Students</span>
           <h2 class="stat-value">{{ analytics()?.totalStudents || 0 }}</h2>
-          <span class="stat-sub">Batch of 2024</span>
+          <span class="stat-sub">Batch of 2026</span>
         </div>
         <div class="badge-icon icon-blue">
           <span class="material-symbols-outlined">groups</span>
@@ -78,33 +78,38 @@
             <span class="header-emoji">📊</span>
             <h3 class="panel-title">Placement Funnel</h3>
           </div>
-          <button class="pdf-link" (click)="downloadPDF()">
-            <span class="material-symbols-outlined">download</span>
-            Download PDF
-          </button>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="pdf-link" (click)="exportDashboardStatsToCSV()"
+              style="background: #27AE60; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: 11.5px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s; box-shadow: 0 2px 6px rgba(39,174,96,0.15);">
+              <span class="material-symbols-outlined" style="font-size: 15px;">file_download</span>
+              <span>Export CSV</span>
+            </button>
+            <button class="pdf-link" (click)="downloadPDF()">
+              <span class="material-symbols-outlined">download</span>
+              Download PDF
+            </button>
+          </div>
         </div>
 
         <div class="funnel-list">
           @for (f of funnelData(); track f.stage) {
-            <div class="funnel-item">
-              <div class="funnel-label-row">
-                <span class="funnel-stage-name">{{ f.stage }}</span>
-                <span class="funnel-stage-count">{{ f.count }}</span>
-              </div>
-              <div class="funnel-track">
-                <div
-                  class="funnel-bar"
-                  [style.width.%]="getFunnelBarWidth(f.count)"
-                  [style.background]="getFunnelBarColor(f.stage)"
-                ></div>
-              </div>
+          <div class="funnel-item">
+            <div class="funnel-label-row">
+              <span class="funnel-stage-name">{{ f.stage }}</span>
+              <span class="funnel-stage-count">{{ f.count }}</span>
             </div>
+            <div class="funnel-track">
+              <div class="funnel-bar" [style.width.%]="getFunnelBarWidth(f.count)"
+                [style.background]="getFunnelBarColor(f.stage)"></div>
+            </div>
+          </div>
           }
         </div>
 
         <div class="panel-divider"></div>
         <p class="panel-footnote">
-          Note: Placed count includes students who successfully cleared multi-round processes across all recruiter categories.
+          Note: Placed count includes students who successfully cleared multi-round processes across all recruiter
+          categories.
         </p>
       </div>
 
@@ -122,15 +127,15 @@
 
         <div class="branch-list">
           @for (b of branchStats(); track b.branch) {
-            <div class="branch-item">
-              <div class="branch-label-row">
-                <span class="branch-name">{{ b.branch }}</span>
-                <span class="branch-percent">{{ b.percentage }}%</span>
-              </div>
-              <div class="branch-track">
-                <div class="branch-bar" [style.width.%]="b.percentage"></div>
-              </div>
+          <div class="branch-item">
+            <div class="branch-label-row">
+              <span class="branch-name">{{ b.branch }}</span>
+              <span class="branch-percent">{{ b.percentage }}%</span>
             </div>
+            <div class="branch-track">
+              <div class="branch-bar" [style.width.%]="b.percentage"></div>
+            </div>
+          </div>
           }
         </div>
 
@@ -201,87 +206,80 @@
          5. Recruiter Approvals Table Section
          ══════════════════════════════════════════ -->
     @if (pendingRecruiters().length > 0 || activeTab() === 'approve') {
-      <section class="recruiter-approvals-card glass-panel">
-        <div class="panel-header">
-          <div class="panel-title-wrap">
-            <div class="title-icon-badge">
-              <span class="material-symbols-outlined">how_to_reg</span>
-            </div>
-            <h3 class="panel-title">Pending Recruiter Approvals</h3>
+    <section class="recruiter-approvals-card glass-panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <div class="title-icon-badge">
+            <span class="material-symbols-outlined">how_to_reg</span>
           </div>
-          <div class="header-right-actions">
-            <a routerLink="/tpo/approval" class="btn-full-verification">
-              <span class="material-symbols-outlined">analytics</span>
-              <span>Full Verification & WHOIS</span>
-            </a>
-            <span class="badge-pending-count">{{ pendingRecruiters().length }} Pending</span>
-          </div>
+          <h3 class="panel-title">Pending Recruiter Approvals</h3>
         </div>
+        <div class="header-right-actions">
+          <a routerLink="/tpo/approval" class="btn-full-verification">
+            <span class="material-symbols-outlined">analytics</span>
+            <span>Full Verification & WHOIS</span>
+          </a>
+          <span class="badge-pending-count">{{ pendingRecruiters().length }} Pending</span>
+        </div>
+      </div>
 
-        @if (pendingRecruiters().length === 0) {
-          <div class="empty-table-state">
-            <span class="material-symbols-outlined empty-icon">verified_user</span>
-            <p>All recruiter registrations have been reviewed!</p>
-          </div>
-        }
+      @if (pendingRecruiters().length === 0) {
+      <div class="empty-table-state">
+        <span class="material-symbols-outlined empty-icon">verified_user</span>
+        <p>All recruiter registrations have been reviewed!</p>
+      </div>
+      }
 
-        @if (pendingRecruiters().length > 0) {
-          <div class="table-scroll">
-            <table class="approval-table">
-              <thead>
-                <tr>
-                  <th>Company Name</th>
-                  <th>Official Email</th>
-                  <th>Trust Score</th>
-                  <th>Domain Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (rec of paginatedRecruiters; track rec._id) {
-                  <tr>
-                    <td class="font-bold text-navy">{{ rec.companyName }}</td>
-                    <td>{{ rec.officialEmail }}</td>
-                    <td>
-                      <span class="trust-pill" [ngClass]="getTrustScoreClass(rec.trustScore)">
-                        {{ rec.trustScore || 85 }}/100
-                      </span>
-                    </td>
-                    <td>
-                      <span class="domain-tag">
-                        <span class="material-symbols-outlined">check_circle</span>
-                        Verified Domain
-                      </span>
-                    </td>
-                    <td>
-                      <div class="table-actions">
-                        <a routerLink="/tpo/approval" class="btn-verify-sm" title="View WHOIS Details">
-                          <span class="material-symbols-outlined">search</span>
-                          <span>Details</span>
-                        </a>
-                        <button
-                          class="btn-approve-sm"
-                          (click)="approveRecruiter(rec._id)"
-                          [disabled]="isApproving() === rec._id"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          class="btn-reject-sm"
-                          (click)="rejectRecruiter(rec._id)"
-                          [disabled]="isRejecting() === rec._id"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
-      </section>
+      @if (pendingRecruiters().length > 0) {
+      <div class="table-scroll">
+        <table class="approval-table">
+          <thead>
+            <tr>
+              <th>Company Name</th>
+              <th>Official Email</th>
+              <th>Trust Score</th>
+              <th>Domain Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rec of paginatedRecruiters; track rec._id) {
+            <tr>
+              <td class="font-bold text-navy">{{ rec.companyName }}</td>
+              <td>{{ rec.officialEmail }}</td>
+              <td>
+                <span class="trust-pill" [ngClass]="getTrustScoreClass(rec.trustScore)">
+                  {{ rec.trustScore || 85 }}/100
+                </span>
+              </td>
+              <td>
+                <span class="domain-tag">
+                  <span class="material-symbols-outlined">check_circle</span>
+                  Verified Domain
+                </span>
+              </td>
+              <td>
+                <div class="table-actions">
+                  <a routerLink="/tpo/approval" class="btn-verify-sm" title="View WHOIS Details">
+                    <span class="material-symbols-outlined">search</span>
+                    <span>Details</span>
+                  </a>
+                  <button class="btn-approve-sm" (click)="approveRecruiter(rec._id)"
+                    [disabled]="isApproving() === rec._id">
+                    Approve
+                  </button>
+                  <button class="btn-hold-sm" (click)="openHoldModal(rec)">
+                    Put On Hold
+                  </button>
+                </div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+    </section>
     }
 
     <!-- ══════════════════════════════════════════
@@ -299,70 +297,67 @@
       </div>
 
       @if (approvedRecruiters().length === 0) {
-        <div class="empty-table-state">
-          <span class="material-symbols-outlined empty-icon">corporate_fare</span>
-          <p>No approved recruiters yet. Review pending registrations above.</p>
-        </div>
+      <div class="empty-table-state">
+        <span class="material-symbols-outlined empty-icon">corporate_fare</span>
+        <p>No approved recruiters yet. Review pending registrations above.</p>
+      </div>
       }
 
       @if (approvedRecruiters().length > 0) {
-        <div class="table-scroll">
-          <table class="approval-table">
-            <thead>
-              <tr>
-                <th>Company Name</th>
-                <th>Official Email</th>
-                <th>Trust Score</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (rec of approvedRecruiters(); track rec._id) {
-                <tr>
-                  <td class="font-bold text-navy">
-                    <span class="company-name">{{ rec.companyName }}</span>
-                    @if (rec.website) {
-                      <small style="display: block; font-size: 11px; color: var(--on-surface-var); font-weight: 500;">{{ rec.website }}</small>
-                    }
-                  </td>
-                  <td>{{ rec.officialEmail }}</td>
-                  <td>
-                    <span class="trust-pill trust-high">
-                      {{ rec.trustScore || 85 }}/100
-                    </span>
-                  </td>
-                  <td>
-                    @if (rec.isApproved) {
-                      <span class="status-tag tag-success">
-                        ✅ Approved & Active
-                      </span>
-                    } @else {
-                      <span class="status-tag tag-inactive">
-                        ⛔ Deactivated
-                      </span>
-                    }
-                  </td>
-                  <td>
-                    <div class="table-actions">
-                      <button
-                        class="btn-toggle-status-sm"
-                        [class.btn-deactivate]="rec.isApproved"
-                        [class.btn-activate]="!rec.isApproved"
-                        (click)="toggleRecruiterActiveStatus(rec._id)"
-                        [disabled]="isTogglingStatus() === rec._id"
-                        [title]="rec.isApproved ? 'Deactivate recruiter (blocks login)' : 'Activate recruiter'"
-                      >
-                        <span class="material-symbols-outlined">{{ rec.isApproved ? 'block' : 'check_circle' }}</span>
-                        <span>{{ rec.isApproved ? 'Deactivate' : 'Activate' }}</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+      <div class="table-scroll">
+        <table class="approval-table">
+          <thead>
+            <tr>
+              <th>Company Name</th>
+              <th>Official Email</th>
+              <th>Trust Score</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rec of approvedRecruiters(); track rec._id) {
+            <tr>
+              <td class="font-bold text-navy">
+                <span class="company-name">{{ rec.companyName }}</span>
+                @if (rec.website) {
+                <small style="display: block; font-size: 11px; color: var(--on-surface-var); font-weight: 500;">{{
+                  rec.website }}</small>
+                }
+              </td>
+              <td>{{ rec.officialEmail }}</td>
+              <td>
+                <span class="trust-pill trust-high">
+                  {{ rec.trustScore || 85 }}/100
+                </span>
+              </td>
+              <td>
+                @if (rec.isApproved) {
+                <span class="status-tag tag-success">
+                  ✅ Approved & Active
+                </span>
+                } @else {
+                <span class="status-tag tag-inactive">
+                  ⛔ Deactivated
+                </span>
+                }
+              </td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn-toggle-status-sm" [class.btn-deactivate]="rec.isApproved"
+                    [class.btn-activate]="!rec.isApproved" (click)="toggleRecruiterActiveStatus(rec._id)"
+                    [disabled]="isTogglingStatus() === rec._id"
+                    [title]="rec.isApproved ? 'Deactivate recruiter (blocks login)' : 'Activate recruiter'">
+                    <span class="material-symbols-outlined">{{ rec.isApproved ? 'block' : 'check_circle' }}</span>
+                    <span>{{ rec.isApproved ? 'Deactivate' : 'Activate' }}</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
       }
     </section>
 
@@ -372,90 +367,163 @@
        6. Bulk Import Modal
        ============================================= -->
   @if (isImportModalOpen()) {
-    <div class="modal-backdrop" (click)="closeImportModal()">
-      <div class="modal-card" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h3 class="modal-title">Import Student Records</h3>
-          <button class="btn-close" (click)="closeImportModal()">&times;</button>
+  <div class="modal-backdrop" (click)="closeImportModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Import Student Records</h3>
+        <button class="btn-close" (click)="closeImportModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-desc">
+          Upload CSV file or paste student records to enroll batch students.
+        </p>
+
+        <div class="file-dropzone">
+          <input type="file" accept=".csv" (change)="onFileSelect($event)" id="csv-input" />
+          <label for="csv-input" class="dropzone-inner">
+            <span class="material-symbols-outlined dropzone-icon">cloud_upload</span>
+            <span>Click to select CSV File</span>
+            <small>Columns: rollNumber, name, email, cgpa, branch, passoutYear</small>
+          </label>
         </div>
 
-        <div class="modal-body">
-          <p class="modal-desc">
-            Upload CSV file or paste student records to enroll batch students.
-          </p>
+        <div class="modal-or">
+          <span>OR paste JSON data</span>
+          <button class="btn-link" (click)="loadSampleJSON()">Load Sample</button>
+        </div>
 
-          <div class="file-dropzone">
-            <input type="file" accept=".csv" (change)="onFileSelect($event)" id="csv-input" />
-            <label for="csv-input" class="dropzone-inner">
-              <span class="material-symbols-outlined dropzone-icon">cloud_upload</span>
-              <span>Click to select CSV File</span>
-              <small>Columns: rollNumber, name, email, cgpa, branch, passoutYear</small>
-            </label>
+        <textarea class="modal-textarea" rows="4" [ngModel]="importRawInput()"
+          (ngModelChange)="importRawInput.set($event)"
+          placeholder='[{"rollNumber": "CS24B001", "name": "Aarav", "email": "aarav@alphabet.edu", "cgpa": 9.1, "branch": "CSE", "passoutYear": 2024}]'></textarea>
+
+        @if (importErrorMsg()) {
+        <p class="error-text">{{ importErrorMsg() }}</p>
+        }
+        @if (importSuccessMsg()) {
+        <p class="success-text">{{ importSuccessMsg() }}</p>
+        }
+
+        @if (previewStudents().length > 0) {
+        <div class="preview-box">
+          <span class="preview-head">Preview ({{ previewStudents().length }} students)</span>
+          <div class="preview-scroll">
+            <table class="preview-table">
+              <thead>
+                <tr>
+                  <th>Roll No</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>CGPA</th>
+                  <th>Branch</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (s of previewStudents().slice(0, 5); track s.rollNumber || s.email) {
+                <tr>
+                  <td>{{ s.rollNumber }}</td>
+                  <td>{{ s.name }}</td>
+                  <td>{{ s.email }}</td>
+                  <td>{{ s.cgpa }}</td>
+                  <td>{{ s.branch }}</td>
+                </tr>
+                }
+              </tbody>
+            </table>
           </div>
-
-          <div class="modal-or">
-            <span>OR paste JSON data</span>
-            <button class="btn-link" (click)="loadSampleJSON()">Load Sample</button>
-          </div>
-
-          <textarea
-            class="modal-textarea"
-            rows="4"
-            [ngModel]="importRawInput()"
-            (ngModelChange)="importRawInput.set($event)"
-            placeholder='[{"rollNumber": "CS24B001", "name": "Aarav", "email": "aarav@alphabet.edu", "cgpa": 9.1, "branch": "CSE", "passoutYear": 2024}]'
-          ></textarea>
-
-          @if (importErrorMsg()) {
-            <p class="error-text">{{ importErrorMsg() }}</p>
-          }
-          @if (importSuccessMsg()) {
-            <p class="success-text">{{ importSuccessMsg() }}</p>
-          }
-
-          @if (previewStudents().length > 0) {
-            <div class="preview-box">
-              <span class="preview-head">Preview ({{ previewStudents().length }} students)</span>
-              <div class="preview-scroll">
-                <table class="preview-table">
-                  <thead>
-                    <tr>
-                      <th>Roll No</th>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>CGPA</th>
-                      <th>Branch</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (s of previewStudents().slice(0, 5); track s.rollNumber || s.email) {
-                      <tr>
-                        <td>{{ s.rollNumber }}</td>
-                        <td>{{ s.name }}</td>
-                        <td>{{ s.email }}</td>
-                        <td>{{ s.cgpa }}</td>
-                        <td>{{ s.branch }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          }
         </div>
+        }
+      </div>
 
-        <div class="modal-footer">
-          <button class="btn-cancel" (click)="closeImportModal()">Cancel</button>
-          <button
-            class="btn-import-submit"
-            [disabled]="previewStudents().length === 0 || isImporting()"
-            (click)="submitBulkImport()"
-          >
-            Confirm & Import
-          </button>
-        </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeImportModal()">Cancel</button>
+        <button class="btn-import-submit" [disabled]="previewStudents().length === 0 || isImporting()"
+          (click)="submitBulkImport()">
+          Confirm & Import
+        </button>
       </div>
     </div>
+  </div>
+  }
+
+  <!-- Put Recruiter On Hold Modal -->
+  @if (isHoldModalOpen() && selectedRecruiterForHold()) {
+  <div class="modal-overlay" (click)="closeHoldModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()" style="max-width: 540px; width: 100%;">
+      <div class="modal-header">
+        <div>
+          <h3 style="margin: 0 0 4px 0; font-size: 17px; font-weight: 800; color: #D35400; display: flex; align-items: center; gap: 6px;">
+            <span class="material-symbols-outlined">pause_circle</span>
+            <span>Put Recruiter On Hold</span>
+          </h3>
+          <span style="font-size: 12.5px; color: var(--text-muted); font-weight: 600;">
+            {{ selectedRecruiterForHold()?.companyName }} ({{ selectedRecruiterForHold()?.officialEmail }})
+          </span>
+        </div>
+        <button class="btn-close" (click)="closeHoldModal()">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+
+        @if (holdErrorMsg()) {
+          <div class="toast-danger" style="background: #FADBD8; border: 1px solid #E74C3C; color: #78281F; padding: 10px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+            <span class="material-symbols-outlined" style="font-size: 16px;">error</span>
+            <span>{{ holdErrorMsg() }}</span>
+          </div>
+        }
+
+        <div style="background: #FEF5ED; border: 1px solid #F5CBA7; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #B9770E; font-weight: 600; line-height: 1.5;">
+          <strong>Approval Rule:</strong> Placing an account on hold allows the recruiter to edit their profile details (such as official domain email or verification documents) and re-submit for review.
+        </div>
+
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 12.5px; font-weight: 750; color: var(--text-dark);">
+            Review Feedback / Action Items Required *
+          </label>
+          <textarea
+            [ngModel]="holdFeedbackInput()"
+            (ngModelChange)="holdFeedbackInput.set($event)"
+            rows="3"
+            placeholder="e.g. Please register using your official company domain email (e.g. hr@company.com) or upload valid MCA registration documents."
+            style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px; font-size: 13px; font-family: inherit; resize: vertical; outline: none; box-sizing: border-box;"
+          ></textarea>
+        </div>
+
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 12.5px; font-weight: 750; color: var(--text-dark);">
+            Suggestions / Next Steps (Optional)
+          </label>
+          <input
+            type="text"
+            [ngModel]="holdSuggestionsInput()"
+            (ngModelChange)="holdSuggestionsInput.set($event)"
+            placeholder="e.g. Update domain email under profile settings"
+            style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box;"
+          />
+        </div>
+
+      </div>
+
+      <div class="modal-footer" style="padding: 16px 24px; background: #F8F9FA; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border);">
+        <button class="btn-cancel" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: white; font-weight: 700; cursor: pointer;" (click)="closeHoldModal()">
+          Cancel
+        </button>
+        <button
+          style="padding: 8px 18px; border-radius: 8px; border: none; background: #D35400; color: white; font-weight: 800; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(211,84,0,0.25);"
+          [disabled]="isSubmittingHold() || !holdFeedbackInput().trim()"
+          (click)="submitPutOnHold()"
+        >
+          @if (isSubmittingHold()) {
+            <span>Saving...</span>
+          } @else {
+            <span class="material-symbols-outlined" style="font-size: 16px;">pause_circle</span>
+            <span>Confirm Put On Hold</span>
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
   }
 
 </div>

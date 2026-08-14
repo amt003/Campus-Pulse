@@ -589,3 +589,35 @@
   background: #F8F9FA;
 }
 
+/* Empty state design identical to schedules page */
+.empty-state-card {
+  background: white;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  padding: 48px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.empty-icon-large {
+  font-size: 48px;
+  color: var(--border);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.empty-state-card h3 {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 8px 0 6px 0;
+}
+
+.empty-state-card p {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  max-width: 460px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+

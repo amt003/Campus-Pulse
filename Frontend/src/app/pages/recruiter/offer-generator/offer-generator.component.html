@@ -1,0 +1,342 @@
+<div class="offer-generator-container">
+
+  <!-- Hero Header -->
+  <header class="page-hero-header">
+    <div class="hero-header-inner">
+      <div class="hero-title-group">
+        <button type="button" class="btn-back-glass" (click)="goBack()" title="Back to Dashboard">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <div class="hero-text">
+          <div class="hero-label">OFFER LETTER GENERATOR</div>
+          <h1 class="hero-title">Issue Official Placement Offer</h1>
+          <p class="hero-sub">Review candidate details, set joining date, sign digitally, and send the offer letter.</p>
+        </div>
+      </div>
+      <div class="hero-badge-group">
+        <div class="hero-status-pill">
+          <span class="material-symbols-outlined">gavel</span>
+          <span>Legally Binding Document</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    @if (successMessage()) {
+      <div class="toast-success">
+        <span class="material-symbols-outlined">check_circle</span>
+        <span>{{ successMessage() }}</span>
+      </div>
+    }
+    @if (errorMessage()) {
+      <div class="toast-danger">
+        <span class="material-symbols-outlined">error</span>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+  </header>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="loading-orbital">
+        <div class="orbital-ring ring-1"></div>
+        <div class="orbital-ring ring-2"></div>
+        <span class="material-symbols-outlined loading-icon">description</span>
+      </div>
+      <p class="loading-text">Generating offer data for candidate...</p>
+    </div>
+  } @else if (templateData()) {
+
+    <!-- Main Content Grid -->
+    <div class="generator-main-grid">
+
+      <!-- ========== LEFT PANEL (40%) ========== -->
+      <div class="left-control-panel">
+
+        <!-- Candidate Info Card -->
+        <div class="ctrl-card candidate-card">
+          <div class="card-glow-bar"></div>
+          <div class="card-header-row">
+            <div class="card-icon-orb blue-orb">
+              <span class="material-symbols-outlined">person_pin</span>
+            </div>
+            <div>
+              <h3 class="card-title">Candidate Profile</h3>
+              <p class="card-subtitle">Auto-populated from database</p>
+            </div>
+          </div>
+
+          <div class="candidate-hero-info">
+            <div class="candidate-avatar">{{ (templateData()?.studentName || 'S').charAt(0).toUpperCase() }}</div>
+            <div>
+              <div class="candidate-full-name">{{ templateData()?.studentName }}</div>
+              <div class="candidate-roll-badge">Roll: {{ templateData()?.rollNumber }}</div>
+            </div>
+          </div>
+
+          <div class="info-chips-grid">
+            <div class="info-chip">
+              <span class="chip-label">Company</span>
+              <span class="chip-value">{{ templateData()?.companyName }}</span>
+            </div>
+            <div class="info-chip">
+              <span class="chip-label">Role</span>
+              <span class="chip-value">{{ templateData()?.jobRole }}</span>
+            </div>
+          </div>
+
+          <div class="ctc-display-box">
+            <span class="material-symbols-outlined ctc-icon">payments</span>
+            <div>
+              <div class="ctc-label">Annual CTC Offered</div>
+              <div class="ctc-amount">₹ {{ templateData()?.ctc }} LPA</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inputs Card -->
+        <div class="ctrl-card inputs-card">
+          <div class="card-header-row">
+            <div class="card-icon-orb green-orb">
+              <span class="material-symbols-outlined">edit_calendar</span>
+            </div>
+            <div>
+              <h3 class="card-title">Issue Details</h3>
+              <p class="card-subtitle">Required before generating offer</p>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label" for="joiningDate">
+              <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: -3px;">event</span>
+              Date of Joining *
+            </label>
+            <input
+              type="date"
+              id="joiningDate"
+              [ngModel]="joiningDate()"
+              (ngModelChange)="joiningDate.set($event)"
+              class="date-input"
+              required
+            />
+            <span class="field-hint">Candidate reporting / start date</span>
+          </div>
+
+          <!-- Digital Signature -->
+          <div class="form-field">
+            <div class="sig-field-header">
+              <label class="field-label" style="margin: 0;">
+                <span class="material-symbols-outlined" style="font-size: 14px; vertical-align: -3px;">draw</span>
+                Authorized Signature *
+              </label>
+              <button type="button" class="btn-clear-sig" (click)="clearSignature()">
+                <span class="material-symbols-outlined">restart_alt</span>
+                Clear
+              </button>
+            </div>
+            <div class="sig-pad-wrapper" [class.has-sig]="hasSigned()">
+              <canvas
+                #signatureCanvas
+                (mousedown)="startDrawing($event)"
+                (mousemove)="draw($event)"
+                (mouseup)="stopDrawing()"
+                (mouseleave)="stopDrawing()"
+                (touchstart)="startDrawing($event)"
+                (touchmove)="draw($event)"
+                (touchend)="stopDrawing()"
+              ></canvas>
+              @if (!hasSigned()) {
+                <span class="sig-placeholder">
+                  <span class="material-symbols-outlined" style="font-size: 20px; display: block; margin-bottom: 4px; opacity: 0.4;">gesture</span>
+                  Draw signature here
+                </span>
+              }
+              @if (hasSigned()) {
+                <div class="sig-verified-badge">
+                  <span class="material-symbols-outlined">verified</span>
+                  Signed
+                </div>
+              }
+            </div>
+            <span class="field-hint">Use mouse or touch to draw official signature</span>
+          </div>
+
+          <!-- Send Button -->
+          <button
+            type="button"
+            class="btn-send-offer"
+            [disabled]="isSubmitting() || !joiningDate() || !hasSigned()"
+            (click)="attachAndSendOffer()"
+          >
+            @if (isSubmitting()) {
+              <span class="btn-spinner"></span>
+              <span>Generating & Sending Offer...</span>
+            } @else {
+              <span class="material-symbols-outlined">send</span>
+              <span>Generate & Send Offer Letter</span>
+            }
+          </button>
+
+          @if (!joiningDate() || !hasSigned()) {
+            <p class="send-hint">Complete joining date and signature to proceed.</p>
+          }
+        </div>
+
+      </div>
+
+      <!-- ========== RIGHT PANEL (60%) ========== -->
+      <div class="right-preview-panel">
+        <div class="preview-toolbar">
+          <div class="preview-toolbar-left">
+            <div class="preview-indicator-dot"></div>
+            <span class="preview-label">Live Document Preview</span>
+          </div>
+          <div class="preview-toolbar-right">
+            <span class="preview-chip">A4 · Printable PDF</span>
+          </div>
+        </div>
+
+        <div class="doc-scroll-stage">
+
+          <!-- The actual offer letter document -->
+          <div #offerPreviewRef class="offer-doc" id="offerLetterDocument">
+
+            <!-- Document Header Letterhead -->
+            <div class="doc-header">
+              <div class="doc-header-brand">
+                <div class="doc-company-monogram">{{ (templateData()?.companyName || 'C').charAt(0).toUpperCase() }}</div>
+                <div>
+                  <h1 class="doc-company-name">{{ templateData()?.companyName }}</h1>
+                  <p class="doc-company-division">Campus Recruitment Division</p>
+                  <p class="doc-company-contact">{{ templateData()?.website || 'www.company.com' }} &nbsp;·&nbsp; {{ templateData()?.officialEmail }}</p>
+                </div>
+              </div>
+              <div class="doc-header-meta">
+                <div class="doc-official-badge">OFFICIAL OFFER LETTER</div>
+                <div class="doc-meta-line">Date: {{ todayFormatted() }}</div>
+                <div class="doc-meta-line">Ref: CP/OFFER/2026/{{ templateData()?.rollNumber }}</div>
+              </div>
+            </div>
+
+            <!-- Document Header Divider -->
+            <div class="doc-header-divider">
+              <div class="divider-line"></div>
+              <div class="divider-diamond">◆</div>
+              <div class="divider-line"></div>
+            </div>
+
+            <!-- Addressee Block -->
+            <div class="doc-addressee">
+              <p class="doc-to-label">To,</p>
+              <h2 class="doc-candidate-name">{{ templateData()?.studentName }}</h2>
+              <div class="doc-candidate-meta">
+                <span>Roll No: {{ templateData()?.rollNumber }}</span>
+                <span class="meta-dot">·</span>
+                <span>{{ templateData()?.branch }}</span>
+                <span class="meta-dot">·</span>
+                <span>Alphabet Campus</span>
+              </div>
+            </div>
+
+            <!-- Subject Bar -->
+            <div class="doc-subject-bar">
+              <span class="material-symbols-outlined doc-subject-icon">work</span>
+              <strong>OFFER OF EMPLOYMENT — {{ templateData()?.jobRole | uppercase }}</strong>
+            </div>
+
+            <!-- Letter Body -->
+            <div class="doc-body">
+              <p>Dear <strong>{{ templateData()?.studentName }}</strong>,</p>
+
+              <p>
+                Following your outstanding performance in the campus placement selection process conducted at
+                <strong>Alphabet Campus</strong>, we are delighted to extend this formal offer of employment
+                for the position of <strong>{{ templateData()?.jobRole }}</strong> at
+                <strong>{{ templateData()?.companyName }}</strong>.
+              </p>
+
+              <!-- Terms Table -->
+              <div class="doc-terms-card">
+                <div class="terms-card-title">Employment Terms Summary</div>
+                <div class="terms-row">
+                  <div class="terms-row-left">
+                    <span class="material-symbols-outlined terms-icon">badge</span>
+                    <span class="terms-label">Designation / Role</span>
+                  </div>
+                  <span class="terms-value">{{ templateData()?.jobRole }}</span>
+                </div>
+                <div class="terms-row">
+                  <div class="terms-row-left">
+                    <span class="material-symbols-outlined terms-icon">payments</span>
+                    <span class="terms-label">Annual CTC</span>
+                  </div>
+                  <span class="terms-value terms-ctc">INR {{ templateData()?.ctc }} per annum</span>
+                </div>
+                <div class="terms-row">
+                  <div class="terms-row-left">
+                    <span class="material-symbols-outlined terms-icon">calendar_today</span>
+                    <span class="terms-label">Date of Joining</span>
+                  </div>
+                  <span class="terms-value terms-joining">{{ getFormattedJoiningDate() }}</span>
+                </div>
+                <div class="terms-row" style="border-bottom: none;">
+                  <div class="terms-row-left">
+                    <span class="material-symbols-outlined terms-icon">psychology</span>
+                    <span class="terms-label">Primary Skill Cluster</span>
+                  </div>
+                  <span class="terms-value">{{ templateData()?.topSkill }}</span>
+                </div>
+              </div>
+
+              <p>
+                This offer is contingent upon satisfactory background verification. You will be on a
+                probation period of <strong>six (6) months</strong> from your date of joining.
+              </p>
+              <p>
+                Please confirm your acceptance through the <strong>CampusPulse Placement Portal</strong>
+                within <strong>7 days</strong> of receiving this letter.
+              </p>
+            </div>
+
+            <!-- Document Footer -->
+            <div class="doc-footer">
+              <!-- Signature Block -->
+              <div class="doc-sig-block">
+                <p class="sig-yours">Yours Sincerely,</p>
+                <div class="sig-image-area">
+                  @if (signatureImgUrl()) {
+                    <img [src]="signatureImgUrl()" alt="Authorized Signature" class="sig-img" />
+                  } @else {
+                    <div class="sig-blank-line"></div>
+                  }
+                </div>
+                <p class="sig-name-label">Authorized Signatory</p>
+                <p class="sig-title-label">Head of University Talent Acquisition</p>
+                <p class="sig-company-label">{{ templateData()?.companyName }}</p>
+              </div>
+
+              <!-- Verification Stamp -->
+              <div class="doc-stamp-block">
+                <div class="stamp-outer">
+                  <div class="stamp-inner">
+                    <span class="material-symbols-outlined stamp-icon">verified</span>
+                    <span class="stamp-text">CAMPUS PULSE</span>
+                    <span class="stamp-text-sub">VERIFIED</span>
+                  </div>
+                </div>
+                <p class="stamp-caption">Digitally Sealed via CampusPulse Platform</p>
+              </div>
+            </div>
+
+            <!-- Document Watermark -->
+            <div class="doc-watermark">CONFIDENTIAL</div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  }
+
+</div>

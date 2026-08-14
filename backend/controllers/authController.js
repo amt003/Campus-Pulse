@@ -3,6 +3,8 @@ const User = require("../models/User");
 const Recruiter = require("../models/Recruiter");
 const Student = require("../models/Student");
 const verificationService = require("../services/verificationService");
+const sendEmail = require("../utils/sendEmail");
+const emailTemplates = require("../utils/emailTemplates");
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -85,32 +87,52 @@ const registerUser = async (req, res) => {
 
     let recruiterRecord = null;
     if (role === "Recruiter") {
-      const recEmail = (officialEmail || email).toLowerCase();
-      // Automated WHOIS & Email Verification & Trust Score calculation
-      const verification = await verificationService.calculateTrustScore({
-        website,
-        officialEmail: recEmail,
-        companyName,
-      });
+      try {
+        const recEmail = (officialEmail || email).toLowerCase();
+        // Automated WHOIS & Email Verification & Trust Score calculation
+        let verification = {
+          trustScore: 50,
+          breakdown: { domainAge: 20, emailMatch: 20, mca: 10 },
+          whoisData: { domain: website || "company.com", domainAgeYears: null, registrar: null, isValid: false },
+          mcaData: null,
+          directors: [],
+          verifiedAt: new Date(),
+        };
 
-      console.log(`[Registration WHOIS] ${companyName}: trustScore=${verification.trustScore}, domainAge=${verification.breakdown.domainAge}, emailMatch=${verification.breakdown.emailMatch}, whoisAgeYears=${verification.whoisData.domainAgeYears}`);
+        try {
+          verification = await verificationService.calculateTrustScore({
+            website,
+            officialEmail: recEmail,
+            companyName,
+          });
+          console.log(`[Registration WHOIS] ${companyName}: trustScore=${verification.trustScore}`);
+        } catch (whoisErr) {
+          console.warn(`[Registration WHOIS Warning] WHOIS lookup failed, using default trust score:`, whoisErr.message);
+        }
 
-      recruiterRecord = await Recruiter.create({
-        userId: user._id,
-        companyName: companyName.trim(),
-        coverNote: coverNote ? coverNote.trim() : null,
-        website: website || null,
-        officialEmail: recEmail,
-        isApproved: false,
-        trustScore: verification.trustScore,
-        verificationDetails: {
-          breakdown: verification.breakdown,
-          whoisData: verification.whoisData,
-          mcaData: verification.mcaData,
-          directors: verification.directors,
-          verifiedAt: verification.verifiedAt,
-        },
-      });
+        recruiterRecord = await Recruiter.create({
+          userId: user._id,
+          companyName: companyName.trim(),
+          coverNote: coverNote ? coverNote.trim() : null,
+          website: website || null,
+          officialEmail: recEmail,
+          isApproved: false,
+          status: "Pending",
+          registrationStatus: "pending",
+          trustScore: verification.trustScore,
+          verificationDetails: {
+            breakdown: verification.breakdown,
+            whoisData: verification.whoisData,
+            mcaData: verification.mcaData,
+            directors: verification.directors,
+            verifiedAt: verification.verifiedAt,
+          },
+        });
+      } catch (recErr) {
+        // Roll back newly created user if Recruiter document creation fails
+        await User.findByIdAndDelete(user._id);
+        throw recErr;
+      }
     }
 
     const token = generateToken(user);
@@ -421,8 +443,6 @@ const getGoogleClientId = (req, res) => {
   });
 };
 
-const resetCodes = new Map();
-
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -437,16 +457,21 @@ const forgotPassword = async (req, res) => {
 
     // Generate 6-digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    resetCodes.set(email.toLowerCase(), {
-      code,
-      expires: Date.now() + 15 * 60 * 1000 // 15 mins validity
-    });
+    
+    user.resetPasswordOTP = code;
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 mins validity
+    await user.save();
 
     console.log(`[PASSWORD RESET] Email: ${email} | Code: ${code}`);
 
+    await sendEmail({
+      to: user.email,
+      ...emailTemplates.forgotPassword({ name: user.name, otp: code }),
+    });
+
     return res.status(200).json({
       success: true,
-      message: "A password reset code has been logged to the server console.",
+      message: "A password reset code has been sent to your email.",
       code // Return it for easy local testing/usage!
     });
   } catch (error) {
@@ -461,28 +486,27 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: "Email, code, and newPassword are required" });
     }
 
-    const record = resetCodes.get(email.toLowerCase());
-    if (!record) {
-      return res.status(400).json({ success: false, message: "No reset request active for this email" });
-    }
-
-    if (record.code !== code.toString()) {
-      return res.status(400).json({ success: false, message: "Invalid reset code" });
-    }
-
-    if (Date.now() > record.expires) {
-      return res.status(400).json({ success: false, message: "Reset code has expired" });
-    }
-
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    user.password = newPassword;
-    await user.save();
+    if (!user.resetPasswordOTP || !user.resetPasswordExpires) {
+      return res.status(400).json({ success: false, message: "No reset request active for this email" });
+    }
 
-    resetCodes.delete(email.toLowerCase());
+    if (user.resetPasswordOTP !== code.toString()) {
+      return res.status(400).json({ success: false, message: "Invalid reset code" });
+    }
+
+    if (Date.now() > user.resetPasswordExpires) {
+      return res.status(400).json({ success: false, message: "Reset code has expired" });
+    }
+
+    user.password = newPassword;
+    user.resetPasswordOTP = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
 
     return res.status(200).json({
       success: true,
