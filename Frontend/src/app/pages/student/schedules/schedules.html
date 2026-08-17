@@ -15,6 +15,26 @@
       <span>{{ errorMessage() }}</span>
     </div>
   } @else {
+    @if (isPlaced()) {
+      <div class="placed-congrats-banner" style="background: linear-gradient(135deg, #E8F8F5, #D4EFDF); border: 2px solid #27AE60; border-radius: 16px; padding: 24px 28px; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.12); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div style="width: 52px; height: 52px; border-radius: 50%; background: #27AE60; color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);">
+            🎉
+          </div>
+          <div>
+            <h3 style="font-size: 18px; font-weight: 800; color: #1E8449; margin: 0 0 4px 0;">Congratulations on your Placement!</h3>
+            <p style="font-size: 13.5px; color: #145A32; margin: 0; font-weight: 600;">
+              You have accepted a placement offer at <strong>{{ placedCompany() || 'Campus Recruiter' }}</strong>. In accordance with institutional policy, schedule events for other drives are frozen.
+            </p>
+          </div>
+        </div>
+        <div style="background: #27AE60; color: white; padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; display: flex; align-items: center; gap: 6px;">
+          <span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
+          <span>Placement Confirmed</span>
+        </div>
+      </div>
+    }
+
     @if (currentlyEvents().length === 0 && upcomingEvents().length === 0 && finishedEvents().length === 0) {
       <div class="empty-state-card">
         <span class="material-symbols-outlined empty-icon">event_available</span>
@@ -38,10 +58,17 @@
                 <span class="event-badge active-badge" [style.backgroundColor]="getEventColor(event.eventType)">
                   {{ event.eventType }} Round
                 </span>
-                <span class="live-now-tag">
-                  <span class="pulse-dot"></span>
-                  <span>TODAY</span>
-                </span>
+                @if (event.isFrozen || (isPlaced() && event.companyName !== placedCompany())) {
+                  <span class="live-now-tag" style="background: #FADBD8; color: #78281F;">
+                    <span class="material-symbols-outlined" style="font-size: 12px;">lock</span>
+                    <span>FROZEN</span>
+                  </span>
+                } @else {
+                  <span class="live-now-tag">
+                    <span class="pulse-dot"></span>
+                    <span>TODAY</span>
+                  </span>
+                }
               </div>
 
               <div class="event-card-body">
@@ -67,7 +94,12 @@
                     <span class="location-text">📍 {{ event.location || 'Online' }}</span>
                   </div>
 
-                  @if (event.meetingUrl) {
+                  @if (event.isFrozen || (isPlaced() && event.companyName !== placedCompany())) {
+                    <span style="background: #FADBD8; color: #78281F; border: 1px solid #F5B7B1; padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: 11.5px; display: inline-flex; align-items: center; gap: 4px;">
+                      <span class="material-symbols-outlined" style="font-size: 14px;">lock</span>
+                      <span>Frozen due to Placement Policy</span>
+                    </span>
+                  } @else if (event.meetingUrl) {
                     <a [href]="event.meetingUrl" target="_blank" class="btn-join-meeting-active">
                       <span class="material-symbols-outlined" style="font-size: 16px;">videocam</span>
                       <span>Join Test / Meeting</span>
@@ -131,7 +163,12 @@
                     <span class="location-text">📍 {{ event.location || 'Online' }}</span>
                   </div>
 
-                  @if (event.meetingUrl) {
+                  @if (event.isFrozen || (isPlaced() && event.companyName !== placedCompany())) {
+                    <span class="meeting-locked-tag" style="background: #FADBD8; color: #78281F; border-color: #F5B7B1;" title="Participation frozen due to placement acceptance">
+                      <span class="material-symbols-outlined" style="font-size: 13px;">lock</span>
+                      <span>Frozen (Policy Locked)</span>
+                    </span>
+                  } @else if (event.meetingUrl) {
                     <span class="meeting-locked-tag" title="Meeting link will unlock on the date of the test">
                       <span class="material-symbols-outlined" style="font-size: 13px;">lock</span>
                       <span>Link unlocks on {{ event.date | date:'mediumDate' }}</span>

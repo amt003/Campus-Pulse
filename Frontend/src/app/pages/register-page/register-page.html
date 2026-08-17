@@ -153,9 +153,16 @@
           </label>
           <div class="field-wrap">
             <span class="field-icon material-symbols-outlined">business</span>
-            <input id="reg-company-name" name="companyName" type="text" class="field-input" [(ngModel)]="companyName"
+            <input id="reg-company-name" name="companyName" type="text" class="field-input"
+              [class.field-error]="companyName && getMeaningfulTextError(companyName)" [(ngModel)]="companyName"
               placeholder="e.g., Google India" autocomplete="organization" required />
           </div>
+          @if (companyName && getMeaningfulTextError(companyName)) {
+            <p class="field-error-msg">
+              <span class="material-symbols-outlined">error</span>
+              <span>{{ getMeaningfulTextError(companyName) }}</span>
+            </p>
+          }
         </div>
 
         <!-- Official Email (full width) -->
@@ -208,8 +215,8 @@
           <div class="field-wrap textarea-wrap">
             <span class="field-icon material-symbols-outlined icon-top">description</span>
             <textarea id="reg-cover-note" name="coverNote" class="field-input field-textarea"
-              [class.field-error]="coverNote && coverNote.trim().length < 20"
-              [class.field-success]="coverNote.trim().length >= 20"
+              [class.field-error]="(coverNote && coverNote.trim().length < 20) || (coverNote && getMeaningfulTextError(coverNote))"
+              [class.field-success]="coverNote.trim().length >= 20 && !getMeaningfulTextError(coverNote)"
               [(ngModel)]="coverNote" rows="4"
               placeholder="Subject: Request for Campus Recruitment Partner Approval&#10;&#10;Dear Training & Placement Officer,&#10;&#10;We are pleased to introduce [Company Name] for campus recruitment drives at your institution. Our hiring team is looking to recruit final-year candidates for engineering and analytical roles..." required></textarea>
           </div>
@@ -217,6 +224,11 @@
             <p class="field-error-msg">
               <span class="material-symbols-outlined">error</span>
               Please enter at least 20 characters for your cover note/letter to the TPO.
+            </p>
+          } @else if (coverNote && getMeaningfulTextError(coverNote)) {
+            <p class="field-error-msg">
+              <span class="material-symbols-outlined">error</span>
+              <span>{{ getMeaningfulTextError(coverNote) }}</span>
             </p>
           } @else if (coverNote.trim().length >= 20) {
             <p class="field-success-msg">
@@ -234,9 +246,16 @@
             </label>
             <div class="field-wrap">
               <span class="field-icon material-symbols-outlined">person</span>
-              <input id="reg-contact" name="contactPerson" type="text" class="field-input" [(ngModel)]="contactPerson"
+              <input id="reg-contact" name="contactPerson" type="text" class="field-input"
+                [class.field-error]="contactPerson && getMeaningfulTextError(contactPerson)" [(ngModel)]="contactPerson"
                 placeholder="John Doe" autocomplete="name" required />
             </div>
+            @if (contactPerson && getMeaningfulTextError(contactPerson)) {
+              <p class="field-error-msg">
+                <span class="material-symbols-outlined">error</span>
+                <span>{{ getMeaningfulTextError(contactPerson) }}</span>
+              </p>
+            }
           </div>
           <div class="field-group">
             <label class="field-label" for="reg-phone">
@@ -339,9 +358,7 @@
             <span class="checkbox-custom"></span>
             <span>
               I agree to CampusPulse's
-              <a routerLink="/terms" class="form-inline-link" target="_blank">Terms of Service</a>,
-              <a routerLink="/privacy" class="form-inline-link" target="_blank">Privacy Policy</a>, and
-              <a routerLink="/terms" class="form-inline-link" target="_blank">Recruiter Guidelines</a>
+              <a routerLink="/terms" class="form-inline-link" target="_blank">Terms & Conditions</a>
             </span>
           </label>
         </div>
@@ -358,7 +375,7 @@
         }
 
         <!-- Submit -->
-        <button type="submit" class="btn-submit" [class.loading]="isLoading" [disabled]="isLoading || emailAlreadyExists" id="reg-submit-btn">
+        <button type="submit" class="btn-submit" [class.loading]="isLoading" [disabled]="isLoading || emailAlreadyExists || !isFormValid" id="reg-submit-btn">
           <span class="material-symbols-outlined">how_to_reg</span>
           <span>{{ emailAlreadyExists ? 'Email Already Registered' : 'Register Company' }}</span>
         </button>
@@ -370,9 +387,7 @@
         </p>
 
         <div class="footer-links">
-          <a routerLink="/terms">Terms of Service</a>
-          <span class="divider">|</span>
-          <a routerLink="/privacy">Privacy Policy</a>
+          <a routerLink="/terms">Terms & Conditions</a>
         </div>
 
 

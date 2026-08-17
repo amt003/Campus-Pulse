@@ -74,12 +74,27 @@
         <!-- Action Control Buttons (Only if pending response) -->
         @if (status === 'Sent' || status === 'Viewed' || status === 'Downloaded') {
           <div class="offer-actions-bar">
-            <button type="button" class="btn-action-accept" [disabled]="isSubmittingAction()" (click)="acceptOffer()">
-              <span class="material-symbols-outlined">check_circle</span>
-              <span>{{ isSubmittingAction() ? 'Processing...' : '✅ Accept Offer' }}</span>
-            </button>
+            @if (isConfirmingAccept()) {
+              <!-- Inline confirmation for accept -->
+              <div class="offer-accept-confirm">
+                <span class="offer-accept-confirm__label">Accept this offer and mark yourself as placed?</span>
+                <button type="button" class="btn-action-accept" (click)="acceptOffer()">
+                  <span class="material-symbols-outlined">check</span>
+                  <span>Confirm</span>
+                </button>
+                <button type="button" class="btn-action-decline" (click)="cancelAcceptConfirm()">
+                  <span class="material-symbols-outlined">close</span>
+                  <span>Cancel</span>
+                </button>
+              </div>
+            } @else {
+              <button type="button" class="btn-action-accept" [disabled]="isSubmittingAction()" (click)="acceptOffer()">
+                <span class="material-symbols-outlined">check_circle</span>
+                <span>{{ isSubmittingAction() ? 'Processing...' : '✅ Accept Offer' }}</span>
+              </button>
+            }
             
-            <button type="button" class="btn-action-decline" [disabled]="isSubmittingAction()" (click)="openDeclineModal()">
+            <button type="button" class="btn-action-decline" [disabled]="isSubmittingAction() || isConfirmingAccept()" (click)="openDeclineModal()">
               <span class="material-symbols-outlined">cancel</span>
               <span>❌ Decline Offer</span>
             </button>

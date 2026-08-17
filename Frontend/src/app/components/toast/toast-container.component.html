@@ -1,0 +1,39 @@
+<div class="toast-stack" aria-live="polite" aria-atomic="false">
+  @for (toast of toastService.toasts(); track toast.id) {
+    <div
+      class="toast toast--{{ toast.type }}"
+      role="alert"
+      (click)="dismiss(toast.id)"
+    >
+      <!-- Left semantic icon -->
+      <span class="toast__icon material-symbols-outlined" aria-hidden="true">
+        {{ iconFor(toast.type) }}
+      </span>
+
+      <!-- Content -->
+      <div class="toast__body">
+        <p class="toast__title">{{ toast.title }}</p>
+        @if (toast.message) {
+          <p class="toast__message">{{ toast.message }}</p>
+        }
+        @if (toast.action) {
+          <button
+            class="toast__action-btn"
+            (click)="$event.stopPropagation(); runAction(toast)"
+          >
+            {{ toast.action.label }}
+          </button>
+        }
+      </div>
+
+      <!-- Close button -->
+      <button
+        class="toast__close"
+        (click)="$event.stopPropagation(); dismiss(toast.id)"
+        aria-label="Dismiss notification"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
+  }
+</div>

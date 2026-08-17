@@ -366,7 +366,32 @@
                     <span class="material-symbols-outlined">visibility</span>
                   </button>
 
-                  @if (app.status === 'Selected' || (app.interview && app.interview.result === 'Selected')) {
+                  @if (app.status === 'Placed' || app.status === 'Offer Accepted' || app.offer?.status === 'Accepted') {
+                    <span style="font-size: 11px; font-weight: 800; color: #1E8449; background: #D4EFDF; padding: 3px 8px; border-radius: 4px; border: 1px solid #27AE60; display: inline-flex; align-items: center; gap: 3px;">
+                      <span class="material-symbols-outlined" style="font-size: 13px;">verified</span>
+                      <span>Offer Accepted 🎉</span>
+                    </span>
+                    @if (app.offer?.filePath || app.offer?.fileId) {
+                      <button class="btn-bulk-schedule" style="padding: 4px 8px; font-size: 11px; background: #EBF5FB; color: #1B4F72; border: 1px solid #AED6F1;" (click)="downloadOfferLetter(app.applicationId)" title="Download Offer Letter PDF">
+                        <span class="material-symbols-outlined" style="font-size: 13px;">download</span>
+                      </button>
+                    }
+                  } @else if (app.status === 'Offer Sent' || app.offer?.status === 'Sent') {
+                    <span style="font-size: 11px; font-weight: 750; color: #27AE60; background: #E8F8F5; padding: 3px 8px; border-radius: 4px; border: 1px solid #A3E4D7; display: inline-flex; align-items: center; gap: 3px;">
+                      <span class="material-symbols-outlined" style="font-size: 13px;">mark_email_read</span>
+                      <span>Offer Sent</span>
+                    </span>
+                    @if (app.offer?.filePath || app.offer?.fileId) {
+                      <button class="btn-bulk-schedule" style="padding: 4px 8px; font-size: 11px; background: #EBF5FB; color: #1B4F72; border: 1px solid #AED6F1;" (click)="downloadOfferLetter(app.applicationId)" title="Download Offer Letter PDF">
+                        <span class="material-symbols-outlined" style="font-size: 13px;">download</span>
+                      </button>
+                    }
+                  } @else if (app.status === 'Offer Declined' || app.offer?.status === 'Declined') {
+                    <span style="font-size: 11px; font-weight: 750; color: #C0392B; background: #FDEDEC; padding: 3px 8px; border-radius: 4px; border: 1px solid #F1948A; display: inline-flex; align-items: center; gap: 3px;">
+                      <span class="material-symbols-outlined" style="font-size: 13px;">cancel</span>
+                      <span>Declined</span>
+                    </span>
+                  } @else if (app.status === 'Selected' || (app.interview && app.interview.result === 'Selected')) {
                     <a [routerLink]="['/recruiter/offer', app.applicationId]" class="btn-bulk-schedule" style="padding: 4px 10px; font-size: 11.5px; background: #EBF5FB; color: #1B4F72; border: 1px solid #AED6F1; text-decoration: none;" title="Generate & Sign Offer Letter for {{ app.student?.name }}">
                       <span class="material-symbols-outlined" style="font-size: 14px;">edit_document</span>
                       <span>Generate Offer</span>
@@ -375,21 +400,6 @@
                       <span class="material-symbols-outlined" style="font-size: 14px;">upload_file</span>
                       <span>Upload</span>
                     </button>
-                  } @else if (app.status === 'Offer Sent') {
-                    <span style="font-size: 11px; font-weight: 750; color: #27AE60; background: #E8F8F5; padding: 3px 8px; border-radius: 4px; border: 1px solid #A3E4D7; display: inline-flex; align-items: center; gap: 3px;">
-                      <span class="material-symbols-outlined" style="font-size: 13px;">mark_email_read</span>
-                      <span>Offer Sent</span>
-                    </span>
-                  } @else if (app.status === 'Placed') {
-                    <span style="font-size: 11px; font-weight: 800; color: #1E8449; background: #D4EFDF; padding: 3px 8px; border-radius: 4px; border: 1px solid #27AE60; display: inline-flex; align-items: center; gap: 3px;">
-                      <span class="material-symbols-outlined" style="font-size: 13px;">verified</span>
-                      <span>Placed 🎉</span>
-                    </span>
-                  } @else if (app.status === 'Offer Declined') {
-                    <span style="font-size: 11px; font-weight: 750; color: #C0392B; background: #FDEDEC; padding: 3px 8px; border-radius: 4px; border: 1px solid #F1948A; display: inline-flex; align-items: center; gap: 3px;">
-                      <span class="material-symbols-outlined" style="font-size: 13px;">cancel</span>
-                      <span>Declined</span>
-                    </span>
                   }
                 </div>
               </td>

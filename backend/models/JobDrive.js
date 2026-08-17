@@ -51,9 +51,29 @@ const jobDriveSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Draft", "Open", "Closed"],
-      default: "Draft",
+      enum: ["Draft", "Pending", "Open", "Closed", "Rejected", "OnHold"],
+      default: "Pending",
     },
+    attachments: [
+      {
+        fileName: { type: String, required: true },
+        fileSize: { type: Number, required: true },
+        fileUrl: { type: String, required: true },
+        uploadedAt: { type: Date, default: Date.now },
+      },
+    ],
+    tpoFeedback: {
+      type: String,
+      default: null
+    },
+    submittedForApprovalAt: {
+      type: Date,
+      default: null
+    },
+    resubmittedCount: {
+      type: Number,
+      default: 0
+    }
   },
   {
     timestamps: true,

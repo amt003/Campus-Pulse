@@ -6,12 +6,16 @@ import { TpoLayoutComponent } from './pages/tpo/layout/layout.component';
 import { TpoDashboardComponent } from './pages/tpo/dashboard/dashboard';
 import { TpoApprovalComponent } from './pages/tpo/approval/approval.component';
 import { TpoStudentsComponent } from './pages/tpo/students/students.component';
+import { TpoDriveApprovalComponent } from './pages/tpo/drive-approval/drive-approval.component';
 import { RecruiterDashboardComponent } from './pages/recruiter/dashboard/dashboard';
 import { RecruiterLayoutComponent } from './pages/recruiter/layout/layout.component';
 import { RecruiterProfileComponent } from './pages/recruiter/profile/profile';
 import { RecruiterApplicationsComponent } from './pages/recruiter/applications/applications';
 import { OfferGeneratorComponent } from './pages/recruiter/offer-generator/offer-generator.component';
 import { ProfileOnHoldComponent } from './pages/recruiter/profile-on-hold/profile-on-hold.component';
+import { RecruiterDrivesComponent } from './pages/recruiter/drives/drives';
+import { RecruiterAllApplicationsComponent } from './pages/recruiter/all-applications/all-applications';
+import { RecruiterOffersComponent } from './pages/recruiter/offers/offers';
 import { StudentLayoutComponent } from './pages/student/layout/layout.component';
 import { StudentDashboardComponent } from './pages/student/dashboard/dashboard';
 import { StudentApplicationsComponent } from './pages/student/applications/applications';
@@ -19,7 +23,7 @@ import { StudentSchedulesComponent } from './pages/student/schedules/schedules';
 import { StudentOffersComponent } from './pages/student/offers/offers';
 import { StudentProfileComponent } from './pages/student/profile/profile';
 import { TermsComponent } from './pages/terms/terms.component';
-import { PrivacyComponent } from './pages/privacy/privacy.component';
+import { ForgotPasswordComponent } from './pages/auth/forgot-password/forgot-password.component';
 import { roleAuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -38,16 +42,16 @@ export const routes: Routes = [
     component: LoginPage,
   },
   {
+    path: 'forgot-password',
+    component: ForgotPasswordComponent,
+  },
+  {
     path: 'register',
     component: RegisterPage,
   },
   {
     path: 'terms',
     component: TermsComponent,
-  },
-  {
-    path: 'privacy',
-    component: PrivacyComponent,
   },
   {
     path: 'tpo',
@@ -69,6 +73,10 @@ export const routes: Routes = [
         component: TpoApprovalComponent,
       },
       {
+        path: 'drive-approvals',
+        component: TpoDriveApprovalComponent,
+      },
+      {
         path: 'students',
         component: TpoStudentsComponent,
       },
@@ -88,6 +96,18 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         component: RecruiterDashboardComponent,
+      },
+      {
+        path: 'drives',
+        component: RecruiterDrivesComponent,
+      },
+      {
+        path: 'all-applications',
+        component: RecruiterAllApplicationsComponent,
+      },
+      {
+        path: 'offers',
+        component: RecruiterOffersComponent,
       },
       {
         path: 'profile',

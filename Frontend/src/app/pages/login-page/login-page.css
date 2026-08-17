@@ -46,7 +46,9 @@ a {
    Left Panel — Brand / Visual
    ============================================= */
 .login-panel-left {
-  position: relative;
+  position: sticky;
+  top: 0;
+  height: 100vh;
   overflow: hidden;
   transition: background 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -346,7 +348,6 @@ a {
   justify-content: center;
   background: var(--background);
   padding: 40px 24px;
-  overflow-y: auto;
 }
 
 .form-wrapper {
@@ -868,9 +869,13 @@ a {
 @media (max-width: 1024px) {
   .login-root {
     grid-template-columns: 1fr;
+    min-height: 100vh;
   }
 
   .login-panel-left {
+    position: relative;
+    top: auto;
+    height: auto;
     min-height: 300px;
     padding: 0;
   }

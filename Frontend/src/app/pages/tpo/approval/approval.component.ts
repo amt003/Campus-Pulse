@@ -1,14 +1,13 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { TpoService, PendingRecruiter } from '../../../services/tpo.service';
 
 @Component({
   selector: 'app-tpo-approval',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './approval.component.html',
   styleUrl: './approval.component.css',
 })

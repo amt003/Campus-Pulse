@@ -45,6 +45,7 @@ export class TpoDashboardComponent implements OnInit, OnDestroy {
   protected offerTrends = signal<OfferTrends | null>(null);
   protected pendingRecruiters = signal<PendingRecruiter[]>([]);
   protected approvedRecruiters = signal<PendingRecruiter[]>([]);
+  protected pendingDriveCount = signal<number>(0);
 
   // Action states
   protected isApproving = signal<string | null>(null);
@@ -137,14 +138,16 @@ export class TpoDashboardComponent implements OnInit, OnDestroy {
       this.tpoService.getOfferTrends().toPromise(),
       this.tpoService.getPendingRecruiters().toPromise(),
       this.tpoService.getApprovedRecruiters().toPromise(),
+      this.tpoService.getPendingDrives().toPromise(),
     ])
-      .then(([analytics, funnel, branch, offer, pending, approved]) => {
+      .then(([analytics, funnel, branch, offer, pending, approved, pendingDrives]) => {
         this.analytics.set(analytics || this.zeroAnalytics);
         this.funnelData.set(funnel && funnel.length > 0 ? funnel : this.zeroFunnel);
         this.branchStats.set(branch && branch.length > 0 ? branch : this.zeroBranchStats);
         this.offerTrends.set(offer || this.zeroOfferTrends);
         this.pendingRecruiters.set(pending || []);
         this.approvedRecruiters.set(approved || []);
+        this.pendingDriveCount.set(pendingDrives?.drives?.length || 0);
 
         this.lastUpdatedText.set(new Date().toLocaleTimeString());
         this.isLoading.set(false);

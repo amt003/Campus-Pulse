@@ -48,6 +48,16 @@ export interface ApplicationInfo {
     strongSkills?: string[];
     isOfflineFallback?: boolean;
   };
+  offer?: {
+    status?: string;
+    fileId?: string;
+    filePath?: string;
+    fileName?: string;
+    uploadedDate?: string;
+    expiryDate?: string;
+    declineReason?: string;
+    ctc?: number;
+  };
   isPlacedGlobally?: boolean;
   isPlaced?: boolean;
   placementCompany?: string | null;
@@ -341,6 +351,12 @@ export class RecruiterApplicationsComponent implements OnInit {
     this.selectedIds.set(currentSet);
   }
 
+  protected downloadOfferLetter(appId: string): void {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+    const downloadUrl = `http://localhost:5000/api/recruiter/offer/${appId}/pdf?token=${token}`;
+    window.open(downloadUrl, '_blank');
+  }
+
   // --- Individual Actions ---
   protected shortlistApp(appId: string): void {
     this.successMessage.set(null);
@@ -351,7 +367,7 @@ export class RecruiterApplicationsComponent implements OnInit {
       next: () => {
         this.successMessage.set('Candidate shortlisted successfully!');
         this.fetchApplications();
-        setTimeout(() => this.successMessage.set(null), 3000);
+        setTimeout(() => this.successMessage.set(null), 10000);
       },
       error: (err) => {
         this.errorMessage.set(err.error?.message || 'Failed to update status.');
@@ -368,7 +384,7 @@ export class RecruiterApplicationsComponent implements OnInit {
       next: () => {
         this.successMessage.set('Candidate application rejected.');
         this.fetchApplications();
-        setTimeout(() => this.successMessage.set(null), 3000);
+        setTimeout(() => this.successMessage.set(null), 10000);
       },
       error: (err) => {
         this.errorMessage.set(err.error?.message || 'Failed to update status.');
@@ -392,7 +408,7 @@ export class RecruiterApplicationsComponent implements OnInit {
         this.selectedIds.set(new Set<string>());
         this.successMessage.set(`Successfully shortlisted ${ids.length} candidates!`);
         this.fetchApplications();
-        setTimeout(() => this.successMessage.set(null), 3500);
+        setTimeout(() => this.successMessage.set(null), 10000);
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -416,7 +432,7 @@ export class RecruiterApplicationsComponent implements OnInit {
         this.selectedIds.set(new Set<string>());
         this.successMessage.set(`Rejected ${ids.length} candidate applications.`);
         this.fetchApplications();
-        setTimeout(() => this.successMessage.set(null), 3500);
+        setTimeout(() => this.successMessage.set(null), 10000);
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -427,6 +443,16 @@ export class RecruiterApplicationsComponent implements OnInit {
   }
 
   protected getStatusLabel(app: any): string {
+    const offerStatus = app.offer?.status;
+    if (offerStatus === 'Accepted' || app.status === 'Offer Accepted' || app.status === 'Placed') {
+      return 'Offer Accepted 🎉';
+    }
+    if (offerStatus === 'Sent' || app.status === 'Offer Sent') {
+      return 'Offer Sent 📩';
+    }
+    if (offerStatus === 'Declined' || app.status === 'Offer Declined') {
+      return 'Offer Declined ❌';
+    }
     if (app.status === 'Interview Completed' && app.interview?.result === 'Selected') {
       return 'Selected';
     }
@@ -526,7 +552,7 @@ export class RecruiterApplicationsComponent implements OnInit {
         this.successMessage.set(`${ids.length} candidates marked as ${result} successfully!`);
         this.selectedIds.set(new Set<string>()); // clear selections
         this.fetchApplications();
-        setTimeout(() => this.successMessage.set(null), 3500);
+        setTimeout(() => this.successMessage.set(null), 10000);
       },
       error: (err) => {
         this.resultIsSubmitting.set(false);
@@ -561,7 +587,7 @@ export class RecruiterApplicationsComponent implements OnInit {
       this.offerFile = file;
     } else if (file) {
       this.errorMessage.set('Please select a valid PDF document (.pdf).');
-      setTimeout(() => this.errorMessage.set(null), 4000);
+      setTimeout(() => this.errorMessage.set(null), 10000);
       event.target.value = '';
     }
   }
@@ -580,7 +606,7 @@ export class RecruiterApplicationsComponent implements OnInit {
         this.closeOfferModal();
         this.successMessage.set(`Offer letter uploaded and sent to ${app.student?.name || 'candidate'} successfully! 🎉`);
         this.fetchApplications();
-        setTimeout(() => this.successMessage.set(null), 4000);
+        setTimeout(() => this.successMessage.set(null), 10000);
       },
       error: (err) => {
         this.offerIsSubmitting.set(false);
@@ -903,7 +929,7 @@ export class RecruiterApplicationsComponent implements OnInit {
         `None of the ${totalSelected} selected candidate(s) are eligible for ${type}. ` +
         `Candidates must pass the ${priorRoundName} round first before being scheduled.`
       );
-      setTimeout(() => this.errorMessage.set(null), 6000);
+      setTimeout(() => this.errorMessage.set(null), 10000);
       return;
     }
 
@@ -913,7 +939,7 @@ export class RecruiterApplicationsComponent implements OnInit {
       this.errorMessage.set(
         `⚠️ Notice: ${ineligibleCount} of ${totalSelected} selected candidate(s) did not pass the ${priorRoundName} round and will be skipped.`
       );
-      setTimeout(() => this.errorMessage.set(null), 5000);
+      setTimeout(() => this.errorMessage.set(null), 10000);
     }
 
     // Check if any already-scheduled candidates are in the selection
@@ -925,7 +951,7 @@ export class RecruiterApplicationsComponent implements OnInit {
         `All ${totalSelected} selected candidate(s) have already been scheduled for ${type}. ` +
         `Please deselect them or choose candidates who haven't been scheduled yet.`
       );
-      setTimeout(() => this.errorMessage.set(null), 6000);
+      setTimeout(() => this.errorMessage.set(null), 10000);
       return;
     }
 
@@ -934,7 +960,7 @@ export class RecruiterApplicationsComponent implements OnInit {
       this.errorMessage.set(
         `⚠️ Warning: ${alreadyCount} of ${totalSelected} selected candidate(s) are already scheduled for ${type} and will be skipped.`
       );
-      setTimeout(() => this.errorMessage.set(null), 5000);
+      setTimeout(() => this.errorMessage.set(null), 10000);
     }
 
     this.scheduleType.set(type);
@@ -982,7 +1008,7 @@ export class RecruiterApplicationsComponent implements OnInit {
         this.selectedIds.set(new Set<string>());
         this.successMessage.set(res.message || `Successfully scheduled ${this.scheduleType()}!`);
         this.fetchApplications();
-        setTimeout(() => this.successMessage.set(null), 4000);
+        setTimeout(() => this.successMessage.set(null), 10000);
       },
       error: (err) => {
         this.scheduleIsSubmitting.set(false);

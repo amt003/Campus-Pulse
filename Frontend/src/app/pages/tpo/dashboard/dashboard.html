@@ -61,6 +61,20 @@
           <span class="material-symbols-outlined">insert_chart</span>
         </div>
       </div>
+
+      <!-- Card 5: Pending Drive Approvals -->
+      <div class="card-stat glow-card-amber" style="cursor: pointer;" routerLink="/tpo/drive-approvals">
+        <div class="stat-body">
+          <span class="stat-title">Pending Drives</span>
+          <h2 class="stat-value text-amber">{{ pendingDriveCount() }}</h2>
+          <span class="stat-sub" style="color: #d97706; font-weight: 700;">
+            View All Pending Drives →
+          </span>
+        </div>
+        <div class="badge-icon icon-amber">
+          <span class="material-symbols-outlined">assignment_turned_in</span>
+        </div>
+      </div>
     </section>
 
     <!-- ══════════════════════════════════════════

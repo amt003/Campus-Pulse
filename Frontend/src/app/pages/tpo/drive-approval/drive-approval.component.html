@@ -1,0 +1,367 @@
+<div class="approval-page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">📋 Pending Drive Approvals</h1>
+      <p class="page-subtitle">Review, approve, or put recruiter recruitment drives on hold before they go live to students.</p>
+    </div>
+    <button class="btn-refresh" (click)="fetchPendingDrives(false)" [disabled]="isRefreshing()">
+      <span class="material-symbols-outlined" [class.spinning]="isRefreshing()">refresh</span>
+      <span>Refresh</span>
+    </button>
+  </div>
+
+  <!-- Search Filter Card -->
+  <div class="controls-card">
+    <div class="search-input-wrap">
+      <span class="material-symbols-outlined search-icon">search</span>
+      <input
+        type="text"
+        placeholder="Search drive title or company name..."
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+        class="search-input"
+      />
+    </div>
+    <div class="pending-count-badge">
+      <span class="material-symbols-outlined">hourglass_top</span>
+      <span>{{ filteredDrives.length }} Pending Drive(s)</span>
+    </div>
+  </div>
+
+  <!-- Main Table Card -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading pending drive approvals...</p>
+      </div>
+    } @else if (filteredDrives.length === 0) {
+      <div class="empty-state">
+        <span class="material-symbols-outlined empty-icon">check_circle</span>
+        <h3>No Pending Drive Approvals</h3>
+        <p>All submitted recruitment drives have been reviewed and processed.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="drive-table">
+          <thead>
+            <tr>
+              <th>Drive Details</th>
+              <th>Company Info</th>
+              <th>Offered CTC</th>
+              <th>Application Deadline</th>
+              <th>Eligibility Summary</th>
+              <th>Submitted On</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (drive of filteredDrives; track drive._id) {
+              <tr>
+                <td>
+                  <div class="drive-title-box">
+                    <span class="drive-title clickable-title" (click)="openViewDetailsModal(drive)" title="Click to view full structured drive details">
+                      {{ drive.title }}
+                      <span class="material-symbols-outlined view-icon">open_in_new</span>
+                    </span>
+                    <p class="drive-desc">{{ drive.description | slice:0:80 }}{{ drive.description.length > 80 ? '...' : '' }}</p>
+                    <div class="stage-pills">
+                      @if (drive.hasAptitudeTest) { <span class="stage-pill">Aptitude</span> }
+                      @if (drive.hasGD) { <span class="stage-pill">GD</span> }
+                      <span class="stage-pill">Interview</span>
+                      @if (drive.resubmittedCount && drive.resubmittedCount > 0) {
+                        <span class="stage-pill resubmitted-tag">Resubmitted v{{ drive.resubmittedCount + 1 }}</span>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="company-box">
+                    <span class="company-name">{{ drive.recruiterId?.companyName || drive.recruiterId?.name || 'Recruiter' }}</span>
+                    <span class="company-email">{{ drive.recruiterId?.officialEmail || drive.recruiterId?.email || 'N/A' }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="ctc-tag">₹{{ getCTCInLpa(drive.ctc) }}</span>
+                </td>
+                <td>
+                  <span class="deadline-date">{{ drive.applicationDeadline | date:'mediumDate' }}</span>
+                </td>
+                <td>
+                  <div class="eligibility-box">
+                    <span>Min CGPA: <strong>{{ drive.minCGPA }}</strong></span>
+                    <span>Max Backlogs: <strong>{{ drive.maxBacklogs }}</strong></span>
+                    <span class="branches-text">
+                      {{ drive.eligibleBranches && drive.eligibleBranches.length > 0 ? drive.eligibleBranches.join(', ') : 'All Branches' }}
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <span class="submitted-date">
+                    {{ (drive.submittedForApprovalAt || drive.createdAt) | date:'shortDate' }}
+                  </span>
+                </td>
+                <td style="text-align: right;">
+                  <div class="action-btn-group">
+                    <button class="btn-action btn-approve" (click)="approveDrive(drive)" title="Approve Drive & Publish Live">
+                      <span class="material-symbols-outlined">check_circle</span>
+                      <span>Approve</span>
+                    </button>
+
+                    <button class="btn-action btn-reject" (click)="openModal(drive, 'reject')" title="Reject Drive Request">
+                      <span class="material-symbols-outlined">cancel</span>
+                      <span>Reject</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- Rejection Modal -->
+  @if (isModalOpen() && selectedDrive()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header modal-header-reject">
+          <h3>
+            <span class="material-symbols-outlined">gavel</span>
+            Reject Job Drive
+          </h3>
+          <button class="close-btn" (click)="closeModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="target-drive-summary">
+            <strong>Drive:</strong> {{ selectedDrive()?.title }}<br />
+            <strong>Company:</strong> {{ selectedDrive()?.recruiterId?.companyName }}
+          </div>
+
+          @if (modalError()) {
+            <div class="alert-error">
+              <span class="material-symbols-outlined">warning</span>
+              <span>{{ modalError() }}</span>
+            </div>
+          }
+
+          <div class="form-group">
+            <label>
+              Provide Detailed Rejection Feedback (Required, min 10 characters):
+            </label>
+            <textarea
+              rows="4"
+              class="feedback-textarea"
+              placeholder="e.g., The compensation model does not satisfy college placement policy standards..."
+              [ngModel]="feedbackReason()"
+              (ngModelChange)="feedbackReason.set($event)"
+            ></textarea>
+            <span class="char-hint" [class.hint-valid]="feedbackReason().trim().length >= 10">
+              {{ feedbackReason().trim().length }} / 10 characters minimum
+            </span>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-modal-cancel" (click)="closeModal()" [disabled]="isSubmittingModal()">
+            Cancel
+          </button>
+          <button
+            class="btn-modal-submit btn-submit-reject"
+            (click)="submitModalAction()"
+            [disabled]="isSubmittingModal() || feedbackReason().trim().length < 10"
+          >
+            @if (isSubmittingModal()) {
+              <div class="mini-spinner"></div>
+              <span>Submitting...</span>
+            } @else {
+              <span>Reject Drive</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Full Structured Drive Overview Modal -->
+  @if (isViewDetailsModalOpen() && viewingDrive()) {
+    <div class="modal-backdrop" (click)="closeViewDetailsModal()">
+      <div class="modal-card modal-card-large" (click)="$event.stopPropagation()">
+        
+        <!-- Header -->
+        <div class="modal-header modal-header-info">
+          <div class="header-left">
+            <span class="badge-status-pill">⏳ Pending Approval</span>
+            <h3 class="overview-title">{{ viewingDrive()?.title }}</h3>
+            <span class="company-badge-subtitle">
+              <span class="material-symbols-outlined">domain</span>
+              {{ viewingDrive()?.recruiterId?.companyName || viewingDrive()?.recruiterId?.name || 'Recruiter' }}
+            </span>
+          </div>
+          <button class="close-btn" (click)="closeViewDetailsModal()">&times;</button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body modal-body-scrollable" data-lenis-prevent>
+          
+          <!-- Key Metrics Row (4 Cards) -->
+          <div class="overview-stats-grid">
+            <div class="stat-card stat-card-green">
+              <span class="stat-label">Offered CTC</span>
+              <h4 class="stat-val">₹{{ getCTCInLpa(viewingDrive()!.ctc) }}</h4>
+              <span class="stat-sub">₹{{ viewingDrive()!.ctc.toLocaleString() }} / year</span>
+            </div>
+
+            <div class="stat-card stat-card-orange">
+              <span class="stat-label">Application Deadline</span>
+              <h4 class="stat-val">{{ viewingDrive()!.applicationDeadline | date:'mediumDate' }}</h4>
+              <span class="stat-sub">Window closing date</span>
+            </div>
+
+            <div class="stat-card stat-card-blue">
+              <span class="stat-label">Minimum CGPA</span>
+              <h4 class="stat-val">{{ viewingDrive()!.minCGPA }} / 10</h4>
+              <span class="stat-sub">Cutoff score</span>
+            </div>
+
+            <div class="stat-card stat-card-purple">
+              <span class="stat-label">Backlog Limit</span>
+              <h4 class="stat-val">{{ viewingDrive()!.maxBacklogs }} Allowed</h4>
+              <span class="stat-sub">Active backlogs max</span>
+            </div>
+          </div>
+
+          <!-- Section: Job Description -->
+          <div class="overview-section">
+            <h4 class="section-title">
+              <span class="material-symbols-outlined">description</span>
+              Job Description & Responsibilities
+            </h4>
+            <div class="description-content-box" data-lenis-prevent>
+              {{ viewingDrive()?.description }}
+            </div>
+          </div>
+
+          <!-- Grid Two Column: Eligibility + Process Workflow -->
+          <div class="overview-two-col">
+            <!-- Left Column: Eligible Branches -->
+            <div class="overview-section">
+              <h4 class="section-title">
+                <span class="material-symbols-outlined">school</span>
+                Eligible Branches
+              </h4>
+              <div class="branches-pill-wrap">
+                @if (viewingDrive()?.eligibleBranches && viewingDrive()!.eligibleBranches.length > 0) {
+                  @for (b of viewingDrive()!.eligibleBranches; track b) {
+                    <span class="branch-pill-tag">{{ b }}</span>
+                  }
+                } @else {
+                  <span class="branch-pill-tag tag-all">All Branches Eligible</span>
+                }
+              </div>
+            </div>
+
+            <!-- Right Column: Recruitment Rounds Pipeline -->
+            <div class="overview-section">
+              <h4 class="section-title">
+                <span class="material-symbols-outlined">account_tree</span>
+                Recruitment Rounds Pipeline
+              </h4>
+              <div class="pipeline-flow-wrap">
+                @if (viewingDrive()?.hasAptitudeTest) {
+                  <div class="flow-step-item">
+                    <span class="step-num">1</span>
+                    <span class="step-label">Aptitude Test</span>
+                  </div>
+                  <span class="flow-arrow">➔</span>
+                }
+
+                @if (viewingDrive()?.hasGD) {
+                  <div class="flow-step-item">
+                    <span class="step-num">{{ viewingDrive()?.hasAptitudeTest ? '2' : '1' }}</span>
+                    <span class="step-label">Group Discussion</span>
+                  </div>
+                  <span class="flow-arrow">➔</span>
+                }
+
+                <div class="flow-step-item step-final">
+                  <span class="step-num">
+                    {{ (viewingDrive()?.hasAptitudeTest ? 1 : 0) + (viewingDrive()?.hasGD ? 1 : 0) + 1 }}
+                  </span>
+                  <span class="step-label">Interview (Tech & HR)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: Company & Contact Information -->
+          <div class="overview-section">
+            <h4 class="section-title">
+              <span class="material-symbols-outlined">business</span>
+              Company & Contact Details
+            </h4>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Company Name:</span>
+                <strong class="info-val">{{ viewingDrive()?.recruiterId?.companyName || 'N/A' }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span class="info-label">Contact Person:</span>
+                <strong class="info-val">{{ viewingDrive()?.recruiterId?.name || 'N/A' }}</strong>
+              </div>
+
+              <div class="info-item">
+                <span class="info-label">Official Email:</span>
+                <strong class="info-val">{{ viewingDrive()?.recruiterId?.officialEmail || viewingDrive()?.recruiterId?.email || 'N/A' }}</strong>
+              </div>
+
+              @if (viewingDrive()?.recruiterId?.website) {
+                <div class="info-item">
+                  <span class="info-label">Company Website:</span>
+                  <a [href]="viewingDrive()!.recruiterId!.website!" target="_blank" class="info-link">
+                    {{ viewingDrive()!.recruiterId!.website }}
+                  </a>
+                </div>
+              }
+
+              <div class="info-item">
+                <span class="info-label">Submitted On:</span>
+                <strong class="info-val">{{ (viewingDrive()?.submittedForApprovalAt || viewingDrive()?.createdAt) | date:'medium' }}</strong>
+              </div>
+
+              @if (viewingDrive()?.resubmittedCount && viewingDrive()!.resubmittedCount! > 0) {
+                <div class="info-item">
+                  <span class="info-label">Resubmission History:</span>
+                  <span class="resubmit-count-tag">Revision v{{ viewingDrive()!.resubmittedCount! + 1 }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="modal-footer modal-footer-space-between">
+          <button class="btn-modal-cancel" (click)="closeViewDetailsModal()">Close</button>
+          
+          <div class="action-btn-group">
+            <button class="btn-action btn-approve" (click)="approveDrive(viewingDrive()!); closeViewDetailsModal();" title="Approve Drive & Publish Live">
+              <span class="material-symbols-outlined">check_circle</span>
+              <span>Approve Drive</span>
+            </button>
+
+            <button class="btn-action btn-reject" (click)="openModal(viewingDrive()!, 'reject'); closeViewDetailsModal();" title="Reject Drive Request">
+              <span class="material-symbols-outlined">cancel</span>
+              <span>Reject Drive</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  }
+</div>

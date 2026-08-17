@@ -1,0 +1,187 @@
+<div class="offers-page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Offer Letters Tracker</h1>
+      <p class="page-subtitle">Centralized tracker for all issued job offer letters, acceptance statuses, and candidate
+        responses.</p>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon icon-blue">
+        <span class="material-symbols-outlined">workspace_premium</span>
+      </div>
+      <div>
+        <span class="kpi-label">Total Offers Sent</span>
+        <h2 class="kpi-value">{{ totalOffers() }}</h2>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon icon-green">
+        <span class="material-symbols-outlined">verified</span>
+      </div>
+      <div>
+        <span class="kpi-label">Offers Accepted </span>
+        <h2 class="kpi-value text-green">{{ acceptedOffers() }}</h2>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon icon-amber">
+        <span class="material-symbols-outlined">hourglass_top</span>
+      </div>
+      <div>
+        <span class="kpi-label">Pending Response</span>
+        <h2 class="kpi-value text-amber">{{ pendingOffers() }}</h2>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon icon-red">
+        <span class="material-symbols-outlined">cancel</span>
+      </div>
+      <div>
+        <span class="kpi-label">Offers Declined </span>
+        <h2 class="kpi-value text-red">{{ declinedOffers() }}</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls Card -->
+  <div class="controls-card">
+    <div class="search-input-wrap">
+      <span class="material-symbols-outlined search-icon">search</span>
+      <input type="text" placeholder="Search candidate name, roll number, or role..." [(ngModel)]="searchTerm"
+        class="search-input" />
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-tab" [class.active]="selectedStatus() === 'all'" (click)="selectedStatus.set('all')">
+        All ({{ offers().length }})
+      </button>
+      <button class="filter-tab" [class.active]="selectedStatus() === 'accepted'"
+        (click)="selectedStatus.set('accepted')">
+        Accepted 🎉
+      </button>
+      <button class="filter-tab" [class.active]="selectedStatus() === 'pending'"
+        (click)="selectedStatus.set('pending')">
+        Pending
+      </button>
+      <button class="filter-tab" [class.active]="selectedStatus() === 'declined'"
+        (click)="selectedStatus.set('declined')">
+        Declined ❌
+      </button>
+    </div>
+  </div>
+
+  <!-- Offers Table -->
+  <div class="table-card">
+    @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading offer letters data...</p>
+    </div>
+    } @else if (filteredOffers().length === 0) {
+    <div class="empty-state">
+      <span class="material-symbols-outlined empty-icon">mark_email_unread</span>
+      <h3>No Offer Letters Found</h3>
+      <p>No issued offer letters match your current filter parameters.</p>
+    </div>
+    } @else {
+    <div class="table-responsive">
+      <table class="offers-table">
+        <thead>
+          <tr>
+            <th>Candidate Name</th>
+            <th>Job Drive / Role</th>
+            <th>Offered CTC</th>
+            <th>Issued Date</th>
+            <th>Offer Status</th>
+            <th>Expiry Date</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (app of filteredOffers(); track app._id) {
+          @let status = app.offer?.status || app.status;
+          <tr>
+            <td>
+              <div class="candidate-info">
+                <span class="candidate-name">{{ app.studentId?.userId?.name || 'Candidate' }}</span>
+                <span class="candidate-email">{{ app.studentId?.userId?.email }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="drive-title">{{ app.driveId?.title || 'Drive' }}</span>
+            </td>
+            <td>
+              <span class="ctc-tag">{{ getCTCInLpa(app.offer?.ctc || app.driveId?.ctc) }}</span>
+            </td>
+            <td>{{ (app.offer?.uploadedDate || app.updatedAt) | date:'mediumDate' }}</td>
+            <td>
+              @if (status === 'Accepted' || status === 'Placed' || status === 'Offer Accepted') {
+              <span class="status-pill status-accepted">Accepted 🎉</span>
+              } @else if (status === 'Declined' || status === 'Offer Declined') {
+              <span class="status-pill status-declined" (click)="openDeclineReasonModal(app)"
+                title="Click to view reason">
+                Declined ❌
+              </span>
+              } @else {
+              <span class="status-pill status-pending">Pending Response</span>
+              }
+            </td>
+            <td>
+              <span class="expiry-date">
+                {{ app.offer?.expiryDate ? (app.offer?.expiryDate | date:'mediumDate') : '7 days window' }}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <div class="action-btn-group">
+                <button class="btn-action btn-pdf" (click)="downloadOfferLetter(app._id)" title="Download Offer PDF">
+                  <span class="material-symbols-outlined">download</span>
+                  <span>PDF</span>
+                </button>
+                <button class="btn-action btn-view" (click)="viewOfferGenerator(app._id)" title="View Offer Document">
+                  <span class="material-symbols-outlined">open_in_new</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    }
+  </div>
+
+  <!-- Decline Reason Modal -->
+  @if (isDeclineModalOpen() && selectedOfferForModal()) {
+  <div class="modal-backdrop" (click)="closeDeclineReasonModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Offer Decline Feedback</h3>
+        <button class="close-btn" (click)="closeDeclineReasonModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Candidate:</strong> {{ selectedOfferForModal().studentId?.userId?.name }}</p>
+        <p><strong>Drive:</strong> {{ selectedOfferForModal().driveId?.title }}</p>
+        <div class="decline-reason-box">
+          <span class="material-symbols-outlined" style="color: #d32f2f;">info</span>
+          <div>
+            <strong>Stated Reason:</strong>
+            <p style="margin: 4px 0 0 0;">{{ selectedOfferForModal().offer?.declineReason || 'Candidate opted for
+              another offer.' }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-close" (click)="closeDeclineReasonModal()">Close</button>
+      </div>
+    </div>
+  </div>
+  }
+</div>

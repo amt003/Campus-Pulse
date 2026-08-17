@@ -1,0 +1,142 @@
+<div class="applications-page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Applications Tracker</h1>
+      <p class="page-subtitle">Master record of all student applications across your company's recruitment drives.</p>
+    </div>
+  </div>
+
+  <!-- Filter Controls Card -->
+  <div class="controls-card">
+    <!-- Search -->
+    <div class="search-input-wrap">
+      <span class="material-symbols-outlined search-icon">search</span>
+      <input
+        type="text"
+        placeholder="Search by student name, roll number, or role..."
+        [(ngModel)]="searchTerm"
+        class="search-input"
+      />
+    </div>
+
+    <!-- Drive Filter -->
+    <div class="select-wrap">
+      <span class="material-symbols-outlined select-icon">work</span>
+      <select [(ngModel)]="selectedDriveId" class="filter-select">
+        <option value="all">All Drives</option>
+        @for (drive of uniqueDrives(); track drive.id) {
+          <option [value]="drive.id">{{ drive.title }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="select-wrap">
+      <span class="material-symbols-outlined select-icon">filter_alt</span>
+      <select [(ngModel)]="selectedStatus" class="filter-select">
+        @for (st of availableStatuses; track st) {
+          <option [value]="st">{{ st === 'all' ? 'All Statuses' : st }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Applications Table Card -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading applications master list...</p>
+      </div>
+    } @else if (filteredApplications().length === 0) {
+      <div class="empty-state">
+        <span class="material-symbols-outlined empty-icon">assignment_late</span>
+        <h3>No Applications Found</h3>
+        <p>No candidate applications match the selected filter criteria.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="app-table">
+          <thead>
+            <tr>
+              <th>Candidate Name</th>
+              <th>Roll Number</th>
+              <th>Job Drive / Role</th>
+              <th>Academic Info</th>
+              <th>AI Score</th>
+              <th>Current Status</th>
+              <th>Applied Date</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (app of filteredApplications(); track app._id) {
+              <tr>
+                <td>
+                  <div class="candidate-info">
+                    <span class="candidate-name">{{ app.studentId?.userId?.name || 'Student Candidate' }}</span>
+                    <span class="candidate-email">{{ app.studentId?.userId?.email }}</span>
+                  </div>
+                </td>
+                <td><code class="roll-code">{{ app.studentId?.rollNumber || '—' }}</code></td>
+                <td>
+                  <span class="drive-title">{{ app.driveId?.title || 'Drive' }}</span>
+                </td>
+                <td>
+                  <div class="academic-badge">
+                    <span>{{ app.studentId?.branch || 'N/A' }}</span> · <span>CGPA {{ app.studentId?.cgpa || '—' }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="ai-score-pill">
+                    ⚡ {{ app.aiMatchScore ? app.aiMatchScore + '%' : 'N/A' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-badge {{ getStatusBadgeClass(app.status) }}">
+                    {{ getDisplayStatus(app) }}
+                  </span>
+                </td>
+                <td>{{ app.createdAt | date:'mediumDate' }}</td>
+                <td style="text-align: right;">
+                  <div class="action-btn-group">
+                    <button 
+                      class="btn-action btn-manage" 
+                      (click)="viewDriveApplications(app.driveId?._id)"
+                      title="Manage candidate stage in drive"
+                    >
+                      <span class="material-symbols-outlined">pageview</span>
+                      <span>Manage</span>
+                    </button>
+
+                    @if (app.offer?.filePath || app.offer?.fileId || app.offer?.status === 'Accepted' || app.status === 'Placed' || app.status === 'Offer Accepted') {
+                      <button 
+                        class="btn-action btn-offer" 
+                        (click)="downloadOfferLetter(app._id)"
+                        title="Download Offer Letter PDF"
+                        style="background: #EBF5FB; color: #1B4F72; border: 1px solid #AED6F1;"
+                      >
+                        <span class="material-symbols-outlined">download</span>
+                        <span>PDF</span>
+                      </button>
+                    } @else if (app.status === 'Selected') {
+                      <button 
+                        class="btn-action btn-offer" 
+                        (click)="generateOffer(app._id)"
+                        title="Generate Offer Letter"
+                      >
+                        <span class="material-symbols-outlined">workspace_premium</span>
+                        <span>Offer</span>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

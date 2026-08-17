@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StudentService, Application } from '../../../services/student.service';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-student-applications',
@@ -11,8 +12,17 @@ import { StudentService, Application } from '../../../services/student.service';
 })
 export class StudentApplicationsComponent implements OnInit {
   private readonly studentService = inject(StudentService);
+  private readonly toastService = inject(ToastService);
   protected applications = signal<Application[]>([]);
   protected isLoading = signal<boolean>(true);
+  protected isPlaced = signal<boolean>(false);
+  protected placedCompany = signal<string>('');
+  protected placedDriveTitle = signal<string>('');
+
+  protected isAppPlaced(app: any): boolean {
+    if (!app) return false;
+    return ['Placed', 'Offer Accepted'].includes(app.status) || app.offer?.status === 'Accepted';
+  }
 
   // Master-Detail Navigation State
   protected selectedApp = signal<Application | null>(null);
@@ -77,6 +87,23 @@ export class StudentApplicationsComponent implements OnInit {
       next: (res) => {
         const apps = res.applications || [];
         this.applications.set(apps);
+
+        const responseData = res as any;
+        const placedApp = apps.find((app: any) => this.isAppPlaced(app));
+        let comp = responseData.placedCompany || '';
+        let driveTitle = responseData.placedDriveTitle || '';
+
+        if (placedApp && placedApp.driveId) {
+          if (!comp) comp = placedApp.driveId.companyName || 'Campus Recruiter';
+          if (!driveTitle) driveTitle = placedApp.driveId.title || 'Placement Drive';
+        }
+
+        if (responseData.isPlaced || !!placedApp) {
+          this.isPlaced.set(true);
+          this.placedCompany.set(comp);
+          this.placedDriveTitle.set(driveTitle);
+        }
+
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -86,12 +113,39 @@ export class StudentApplicationsComponent implements OnInit {
     });
   }
 
+  protected resources = signal<any>({
+    driveTitle: '',
+    attachments: [],
+    pastQuestions: []
+  });
+
   protected selectApplication(app: Application): void {
     this.isLoading.set(true);
     this.studentService.getApplicationDetails(app._id).subscribe({
       next: (res) => {
         this.selectedApp.set(res.application);
         this.selectedSchedules.set(res.schedules || []);
+        
+        // Fetch preparation resources
+        const drive = res.application?.driveId;
+        if (drive && drive._id) {
+          this.studentService.getPreparationResources(drive._id).subscribe({
+            next: (resResources) => {
+              if (resResources && resResources.success) {
+                this.resources.set(resResources);
+              }
+            },
+            error: (err) => {
+              console.error('Failed to load preparation resources:', err);
+              this.resources.set({
+                driveTitle: drive.title || 'Placement Drive',
+                attachments: [],
+                pastQuestions: []
+              });
+            }
+          });
+        }
+        
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -107,6 +161,26 @@ export class StudentApplicationsComponent implements OnInit {
   protected clearSelection(): void {
     this.selectedApp.set(null);
     this.selectedSchedules.set([]);
+    this.resources.set({
+      driveTitle: '',
+      attachments: [],
+      pastQuestions: []
+    });
+  }
+
+  protected downloadAttachment(fileId: string, fileName: string): void {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+    const downloadUrl = `http://localhost:5000/api/student/drive/attachment/download/${fileId}?token=${token}`;
+    window.open(downloadUrl, '_blank');
+  }
+
+  protected formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = 1;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.log(bytes) / Math.log(k);
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
 
   protected getCTCInLpa(ctcInRupees: number): string {
@@ -300,6 +374,9 @@ export class StudentApplicationsComponent implements OnInit {
   }
 
   protected handleContactPlacement(): void {
-    alert('Connecting to Campus Placement Officer via Chat... 💬');
+    this.toastService.info(
+      'Contact placement cell',
+      'Reach out to your TPO directly via the placement office'
+    );
   }
 }

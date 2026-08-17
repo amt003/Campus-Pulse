@@ -13,13 +13,16 @@ const {
   declineOffer,
   getOfferDetails,
   getOfferPdf,
+  getPreparationResources,
 } = require("../controllers/studentController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
+const { downloadDriveAttachment } = require("../controllers/recruiterController");
 
 const router = express.Router();
 
 router.use(protect, authorizeRoles("Student"));
+router.get("/drive/attachment/download/:fileId", downloadDriveAttachment);
 
 router.post("/profile", createStudentProfile);
 router.get("/profile", getStudentProfile);
@@ -36,5 +39,8 @@ router.get("/offer/:applicationId", getOfferDetails);
 router.get("/offer/:applicationId/pdf", getOfferPdf);
 router.put("/offer/:applicationId/accept", acceptOffer);
 router.put("/offer/:applicationId/decline", declineOffer);
+
+// Preparation Resources Route
+router.get("/resources/:driveId", getPreparationResources);
 
 module.exports = router;

@@ -23,6 +23,11 @@ export class StudentLayoutComponent implements OnInit, OnDestroy {
   // Expose notification signals
   protected readonly unreadCount = this.notificationService.unreadCount;
   protected readonly notifications = this.notificationService.notifications;
+  protected readonly activeToasts = this.notificationService.activeToasts;
+
+  protected dismissToast(id: string): void {
+    this.notificationService.dismissToast(id);
+  }
 
   ngOnInit(): void {
     this.loadProfile();

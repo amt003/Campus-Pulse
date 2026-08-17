@@ -20,10 +20,20 @@ export class RecruiterLayoutComponent implements OnInit, OnDestroy {
   protected companyLogo = signal<string | null>(null);
   protected isApproved = signal<boolean>(false);
   protected isNotificationsOpen = signal<boolean>(false);
+  protected isSidebarCollapsed = signal<boolean>(false);
+
+  protected toggleSidebar(): void {
+    this.isSidebarCollapsed.update(val => !val);
+  }
 
   // Expose notification signals
   protected readonly unreadCount = this.notificationService.unreadCount;
   protected readonly notifications = this.notificationService.notifications;
+  protected readonly activeToasts = this.notificationService.activeToasts;
+
+  protected dismissToast(id: string): void {
+    this.notificationService.dismissToast(id);
+  }
 
   ngOnInit(): void {
     this.loadProfile();

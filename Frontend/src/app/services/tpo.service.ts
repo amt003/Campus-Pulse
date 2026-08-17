@@ -264,4 +264,20 @@ export class TpoService {
       { headers: this.getAuthHeaders() }
     );
   }
+
+  getPendingDrives(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/drives/pending`, { headers: this.getAuthHeaders() });
+  }
+
+  approveDrive(driveId: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/drive/${driveId}/approve`, {}, { headers: this.getAuthHeaders() });
+  }
+
+  rejectDrive(driveId: string, reason: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/drive/${driveId}/reject`, { reason }, { headers: this.getAuthHeaders() });
+  }
+
+  holdDrive(driveId: string, reason: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/drive/${driveId}/hold`, { reason }, { headers: this.getAuthHeaders() });
+  }
 }

@@ -18,7 +18,11 @@ const {
   addRecruiterSuggestion,
   toggleRecruiterStatus,
   reVerifyRecruiter,
-  reverifyRecruiter
+  reverifyRecruiter,
+  getPendingDrives,
+  approveDrive,
+  rejectDrive,
+  holdDrive
 } = require('../controllers/tpoController');
 
 
@@ -40,6 +44,12 @@ router.get('/offer-trends', getOfferAcceptanceTrends);
 
 // Students management routes
 router.get('/students', getStudentsList);
+
+// Drive Approval routes
+router.get('/drives/pending', getPendingDrives);
+router.put('/drive/:id/approve', approveDrive);
+router.put('/drive/:id/reject', rejectDrive);
+router.put('/drive/:id/hold', holdDrive);
 
 // Recruiter management routes
 router.get('/recruiters/pending', getPendingRecruiters);

@@ -1,0 +1,136 @@
+<div class="drives-page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Job Drives</h1>
+      <p class="page-subtitle">Manage recruitment drives, track applicants, and update preparation resources.</p>
+    </div>
+    <a routerLink="/recruiter/dashboard" class="btn-create-drive">
+      <span class="material-symbols-outlined">add_circle</span>
+      <span>Dashboard / Create Drive</span>
+    </a>
+  </div>
+
+  <!-- Filter & Search Bar -->
+  <div class="controls-card">
+    <div class="search-input-wrap">
+      <span class="material-symbols-outlined search-icon">search</span>
+      <input
+        type="text"
+        placeholder="Search drives by job role or description..."
+        [(ngModel)]="searchTerm"
+        class="search-input"
+      />
+    </div>
+
+    <div class="filter-tabs">
+      <button 
+        class="filter-tab" 
+        [class.active]="filterStatus() === 'all'" 
+        (click)="filterStatus.set('all')"
+      >
+        All Drives ({{ drives().length }})
+      </button>
+      <button 
+        class="filter-tab" 
+        [class.active]="filterStatus() === 'active'" 
+        (click)="filterStatus.set('active')"
+      >
+        Active
+      </button>
+      <button 
+        class="filter-tab" 
+        [class.active]="filterStatus() === 'closed'" 
+        (click)="filterStatus.set('closed')"
+      >
+        Closed / Expired
+      </button>
+    </div>
+  </div>
+
+  <!-- Drives Grid -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading job drives...</p>
+    </div>
+  } @else if (filteredDrives().length === 0) {
+    <div class="empty-state">
+      <span class="material-symbols-outlined empty-icon">work_off</span>
+      <h3>No Job Drives Found</h3>
+      <p>No recruitment drives match your current search or filter criteria.</p>
+    </div>
+  } @else {
+    <div class="drives-grid">
+      @for (drive of filteredDrives(); track drive._id) {
+        <div class="drive-card" (click)="viewApplicants(drive._id)">
+          <!-- Top Badge Bar -->
+          <div class="card-top-bar">
+            <span class="ctc-pill">{{ getCTCInLpa(drive.ctc) }}</span>
+            @if (drive.status === 'Open') {
+              <span class="status-pill active">✅ Open</span>
+            } @else if (drive.status === 'Pending') {
+              <span class="status-pill" style="background: #fef3c7; color: #d97706; border-color: #fde68a;">⏳ Pending Approval</span>
+            } @else if (drive.status === 'OnHold') {
+              <span class="status-pill" style="background: #ffedd5; color: #c2410c; border-color: #fed7aa;">⏸️ On Hold</span>
+            } @else if (drive.status === 'Rejected') {
+              <span class="status-pill" style="background: #fee2e2; color: #dc2626; border-color: #fca5a5;">❌ Rejected</span>
+            } @else {
+              <span class="status-pill closed">🔒 Closed</span>
+            }
+          </div>
+
+          <!-- Role Title & Info -->
+          <h3 class="drive-role">{{ drive.title }}</h3>
+          <p class="drive-desc">{{ drive.description }}</p>
+
+          <!-- Metrics Row -->
+          <div class="metrics-row">
+            <div class="metric">
+              <span class="material-symbols-outlined">group</span>
+              <span><strong>{{ drive.applicationsCount || 0 }}</strong> Applicants</span>
+            </div>
+            <div class="metric">
+              <span class="material-symbols-outlined">grade</span>
+              <span>Min CGPA: <strong>{{ drive.minCGPA }}</strong></span>
+            </div>
+          </div>
+
+          <!-- Deadline -->
+          <div class="deadline-row">
+            <span class="material-symbols-outlined">schedule</span>
+            <span>Deadline: {{ drive.applicationDeadline | date:'mediumDate' }}</span>
+          </div>
+
+          <!-- Action Footer -->
+          <div class="card-footer" (click)="$event.stopPropagation()">
+            <button class="btn-card-action btn-applicants" (click)="viewApplicants(drive._id)">
+              <span class="material-symbols-outlined">assignment_ind</span>
+              <span>Applicants ({{ drive.applicationsCount || 0 }})</span>
+            </button>
+
+            <button class="btn-card-action btn-resources" (click)="openResourcesModal(drive, $event)">
+              <span class="material-symbols-outlined">attachment</span>
+              <span>Resources</span>
+            </button>
+
+            @if (!isDriveClosed(drive)) {
+              <button class="btn-card-action btn-close-drive" (click)="closeDrive(drive._id, $event)" title="Close Application Window">
+                <span class="material-symbols-outlined">lock</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Manage Resources Modal -->
+  @if (isResourcesModalOpen() && selectedDriveForResources()) {
+    <app-manage-resources-modal
+      [driveId]="selectedDriveForResources()._id"
+      [driveTitle]="selectedDriveForResources().title"
+      (onClose)="closeResourcesModal()"
+    />
+  }
+</div>

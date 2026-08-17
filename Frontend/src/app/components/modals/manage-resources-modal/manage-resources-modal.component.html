@@ -1,0 +1,135 @@
+<div class="modal-backdrop" (click)="onClose.emit()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="material-symbols-outlined header-icon">attachment</span>
+        <div>
+          <h3 class="modal-title">Manage Resources</h3>
+          <p class="modal-subtitle">Upload preparation resources for <strong>{{ driveTitle }}</strong></p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="onClose.emit()">&times;</button>
+    </div>
+
+    <!-- Modal Content -->
+    <div class="modal-body">
+
+      <!-- Upload Section -->
+      <div class="upload-section">
+        <div 
+          class="dropzone" 
+          [class.dragover]="dragOver()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+          (click)="fileInput.click()"
+        >
+          <span class="material-symbols-outlined upload-icon">cloud_upload</span>
+          <p class="dropzone-text">
+            @if (selectedFile) {
+              Selected: <strong>{{ selectedFile.name }}</strong> ({{ formatBytes(selectedFile.size) }})
+            } @else {
+              Drag & drop file here or <span>browse</span>
+            }
+          </p>
+          <p class="dropzone-hint">Accepts PDF, DOCX, TXT, PPTX up to 20MB</p>
+          <input 
+            #fileInput
+            type="file" 
+            style="display: none;" 
+            (change)="onFileSelected($event)"
+            accept=".pdf,.docx,.txt,.pptx"
+          />
+        </div>
+
+        @if (selectedFile) {
+          <div class="upload-actions">
+            <button class="btn-cancel" (click)="selectedFile = null">Cancel</button>
+            <button class="btn-upload-submit" (click)="uploadFile()" [disabled]="isUploading()">
+              @if (isUploading()) {
+                <span class="spinner"></span>
+                <span>Uploading...</span>
+              } @else {
+                <span class="material-symbols-outlined">upload</span>
+                <span>Upload File</span>
+              }
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- File List Section -->
+      <div class="resources-list-section">
+        <h4 class="section-title">Uploaded Resources ({{ attachments().length }})</h4>
+
+        @if (isLoading()) {
+          <div class="loading-state">
+            <span class="spinner-blue"></span>
+            <span>Loading resources...</span>
+          </div>
+        } @else if (attachments().length === 0) {
+          <div class="empty-state">
+            <span class="material-symbols-outlined empty-icon">folder_open</span>
+            <p>No preparation resources uploaded yet.</p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="resources-table">
+              <thead>
+                <tr>
+                  <th>File Name</th>
+                  <th>Upload Date</th>
+                  <th>File Size</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (att of attachments(); track att.gridFileId || att.fileName) {
+                  <tr>
+                    <td>
+                      <div class="file-name-cell" (click)="downloadAttachment(att.gridFileId!)" title="Click to download">
+                        <span class="material-symbols-outlined file-icon-small">description</span>
+                        <span class="file-name">{{ att.fileName }}</span>
+                      </div>
+                    </td>
+                    <td>{{ att.uploadedAt | date:'mediumDate' }}</td>
+                    <td>{{ formatBytes(att.fileSize) }}</td>
+                    <td style="text-align: right;">
+                      @if (pendingDeleteId() === (att.gridFileId || att._id)) {
+                        <!-- Inline delete confirmation -->
+                        <div class="delete-confirm-row">
+                          <span class="delete-confirm-label">Remove this file?</span>
+                          <button class="action-btn confirm-del" (click)="confirmDelete()" title="Confirm delete">
+                            <span class="material-symbols-outlined">check</span>
+                          </button>
+                          <button class="action-btn cancel-del" (click)="cancelDelete()" title="Cancel">
+                            <span class="material-symbols-outlined">close</span>
+                          </button>
+                        </div>
+                      } @else {
+                        <div class="action-buttons">
+                          <button class="action-btn download" (click)="downloadAttachment(att.gridFileId!)" title="Download">
+                            <span class="material-symbols-outlined">download</span>
+                          </button>
+                          <button class="action-btn delete" (click)="requestDelete(att.gridFileId || att._id!)" title="Delete">
+                            <span class="material-symbols-outlined">delete</span>
+                          </button>
+                        </div>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer">
+      <button class="btn-close-modal" (click)="onClose.emit()">Close</button>
+    </div>
+  </div>
+</div>

@@ -57,6 +57,18 @@
           <span class="tab-badge-pulse">{{ pendingCount() }}</span>
         }
       </a>
+      <a
+        routerLink="/tpo/drive-approvals"
+        routerLinkActive="active"
+        class="nav-tab"
+        id="layout-nav-drive-approvals"
+      >
+        <span class="material-symbols-outlined nav-tab-icon">assignment_turned_in</span>
+        <span>Pending Drives</span>
+        @if (pendingDriveCount() > 0) {
+          <span class="tab-badge-pulse">{{ pendingDriveCount() }}</span>
+        }
+      </a>
     </nav>
 
     <div class="navbar-right">

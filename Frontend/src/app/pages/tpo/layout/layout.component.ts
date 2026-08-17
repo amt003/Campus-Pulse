@@ -16,6 +16,7 @@ export class TpoLayoutComponent implements OnInit {
   private readonly tpoService = inject(TpoService);
   protected currentUser = signal<{ name: string; email: string; role: string } | null>(null);
   protected pendingCount = signal<number>(0);
+  protected pendingDriveCount = signal<number>(0);
 
   ngOnInit(): void {
     const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
@@ -35,6 +36,12 @@ export class TpoLayoutComponent implements OnInit {
         this.pendingCount.set(data?.length || 0);
       },
       error: (err) => console.error('Failed to fetch pending count for layout badge:', err)
+    });
+    this.tpoService.getPendingDrives().subscribe({
+      next: (res) => {
+        this.pendingDriveCount.set(res?.drives?.length || 0);
+      },
+      error: (err) => console.error('Failed to fetch pending drive count for layout badge:', err)
     });
   }
 

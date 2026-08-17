@@ -8,25 +8,32 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { FormControl } from '@angular/forms';
 import { RecruiterService, RecruiterProfile } from '../../../services/recruiter.service';
+import { meaningfulTextValidator } from '../../../validators/meaningful-text.validator';
+import { ManageResourcesModalComponent } from '../../../components/modals/manage-resources-modal/manage-resources-modal.component';
 
 export interface DriveItem {
   _id: string;
   title: string;
-  status: 'Draft' | 'Open' | 'Closed';
+  description?: string;
+  status: 'Draft' | 'Pending' | 'Open' | 'Closed' | 'Rejected' | 'OnHold';
+  tpoFeedback?: string;
+  resubmittedCount?: number;
   applicationsCount: number;
   applicationDeadline: string;
   ctc: number;
   minCGPA: number;
+  maxBacklogs?: number;
+  eligibleBranches: string[];
   hasAptitudeTest?: boolean;
   hasGD?: boolean;
-  hasOtherInterviews?: boolean;
 }
 
 @Component({
   selector: 'app-recruiter-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ManageResourcesModalComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -42,6 +49,13 @@ export class RecruiterDashboardComponent implements OnInit {
   protected successMessage = signal<string | null>(null);
   protected errorMessage = signal<string | null>(null);
   protected isSubmitting = signal<boolean>(false);
+
+  // Edit Mode state
+  protected editingDriveId = signal<string | null>(null);
+
+  // Kebab menu & Resources Modal
+  protected activeDropdown = signal<string | null>(null);
+  protected selectedDriveForResources = signal<{ id: string; title: string } | null>(null);
 
   // Stats for Approved State
   protected activeDrivesCount = signal<number>(0);
@@ -77,7 +91,7 @@ export class RecruiterDashboardComponent implements OnInit {
     };
   });
 
-  // Create Drive Modal / Form placeholder
+  // Create/Edit Drive Modal / Form state
   protected isCreateModalOpen = signal<boolean>(false);
   
   // Applicant List Modal state
@@ -210,14 +224,32 @@ export class RecruiterDashboardComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
-  // Create Drive Handler
+  // Create / Edit Drive Handlers
   protected openCreateModal(): void {
+    this.editingDriveId.set(null);
+    this.resetForm();
+    this.errorMessage.set(null);
+    this.isCreateModalOpen.set(true);
+  }
+
+  protected openEditModal(drive: DriveItem): void {
+    this.editingDriveId.set(drive._id);
+    this.newDriveTitle.set(drive.title || '');
+    this.newDriveDesc.set(drive.description || '');
+    this.newDriveCTC.set(drive.ctc || 1200000);
+    this.newDriveMinCGPA.set(drive.minCGPA || 7.0);
+    this.newDriveMaxBacklogs.set(drive.maxBacklogs || 0);
+    this.newDriveDeadline.set(drive.applicationDeadline ? new Date(drive.applicationDeadline).toISOString().split('T')[0] : '');
+    this.selectedBranches.set(drive.eligibleBranches || ['CSE', 'IT', 'ECE']);
+    this.newDriveHasAptitude.set(!!drive.hasAptitudeTest);
+    this.newDriveHasGD.set(!!drive.hasGD);
     this.errorMessage.set(null);
     this.isCreateModalOpen.set(true);
   }
 
   protected closeCreateModal(): void {
     this.isCreateModalOpen.set(false);
+    this.editingDriveId.set(null);
   }
 
   private resetForm(): void {
@@ -232,6 +264,22 @@ export class RecruiterDashboardComponent implements OnInit {
     this.newDriveHasGD.set(false);
   }
 
+  protected getMeaningfulError(val: string, fieldName: 'title' | 'description' = 'title'): string | null {
+    if (!val || !val.trim()) return null;
+    const control = new FormControl(val);
+    const errors = meaningfulTextValidator(control);
+    if (!errors) return null;
+    if (errors['tooFewLetters']) return 'Please enter at least 2 alphabetic characters.';
+    if (errors['noVowel']) {
+      return fieldName === 'description' 
+        ? 'Please enter a valid, meaningful job description.' 
+        : "Please enter a meaningful job title (e.g., 'Cloud Support Associate').";
+    }
+    if (errors['keyboardMash']) return 'Please enter a valid, meaningful text without keyboard mash (e.g., asdfghjkl).';
+    if (errors['repeatingChars']) return "Please avoid repeating characters (e.g., 'aaaa').";
+    return null;
+  }
+
   protected isFormInvalid(): boolean {
     const title = this.newDriveTitle()?.trim() || '';
     const desc = this.newDriveDesc()?.trim() || '';
@@ -241,8 +289,8 @@ export class RecruiterDashboardComponent implements OnInit {
     const deadline = this.newDriveDeadline();
     const branches = this.selectedBranches();
 
-    if (!title || title.length < 3) return true;
-    if (!desc || desc.length < 10) return true;
+    if (!title || title.length < 3 || !!this.getMeaningfulError(title, 'title')) return true;
+    if (!desc || desc.length < 10 || !!this.getMeaningfulError(desc, 'description')) return true;
     if (!ctc || ctc < 10000) return true;
     if (!deadline || deadline < this.todayDate) return true;
     if (minCGPA !== undefined && minCGPA !== null && (minCGPA < 0 || minCGPA > 10)) return true;
@@ -271,25 +319,50 @@ export class RecruiterDashboardComponent implements OnInit {
       applicationDeadline: this.newDriveDeadline(),
       hasAptitudeTest: this.newDriveHasAptitude(),
       hasGD: this.newDriveHasGD(),
-      status: 'Open',
     };
 
-    this.recruiterService.createDrive(payload).subscribe({
-      next: () => {
+    const isEdit = !!this.editingDriveId();
+    const action$ = isEdit
+      ? this.recruiterService.updateDrive(this.editingDriveId()!, payload)
+      : this.recruiterService.createDrive(payload);
+
+    action$.subscribe({
+      next: (res) => {
         this.isSubmitting.set(false);
         this.closeCreateModal();
         this.resetForm();
-        this.successMessage.set('Placement drive published successfully!');
+        this.successMessage.set(
+          isEdit 
+            ? 'Drive updated successfully!'
+            : '✅ Drive submitted for TPO approval. You will be notified once it\'s live.'
+        );
         this.fetchDrives();
         setTimeout(() => {
           this.successMessage.set(null);
-        }, 4000);
+        }, 10000);
       },
       error: (err) => {
-        console.error('Create drive error:', err);
+        console.error('Submit drive error:', err);
         this.isSubmitting.set(false);
-        this.errorMessage.set(err.error?.message || 'Failed to publish the job drive. Please try again.');
+        this.errorMessage.set(err.error?.message || 'Failed to submit the job drive. Please try again.');
       },
+    });
+  }
+
+  protected resubmitDrive(driveId: string): void {
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    this.recruiterService.resubmitDrive(driveId).subscribe({
+      next: (res) => {
+        this.isSubmitting.set(false);
+        this.successMessage.set('✅ Drive resubmitted for TPO approval.');
+        this.fetchDrives();
+        setTimeout(() => this.successMessage.set(null), 10000);
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        this.errorMessage.set(err.error?.message || 'Failed to resubmit drive.');
+      }
     });
   }
 
@@ -336,5 +409,18 @@ export class RecruiterDashboardComponent implements OnInit {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  }
+
+  protected toggleDropdown(driveId: string): void {
+    this.activeDropdown.update((val) => (val === driveId ? null : driveId));
+  }
+
+  protected openResourceManager(driveId: string, driveTitle: string): void {
+    this.activeDropdown.set(null); // Close the dropdown menu
+    this.selectedDriveForResources.set({ id: driveId, title: driveTitle });
+  }
+
+  protected closeResourceManager(): void {
+    this.selectedDriveForResources.set(null);
   }
 }

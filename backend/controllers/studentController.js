@@ -6,6 +6,7 @@ const User = require("../models/User");
 const Recruiter = require("../models/Recruiter");
 const aiService = require("../services/aiService");
 const socketService = require("../services/socketService");
+const { getStudentPlacementStatus } = require("../utils/studentStatus");
 
 const createStudentProfile = async (req, res) => {
   try {
@@ -353,6 +354,8 @@ const getStudentApplications = async (req, res) => {
       return res.status(404).json({ message: "Student profile not found" });
     }
 
+    const placementStatus = await getStudentPlacementStatus(profile._id);
+
     const applications = await Application.find({ studentId: profile._id })
       .populate("driveId")
       .sort({ createdAt: -1 });
@@ -377,7 +380,11 @@ const getStudentApplications = async (req, res) => {
     });
 
     return res.status(200).json({
+      success: true,
       applications: appsWithCompany,
+      isPlaced: profile.isPlaced || placementStatus.isPlaced,
+      placedCompany: placementStatus.companyName,
+      placedDriveTitle: placementStatus.driveTitle,
     });
   } catch (error) {
     return res.status(500).json({
@@ -459,6 +466,9 @@ const getStudentSchedule = async (req, res) => {
       });
     }
 
+    const placementStatus = await getStudentPlacementStatus(student._id);
+    const isPlaced = student.isPlaced || placementStatus.isPlaced;
+
     const rawSchedules = await Schedule.find({ studentId: student._id })
       .populate({
         path: "driveId",
@@ -481,6 +491,12 @@ const getStudentSchedule = async (req, res) => {
 
         let schStatus = sch.status;
         const app = sch.applicationId;
+
+        let isFrozen = false;
+        if (isPlaced && app && app.status !== "Placed" && app.status !== "Offer Accepted" && app.offer?.status !== "Accepted") {
+          isFrozen = true;
+        }
+
         if (app && schStatus !== "Completed") {
           if (sch.eventType === "Aptitude" && (app.aptitude?.status === "Passed" || app.aptitude?.status === "Failed" || (app.aptitude?.score !== null && app.aptitude?.score !== undefined) || app.status === "Aptitude Completed")) {
             schStatus = "Completed";
@@ -503,6 +519,7 @@ const getStudentSchedule = async (req, res) => {
           location: sch.location,
           meetingUrl: sch.meetingUrl,
           status: schStatus,
+          isFrozen,
           drive: {
             title: sch.driveId ? sch.driveId.title : "Placement Drive",
             companyName,
@@ -535,6 +552,9 @@ const getStudentSchedule = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      isPlaced,
+      placedCompany: placementStatus.companyName,
+      placedDriveTitle: placementStatus.driveTitle,
       data: {
         currently,
         upcoming,
@@ -743,6 +763,55 @@ const getOfferPdf = async (req, res) => {
   }
 };
 
+const getPreparationResources = async (req, res) => {
+  try {
+    const { driveId } = req.params;
+    const JobDrive = require("../models/JobDrive");
+    const Recruiter = require("../models/Recruiter");
+    const PastQuestion = require("../models/PastQuestion");
+
+    const drive = await JobDrive.findById(driveId);
+    if (!drive) {
+      return res.status(404).json({ success: false, message: "Job drive not found" });
+    }
+
+    const recruiter = await Recruiter.findOne({ userId: drive.recruiterId });
+    if (!recruiter) {
+      return res.status(404).json({ success: false, message: "Recruiter profile not found" });
+    }
+
+    const attachments = (drive.attachments || []).map((att) => ({
+      fileId: att.gridFileId,
+      fileName: att.fileName,
+      fileSize: att.fileSize,
+      uploadDate: att.uploadedAt,
+    }));
+
+    const pastQuestions = await PastQuestion.find({
+      companyName: { $regex: new RegExp(`^${recruiter.companyName.trim()}$`, "i") },
+    });
+
+    const formattedQuestions = pastQuestions.map((q) => ({
+      question: q.question,
+      questionType: q.questionType,
+      year: q.year,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      driveTitle: drive.title,
+      attachments,
+      pastQuestions: formattedQuestions,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get preparation resources",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createStudentProfile,
   getStudentProfile,
@@ -757,4 +826,5 @@ module.exports = {
   declineOffer,
   getOfferDetails,
   getOfferPdf,
+  getPreparationResources,
 };

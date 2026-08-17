@@ -400,3 +400,20 @@
 .btn-view-full-offer:hover {
   background: var(--secondary);
 }
+
+/* ─── Inline accept confirmation bar ────────────────────────────────────── */
+.offer-accept-confirm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.offer-accept-confirm__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--on-surface, #091d2e);
+  flex: 1;
+  min-width: 180px;
+}

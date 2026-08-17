@@ -7,7 +7,7 @@ import {
   inject,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import Lenis from 'lenis';
+import { SmoothScrollService } from '../../services/smooth-scroll.service';
 
 @Component({
   selector: 'app-landing-page',
@@ -18,15 +18,14 @@ import Lenis from 'lenis';
 })
 export class LandingPage implements AfterViewInit, OnDestroy {
   private readonly elRef = inject(ElementRef);
+  private readonly smoothScroll = inject(SmoothScrollService);
 
   protected headerScrolled = false;
   protected mobileMenuOpen = false;
   protected activeSection = '';
 
-  private lenis?: Lenis;
   private revealObserver?: IntersectionObserver;
   private spyObserver?: IntersectionObserver;
-  private rafId?: number;
 
   @HostListener('window:scroll')
   onScroll(): void {
@@ -34,24 +33,8 @@ export class LandingPage implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.initLenis();
     this.initReveal();
     this.initScrollSpy();
-  }
-
-  private initLenis(): void {
-    this.lenis = new Lenis({
-      duration: 1.2,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: 'vertical',
-      smoothWheel: true,
-    });
-
-    const raf = (time: number) => {
-      this.lenis?.raf(time);
-      this.rafId = requestAnimationFrame(raf);
-    };
-    this.rafId = requestAnimationFrame(raf);
   }
 
   private initReveal(): void {
@@ -96,13 +79,15 @@ export class LandingPage implements AfterViewInit, OnDestroy {
 
   protected scrollToSection(id: string): void {
     this.closeMobileMenu();
+    if (!id) {
+      this.smoothScroll.scrollTo(0, { duration: 1.2 });
+      return;
+    }
     const el = document.getElementById(id);
-    if (el) this.lenis?.scrollTo(el, { offset: -64, duration: 1.4 });
+    if (el) this.smoothScroll.scrollTo(el, { offset: -64, duration: 1.4 });
   }
 
   ngOnDestroy(): void {
-    if (this.rafId) cancelAnimationFrame(this.rafId);
-    this.lenis?.destroy();
     this.revealObserver?.disconnect();
     this.spyObserver?.disconnect();
   }

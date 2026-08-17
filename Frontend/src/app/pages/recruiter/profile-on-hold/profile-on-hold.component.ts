@@ -114,6 +114,7 @@ export class ProfileOnHoldComponent implements OnInit {
   protected submitEdit(): void {
     if (!this.isFormValid) {
       this.errorMessage.set('Please satisfy all validation criteria in the checklist below before submitting.');
+      setTimeout(() => this.errorMessage.set(null), 10000);
       return;
     }
 

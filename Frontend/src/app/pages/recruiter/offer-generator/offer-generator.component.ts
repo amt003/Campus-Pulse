@@ -265,6 +265,7 @@ export class OfferGeneratorComponent implements OnInit, AfterViewInit {
           console.error('Upload offer error:', err);
           this.isSubmitting.set(false);
           this.errorMessage.set(err.error?.message || 'Failed to upload offer letter to server.');
+          setTimeout(() => this.errorMessage.set(null), 10000);
         }
       });
 
@@ -272,6 +273,7 @@ export class OfferGeneratorComponent implements OnInit, AfterViewInit {
       console.error('PDF Generation Error:', err);
       this.isSubmitting.set(false);
       this.errorMessage.set('Failed to generate PDF document: ' + err.message);
+      setTimeout(() => this.errorMessage.set(null), 10000);
     }
   }
 

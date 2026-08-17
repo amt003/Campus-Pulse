@@ -24,9 +24,24 @@ const {
   getOfferTemplateData,
   bulkUploadAptitudeScores,
   getRecruiterAnalytics,
+  getDriveAttachments,
+  uploadDriveAttachment,
+  deleteDriveAttachment,
+  downloadDriveAttachment,
+  getAllRecruiterApplications,
+  getAllRecruiterOffers,
+  getRecruiterOfferPdf,
+  resubmitDriveForApproval,
 } = require("../controllers/recruiterController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const { uploadImage, uploadOffer } = require("../middleware/uploadMiddleware");
+const multer = require("multer");
+const memoryUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 20 * 1024 * 1024,
+  },
+});
 
 const router = express.Router();
 
@@ -37,7 +52,12 @@ router.get("/analytics", getRecruiterAnalytics);
 router.put("/profile", uploadImage.single("logo"), updateRecruiterProfile);
 router.post("/request-reapproval", requestReapproval);
 router.post("/drive", createJobDrive);
+router.post("/drive/:driveId/resubmit", resubmitDriveForApproval);
 router.get("/drives", getRecruiterDrives);
+router.get("/all-applications", getAllRecruiterApplications);
+router.get("/all-offers", getAllRecruiterOffers);
+router.get("/offer/:applicationId/pdf", getRecruiterOfferPdf);
+router.get("/offer/download/:applicationId", getRecruiterOfferPdf);
 router.get("/drive/:id", getJobDriveById);
 router.put("/drive/:id", updateJobDrive);
 router.put("/drive/:id/close", closeJobDrive);
@@ -54,6 +74,12 @@ router.put("/result/interview", declareInterviewResults);
 router.post("/schedule/:driveId", scheduleStage);
 router.post("/schedule", scheduleEvent);
 router.post("/check-availability", getAvailableStudentsForSlot);
+
+// Attachments / Preparation Resources
+router.get("/drive/:driveId/attachments", getDriveAttachments);
+router.post("/drive/:driveId/attachment", memoryUpload.single("file"), uploadDriveAttachment);
+router.delete("/drive/:driveId/attachment/:fileId", deleteDriveAttachment);
+router.get("/drive/attachment/download/:fileId", downloadDriveAttachment);
 
 module.exports = router;
 

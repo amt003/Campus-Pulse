@@ -97,7 +97,9 @@ const getDashboardAnalytics = async (req, res) => {
       pendingApprovals,
     ] = await Promise.all([
       Student.countDocuments(),
-      Application.distinct("studentId", { status: "Placed" }),
+      Application.distinct("studentId", {
+        $or: [{ status: { $in: ["Placed", "Offer Accepted"] } }, { "offer.status": "Accepted" }]
+      }),
       JobDrive.countDocuments({ status: "Open" }),
       Recruiter.countDocuments({
         isApproved: false,
@@ -137,10 +139,28 @@ const getPlacementFunnel = async (req, res) => {
       totalPlaced,
     ] = await Promise.all([
       Application.countDocuments(),
-      Application.countDocuments({ "aptitude.status": { $in: ["Passed", "Completed"] } }),
-      Application.countDocuments({ "gd.status": { $in: ["Shortlisted", "Completed"] } }),
-      Application.countDocuments({ "interview.status": "Completed" }),
-      Application.countDocuments({ status: "Placed" }),
+      Application.countDocuments({
+        $or: [
+          { "aptitude.status": { $in: ["Passed", "Completed"] } },
+          { status: { $in: ["Aptitude Completed", "GD Scheduled", "GD Completed", "Interview Scheduled", "Interview Completed", "Selected", "Offer Sent", "Offer Accepted", "Placed"] } }
+        ]
+      }),
+      Application.countDocuments({
+        $or: [
+          { "gd.status": { $in: ["Shortlisted", "Completed"] } },
+          { status: { $in: ["GD Completed", "Interview Scheduled", "Interview Completed", "Selected", "Offer Sent", "Offer Accepted", "Placed"] } }
+        ]
+      }),
+      Application.countDocuments({
+        $or: [
+          { "interview.status": "Completed" },
+          { "interview.result": "Selected" },
+          { status: { $in: ["Selected", "Offer Sent", "Offer Accepted", "Placed"] } }
+        ]
+      }),
+      Application.countDocuments({
+        $or: [{ status: { $in: ["Placed", "Offer Accepted"] } }, { "offer.status": "Accepted" }]
+      }),
     ]);
 
     const funnel = [
@@ -740,6 +760,167 @@ const reverifyRecruiter = async (req, res) => {
   }
 };
 
+const getPendingDrives = async (req, res) => {
+  try {
+    const drives = await JobDrive.find({ status: "Pending" })
+      .populate("recruiterId", "name email companyName officialEmail website phone")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      drives,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch pending drives",
+      error: error.message,
+    });
+  }
+};
+
+const approveDrive = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const drive = await JobDrive.findById(id).populate("recruiterId");
+
+    if (!drive) {
+      return res.status(404).json({ success: false, message: "Drive not found" });
+    }
+
+    if (drive.status !== "Pending") {
+      return res.status(400).json({
+        success: false,
+        message: `Only pending drives can be approved (current status: ${drive.status}).`,
+      });
+    }
+
+    drive.status = "Open";
+    drive.tpoFeedback = null;
+    await drive.save();
+
+    if (drive.recruiterId && drive.recruiterId._id) {
+      await socketService.sendRealTimeNotification(drive.recruiterId._id, {
+        title: "Job Drive Approved 🎉",
+        message: `Your job drive "${drive.title}" has been approved by the TPO and is now live for students to apply!`,
+        type: "success",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Drive approved successfully! Students can now apply.",
+      drive,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to approve job drive",
+      error: error.message,
+    });
+  }
+};
+
+const rejectDrive = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    if (!reason || typeof reason !== "string" || reason.trim().length < 10) {
+      return res.status(400).json({
+        success: false,
+        message: "A detailed rejection reason is required (minimum 10 characters).",
+      });
+    }
+
+    const drive = await JobDrive.findById(id).populate("recruiterId");
+    if (!drive) {
+      return res.status(404).json({ success: false, message: "Drive not found" });
+    }
+
+    if (drive.status !== "Pending") {
+      return res.status(400).json({
+        success: false,
+        message: `Only pending drives can be rejected (current status: ${drive.status}).`,
+      });
+    }
+
+    drive.status = "Rejected";
+    drive.tpoFeedback = reason.trim();
+    await drive.save();
+
+    if (drive.recruiterId && drive.recruiterId._id) {
+      await socketService.sendRealTimeNotification(drive.recruiterId._id, {
+        title: "Job Drive Rejected ❌",
+        message: `Your job drive "${drive.title}" was rejected by TPO: ${reason.trim()}`,
+        type: "error",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Drive rejected. Recruiter has been notified.",
+      drive,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to reject job drive",
+      error: error.message,
+    });
+  }
+};
+
+const holdDrive = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    if (!reason || typeof reason !== "string" || reason.trim().length < 10) {
+      return res.status(400).json({
+        success: false,
+        message: "A detailed feedback reason is required when putting a drive on hold (minimum 10 characters).",
+      });
+    }
+
+    const drive = await JobDrive.findById(id).populate("recruiterId");
+    if (!drive) {
+      return res.status(404).json({ success: false, message: "Drive not found" });
+    }
+
+    if (drive.status !== "Pending") {
+      return res.status(400).json({
+        success: false,
+        message: `Only pending drives can be placed on hold (current status: ${drive.status}).`,
+      });
+    }
+
+    drive.status = "OnHold";
+    drive.tpoFeedback = reason.trim();
+    await drive.save();
+
+    if (drive.recruiterId && drive.recruiterId._id) {
+      await socketService.sendRealTimeNotification(drive.recruiterId._id, {
+        title: "Job Drive Placed On Hold ⏸️",
+        message: `Your job drive "${drive.title}" requires revisions. TPO Feedback: ${reason.trim()}`,
+        type: "warning",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Drive placed on hold. Recruiter can edit and resubmit.",
+      drive,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to place job drive on hold",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getStudentsList,
   getDashboardAnalytics,
@@ -758,5 +939,9 @@ module.exports = {
   toggleRecruiterStatus,
   reVerifyRecruiter,
   reverifyRecruiter,
+  getPendingDrives,
+  approveDrive,
+  rejectDrive,
+  holdDrive,
 };
 

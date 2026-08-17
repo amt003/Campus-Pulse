@@ -159,7 +159,8 @@ const getDriveApplications = async (req, res) => {
             xai: app.xai,
             aptitude: app.aptitude,
             gd: app.gd,
-            interview: app.interview
+            interview: app.interview,
+            offer: app.offer
           };
         })
       }
@@ -254,7 +255,6 @@ const createJobDrive = async (req, res) => {
       applicationDeadline,
       hasAptitudeTest,
       hasGD,
-      status,
     } = req.body;
 
     if (
@@ -282,12 +282,14 @@ const createJobDrive = async (req, res) => {
       applicationDeadline,
       hasAptitudeTest: Boolean(hasAptitudeTest),
       hasGD: Boolean(hasGD),
-      status: status || "Draft",
+      status: "Pending",
+      submittedForApprovalAt: new Date(),
+      tpoFeedback: null,
     });
 
     return res.status(201).json({
       success: true,
-      message: "Job drive created successfully",
+      message: "✅ Drive submitted for TPO approval. You will be notified once it's live.",
       drive: jobDrive,
     });
   } catch (error) {
@@ -369,6 +371,13 @@ const updateJobDrive = async (req, res) => {
       });
     }
 
+    if (drive.status !== "OnHold" && drive.status !== "Draft" && drive.status !== "Open") {
+      return res.status(400).json({
+        success: false,
+        message: `Editing is only allowed when drive status is On Hold or Draft (current status: ${drive.status}).`,
+      });
+    }
+
     const allowedFields = [
       "title",
       "description",
@@ -379,7 +388,6 @@ const updateJobDrive = async (req, res) => {
       "applicationDeadline",
       "hasAptitudeTest",
       "hasGD",
-      "status",
     ];
 
     allowedFields.forEach((field) => {
@@ -388,6 +396,7 @@ const updateJobDrive = async (req, res) => {
       }
     });
 
+    // If drive is OnHold, keep status as OnHold (do not auto-resubmit)
     await drive.save();
 
     return res.status(200).json({
@@ -399,6 +408,49 @@ const updateJobDrive = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to update job drive",
+      error: error.message,
+    });
+  }
+};
+
+const resubmitDriveForApproval = async (req, res) => {
+  try {
+    const { driveId } = req.params;
+    const drive = await JobDrive.findOne({
+      _id: driveId,
+      recruiterId: req.user._id,
+    });
+
+    if (!drive) {
+      return res.status(404).json({
+        success: false,
+        message: "Job drive not found or not owned by recruiter",
+      });
+    }
+
+    if (drive.status !== "OnHold" && drive.status !== "Draft") {
+      return res.status(400).json({
+        success: false,
+        message: `Only drives currently On Hold or Draft can be resubmitted for approval (current status: ${drive.status}).`,
+      });
+    }
+
+    drive.status = "Pending";
+    drive.tpoFeedback = null;
+    drive.submittedForApprovalAt = new Date();
+    drive.resubmittedCount = (drive.resubmittedCount || 0) + 1;
+
+    await drive.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Drive resubmitted for TPO approval.",
+      drive,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to resubmit job drive",
       error: error.message,
     });
   }
@@ -1845,6 +1897,286 @@ const getRecruiterAnalytics = async (req, res) => {
   }
 };
 
+const getDriveAttachments = async (req, res) => {
+  try {
+    const { driveId } = req.params;
+    const JobDrive = require("../models/JobDrive");
+    const drive = await JobDrive.findById(driveId);
+    if (!drive) {
+      return res.status(404).json({ success: false, message: "Job drive not found" });
+    }
+    return res.status(200).json({ success: true, attachments: drive.attachments || [] });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to get attachments", error: error.message });
+  }
+};
+
+const uploadDriveAttachment = async (req, res) => {
+  try {
+    const { driveId } = req.params;
+    const JobDrive = require("../models/JobDrive");
+    const drive = await JobDrive.findById(driveId);
+    if (!drive) {
+      return res.status(404).json({ success: false, message: "Job drive not found" });
+    }
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+
+    const { GridFSBucket } = require("mongodb");
+    const mongoose = require("mongoose");
+    const bucket = new GridFSBucket(mongoose.connection.db, { bucketName: "resources" });
+    
+    const uploadStream = bucket.openUploadStream(req.file.originalname, {
+      contentType: req.file.mimetype,
+    });
+    
+    uploadStream.end(req.file.buffer);
+    
+    uploadStream.on("finish", async () => {
+      const fileId = uploadStream.id;
+      if (!drive.attachments) {
+        drive.attachments = [];
+      }
+      const newAttachment = {
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+        fileType: req.file.mimetype,
+        gridFileId: fileId,
+        uploadedAt: new Date()
+      };
+      drive.attachments.push(newAttachment);
+      await drive.save();
+      return res.status(200).json({
+        success: true,
+        message: "Resource uploaded successfully",
+        attachment: newAttachment
+      });
+    });
+    
+    uploadStream.on("error", (err) => {
+      return res.status(500).json({ success: false, message: "GridFS upload stream failed", error: err.message });
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to upload resource", error: error.message });
+  }
+};
+
+const deleteDriveAttachment = async (req, res) => {
+  try {
+    const { driveId, fileId } = req.params;
+    const JobDrive = require("../models/JobDrive");
+    const drive = await JobDrive.findById(driveId);
+    if (!drive) {
+      return res.status(404).json({ success: false, message: "Job drive not found" });
+    }
+
+    const { GridFSBucket, ObjectId } = require("mongodb");
+    const mongoose = require("mongoose");
+    const bucket = new GridFSBucket(mongoose.connection.db, { bucketName: "resources" });
+    
+    // Remove from GridFS if it exists
+    try {
+      await bucket.delete(new ObjectId(fileId));
+    } catch (err) {
+      console.warn("File did not exist in GridFS, continuing deletion from document:", err.message);
+    }
+    
+    // Pull from drive.attachments array
+    drive.attachments = drive.attachments.filter(att => att.gridFileId.toString() !== fileId);
+    await drive.save();
+    
+    return res.status(200).json({ success: true, message: "Resource deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to delete resource", error: error.message });
+  }
+};
+
+const downloadDriveAttachment = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const { GridFSBucket, ObjectId } = require("mongodb");
+    const mongoose = require("mongoose");
+    const bucket = new GridFSBucket(mongoose.connection.db, { bucketName: "resources" });
+    
+    const fileObjectId = new ObjectId(fileId);
+    const files = await mongoose.connection.db.collection("resources.files").find({ _id: fileObjectId }).toArray();
+    if (!files || files.length === 0) {
+      return res.status(404).json({ success: false, message: "Attachment not found" });
+    }
+    
+    res.set({
+      "Content-Type": files[0].contentType || "application/octet-stream",
+      "Content-Disposition": `attachment; filename="${files[0].filename}"`,
+    });
+    
+    const downloadStream = bucket.openDownloadStream(fileObjectId);
+    downloadStream.pipe(res);
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Download failed", error: error.message });
+  }
+};
+
+const getAllRecruiterApplications = async (req, res) => {
+  try {
+    const drives = await JobDrive.find({ recruiterId: req.user._id }).select("_id title companyName ctc");
+    const driveIds = drives.map((d) => d._id);
+
+    const applications = await Application.find({ driveId: { $in: driveIds } })
+      .populate({
+        path: "studentId",
+        populate: {
+          path: "userId",
+          select: "name email phone",
+        },
+      })
+      .populate("driveId", "title companyName ctc status recruiterId")
+      .sort({ createdAt: -1 });
+
+    const studentIds = applications.map((app) => app.studentId?._id).filter(Boolean);
+
+    // Find all accepted offers / placement records for these students
+    const acceptedApps = await Application.find({
+      studentId: { $in: studentIds },
+      $or: [
+        { status: { $in: ["Placed", "Offer Accepted"] } },
+        { "offer.status": "Accepted" }
+      ]
+    }).populate("driveId");
+
+    const recruiterUserIds = acceptedApps.map((p) => p.driveId?.recruiterId).filter(Boolean);
+    const recruiters = await Recruiter.find({ userId: { $in: recruiterUserIds } });
+    const recruiterMap = new Map();
+    recruiters.forEach((r) => {
+      recruiterMap.set(r.userId.toString(), r.companyName);
+    });
+
+    const acceptedMap = new Map();
+    acceptedApps.forEach((p) => {
+      const recUserId = p.driveId?.recruiterId?.toString();
+      const compName = recUserId ? recruiterMap.get(recUserId) : null;
+      acceptedMap.set(p.studentId._id.toString(), {
+        driveId: p.driveId?._id?.toString(),
+        companyName: compName || "another company",
+        title: p.driveId?.title || "Placement Drive"
+      });
+    });
+
+    const formattedApplications = applications.map((app) => {
+      const appObj = app.toObject();
+      const studentIdStr = app.studentId?._id?.toString();
+      const placementInfo = studentIdStr ? acceptedMap.get(studentIdStr) : null;
+
+      if (placementInfo) {
+        if (placementInfo.driveId === app.driveId?._id?.toString()) {
+          appObj.isPlacedInThisDrive = true;
+          appObj.displayStatus = "Offer Accepted 🎉";
+        } else {
+          appObj.isPlacedElsewhere = true;
+          appObj.isPlacedGlobally = true;
+          appObj.isPlaced = true;
+          appObj.placementCompany = placementInfo.companyName;
+          appObj.displayStatus = `Placed at ${placementInfo.companyName}`;
+        }
+      }
+
+      return appObj;
+    });
+
+    return res.status(200).json({
+      success: true,
+      applications: formattedApplications,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch recruiter applications",
+      error: error.message,
+    });
+  }
+};
+
+const getAllRecruiterOffers = async (req, res) => {
+  try {
+    const drives = await JobDrive.find({ recruiterId: req.user._id }).select("_id title companyName ctc");
+    const driveIds = drives.map((d) => d._id);
+
+    const applications = await Application.find({
+      driveId: { $in: driveIds },
+      "offer.status": { $exists: true, $ne: "Not Sent" },
+    })
+      .populate({
+        path: "studentId",
+        populate: {
+          path: "userId",
+          select: "name email phone",
+        },
+      })
+      .populate("driveId", "title companyName ctc")
+      .sort({ "offer.uploadedDate": -1, createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      offers: applications,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch offer letters",
+      error: error.message,
+    });
+  }
+};
+
+const getRecruiterOfferPdf = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const fs = require("fs");
+    const path = require("path");
+
+    const application = await Application.findById(applicationId).populate("driveId");
+    if (!application) {
+      return res.status(404).json({ success: false, message: "Application not found" });
+    }
+
+    const recruiter = await Recruiter.findOne({ userId: req.user._id });
+    if (!recruiter) {
+      return res.status(403).json({ success: false, message: "Recruiter profile not found" });
+    }
+
+    // Security check: verify recruiter owns this drive
+    if (
+      application.driveId &&
+      application.driveId.recruiterId.toString() !== recruiter._id.toString() &&
+      application.driveId.recruiterId.toString() !== req.user._id.toString()
+    ) {
+      return res.status(403).json({ success: false, message: "You are not authorized to download offer letters for this drive" });
+    }
+
+    if (!application.offer || (!application.offer.filePath && !application.offer.fileId)) {
+      return res.status(404).json({ success: false, message: "Offer letter file not found" });
+    }
+
+    const relativePath = application.offer.filePath || `/uploads/offers/${application.offer.fileId}`;
+    const absolutePath = path.join(__dirname, "..", relativePath);
+
+    if (!fs.existsSync(absolutePath)) {
+      return res.status(404).json({ success: false, message: "Offer letter file missing on server disk" });
+    }
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="${application.offer.fileName || 'OfferLetter.pdf'}"`);
+
+    return res.sendFile(absolutePath);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve offer PDF",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getRecruiterProfile,
   getDriveApplications,
@@ -1870,5 +2202,13 @@ module.exports = {
   getOfferTemplateData,
   bulkUploadAptitudeScores,
   getRecruiterAnalytics,
+  getDriveAttachments,
+  uploadDriveAttachment,
+  deleteDriveAttachment,
+  downloadDriveAttachment,
+  getAllRecruiterApplications,
+  getAllRecruiterOffers,
+  getRecruiterOfferPdf,
+  resubmitDriveForApproval,
 };
 

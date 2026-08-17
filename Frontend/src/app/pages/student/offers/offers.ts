@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { StudentService } from '../../../services/student.service';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-student-offers',
@@ -17,6 +18,7 @@ export class StudentOffersComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly toastService = inject(ToastService);
 
   protected isSingleOfferMode = signal<boolean>(false);
   protected currentApplicationId = signal<string | null>(null);
@@ -30,6 +32,9 @@ export class StudentOffersComponent implements OnInit {
   protected isLoading = signal<boolean>(true);
   protected errorMessage = signal<string>('');
   protected successMessage = signal<string>('');
+
+  // Inline accept confirmation (replaces native confirm())
+  protected isConfirmingAccept = signal<boolean>(false);
 
   // Decline Modal States
   protected isDeclineModalOpen = signal<boolean>(false);
@@ -72,12 +77,18 @@ export class StudentOffersComponent implements OnInit {
           this.safePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(pdfApiUrl);
         } else {
           this.errorMessage.set('Offer letter details not found.');
+          this.toastService.error('Offer not found', 'Offer letter details could not be loaded');
         }
         this.isLoading.set(false);
       },
       error: (err) => {
         console.error('Failed to load offer details:', err);
-        this.errorMessage.set(err.error?.message || 'Failed to fetch offer letter details.');
+        const errMsg = err.error?.message || 'Failed to fetch offer letter details.';
+        this.errorMessage.set(errMsg);
+        this.toastService.error(
+          'Failed to load offer',
+          err.error?.message || 'Check your connection and try again'
+        );
         this.isLoading.set(false);
       }
     });
@@ -111,25 +122,38 @@ export class StudentOffersComponent implements OnInit {
     const appId = this.currentApplicationId();
     if (!appId) return;
 
-    if (!confirm('Are you sure you want to ACCEPT this job offer? By accepting, your placement status will be updated to Placed 🎉.')) {
+    if (!this.isConfirmingAccept()) {
+      // First click: ask for inline confirmation
+      this.isConfirmingAccept.set(true);
       return;
     }
 
+    // Second click: confirmed
+    this.isConfirmingAccept.set(false);
     this.isSubmittingAction.set(true);
-    this.errorMessage.set('');
-    this.successMessage.set('');
 
     this.studentService.acceptOffer(appId).subscribe({
       next: (res) => {
         this.isSubmittingAction.set(false);
-        this.successMessage.set('Congratulations! Job offer accepted successfully. You are now PLACED! 🎉');
+        const company = this.driveDetails()?.company ?? this.driveDetails()?.title ?? '';
+        this.toastService.success(
+          'Offer accepted',
+          company ? `Placement status updated — ${company}` : 'Your placement status has been updated'
+        );
         this.loadSingleOffer(appId);
       },
       error: (err) => {
         this.isSubmittingAction.set(false);
-        this.errorMessage.set(err.error?.message || 'Failed to accept offer. Please try again.');
+        this.toastService.error(
+          'Offer acceptance failed',
+          err.error?.message || 'Try again or contact the placement cell'
+        );
       }
     });
+  }
+
+  protected cancelAcceptConfirm(): void {
+    this.isConfirmingAccept.set(false);
   }
 
   protected openDeclineModal(): void {
@@ -146,21 +170,24 @@ export class StudentOffersComponent implements OnInit {
     if (!appId) return;
 
     this.isSubmittingAction.set(true);
-    this.errorMessage.set('');
-    this.successMessage.set('');
-
     const reason = this.selectedDeclineReason();
 
     this.studentService.declineOffer(appId, reason).subscribe({
       next: (res) => {
         this.isSubmittingAction.set(false);
         this.closeDeclineModal();
-        this.successMessage.set('You have declined the job offer. The placement cell has been updated.');
+        this.toastService.info(
+          'Offer declined',
+          'The placement cell has been updated'
+        );
         this.loadSingleOffer(appId);
       },
       error: (err) => {
         this.isSubmittingAction.set(false);
-        this.errorMessage.set(err.error?.message || 'Failed to decline offer.');
+        this.toastService.error(
+          'Offer decline failed',
+          err.error?.message || 'Try again or contact the placement cell'
+        );
       }
     });
   }

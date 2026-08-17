@@ -148,7 +148,7 @@
         <div class="field-group">
           <div class="field-label-row">
             <label class="field-label" for="login-password">Password</label>
-            <a href="javascript:void(0)" (click)="openForgotModal()" class="forgot-link">Forgot password?</a>
+            <a routerLink="/forgot-password" class="forgot-link">Forgot password?</a>
           </div>
           <div class="field-wrap">
             <span class="field-icon material-symbols-outlined">lock</span>
@@ -301,8 +301,7 @@
       <!-- Footer text -->
       <p class="form-footer-note">
         By signing in, you agree to our
-        <a routerLink="/terms" class="form-inline-link">Terms of Service</a> and
-        <a routerLink="/privacy" class="form-inline-link">Privacy Policy</a>.
+        <a routerLink="/terms" class="form-inline-link">Terms & Conditions</a>.
       </p>
       @if (selectedRole() === 'recruiter') {
         <p class="form-footer-note">
@@ -312,9 +311,7 @@
       }
 
       <div class="footer-links">
-        <a routerLink="/terms">Terms of Service</a>
-        <span class="divider">|</span>
-        <a routerLink="/privacy">Privacy Policy</a>
+        <a routerLink="/terms">Terms & Conditions</a>
       </div>
 
     </div>

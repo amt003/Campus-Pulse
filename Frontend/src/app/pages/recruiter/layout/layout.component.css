@@ -1,8 +1,9 @@
 .layout-wrapper {
-  min-height: 100vh;
+  height: 100vh;
   background: #F8F9FA;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* Header */
@@ -158,7 +159,105 @@
   border-color: rgba(231, 76, 60, 0.2);
 }
 
-.layout-main {
+.app-layout-body {
   flex: 1;
+  height: calc(100vh - 70px);
+  display: flex;
+  overflow: hidden;
   width: 100%;
+}
+
+.main-content-scroll-wrapper {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: #F8F9FA;
+}
+
+/* ========================================================
+   RECRUITER SIDEBAR NAVIGATION
+   ======================================================== */
+.recruiter-sidebar {
+  width: 240px;
+  height: 100%;
+  overflow-y: auto;
+  background: white;
+  border-right: 1px solid #E5E8E8;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  gap: 8px;
+  flex-shrink: 0;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.recruiter-sidebar.collapsed {
+  width: 76px;
+  padding: 24px 10px;
+}
+
+.recruiter-sidebar.collapsed .sidebar-link {
+  justify-content: center;
+  padding: 12px;
+  gap: 0;
+}
+
+.recruiter-sidebar.collapsed .sidebar-link span:not(.material-symbols-outlined) {
+  display: none;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #5D6D7E;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-link:hover {
+  background: #F4F6F7;
+  color: #1A5276;
+}
+
+.sidebar-link.active-link {
+  background: #EBF5FB;
+  color: #1A5276;
+  font-weight: 750;
+}
+
+.sidebar-link span.material-symbols-outlined {
+  font-size: 20px;
+}
+
+.rec-main {
+  flex-grow: 1;
+  padding: 40px;
+  background: #F8F9FA;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .recruiter-sidebar {
+    width: 70px;
+    padding: 24px 8px;
+  }
+  .sidebar-link span:not(.material-symbols-outlined) {
+    display: none;
+  }
+  .sidebar-link {
+    justify-content: center;
+    padding: 12px;
+  }
 }

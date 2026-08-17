@@ -66,6 +66,24 @@ export class RecruiterService {
     });
   }
 
+  getAllApplications(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/all-applications`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  getAllOffers(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/all-offers`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  closeDrive(driveId: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/drive/${driveId}/close`, {}, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
   getDriveApplications(driveId: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/applications/${driveId}`, {
       headers: this.getAuthHeaders(),
@@ -181,6 +199,38 @@ export class RecruiterService {
 
   getAnalytics(): Observable<any> {
     return this.http.get(`${this.apiUrl}/analytics`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  getDriveAttachments(driveId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/drive/${driveId}/attachments`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  uploadDriveAttachment(driveId: string, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.apiUrl}/drive/${driveId}/attachment`, formData, {
+      headers: this.getMultipartHeaders(),
+    });
+  }
+
+  deleteDriveAttachment(driveId: string, fileId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/drive/${driveId}/attachment/${fileId}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  resubmitDrive(driveId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/drive/${driveId}/resubmit`, {}, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  updateDrive(driveId: string, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/drive/${driveId}`, data, {
       headers: this.getAuthHeaders(),
     });
   }

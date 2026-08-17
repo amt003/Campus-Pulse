@@ -185,13 +185,9 @@
 
       <!-- Drives Section Header -->
       <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid var(--border); padding-bottom: 10px; margin-bottom: 20px;">
-        <h3 style="font-size: 16px; font-weight: 800; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 8px;">
-          <span class="material-symbols-outlined" style="font-size: 20px; color: var(--secondary);">grid_view</span>
-          <span>Your Active Drives</span>
-        </h3>
-        <a style="font-size: 12px; font-weight: 700; color: var(--secondary); text-decoration: none; cursor: pointer;">View Archive</a>
+        <h3 style="margin: 0; font-size: 18px; font-weight: 850; color: var(--text-dark);">Active Recruitment Drives</h3>
       </div>
-
+      
       <!-- Empty State -->
       @if (drives().length === 0) {
         <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 48px; text-align: center; color: var(--text-muted); margin-bottom: 32px;">
@@ -220,14 +216,56 @@
                       <span style="background: rgba(39, 174, 96, 0.12); color: var(--success); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">
                         {{ (d.ctc / 100000).toFixed(1) }} LPA
                       </span>
-                      <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Full Time Role</span>
+                      @if (d.status === 'Open') {
+                        <span style="background: rgba(39, 174, 96, 0.15); color: #16a34a; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">✅ Open</span>
+                      } @else if (d.status === 'Pending') {
+                        <span style="background: #fef3c7; color: #d97706; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">⏳ Pending Approval</span>
+                      } @else if (d.status === 'OnHold') {
+                        <span style="background: #ffedd5; color: #c2410c; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">⏸️ On Hold</span>
+                      } @else if (d.status === 'Rejected') {
+                        <span style="background: #fee2e2; color: #dc2626; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">❌ Rejected</span>
+                      } @else {
+                        <span style="background: #f1f5f9; color: #64748b; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">🔒 Closed</span>
+                      }
                     </div>
                   </div>
                 </div>
-                <button style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
-                  <span class="material-symbols-outlined" style="font-size: 20px;">more_vert</span>
-                </button>
+                <div style="position: relative;" (click)="$event.stopPropagation()">
+                  <button (click)="toggleDropdown(d._id)" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">more_vert</span>
+                  </button>
+                  @if (activeDropdown() === d._id) {
+                    <div style="position: absolute; right: 0; top: 28px; background: white; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); padding: 6px 0; min-width: 160px; z-index: 1000;">
+                      <a (click)="openResourceManager(d._id, d.title)" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; color: var(--text-dark); text-decoration: none; cursor: pointer; font-size: 12.5px; font-weight: 650; text-align: left; transition: background 0.15s; width: 100%; box-sizing: border-box;">
+                        <span class="material-symbols-outlined" style="font-size: 16px; color: var(--primary);">attachment</span>
+                        <span>Manage Resources</span>
+                      </a>
+                    </div>
+                  }
+                </div>
               </div>
+
+              <!-- On Hold Feedback Banner -->
+              @if (d.status === 'OnHold') {
+                <div style="background: #fff8e1; border-top: 1px solid #ffe082; border-bottom: 1px solid #ffe082; padding: 12px 16px; font-size: 12.5px; color: #856404;">
+                  <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
+                    <span class="material-symbols-outlined" style="font-size: 18px; color: #b78103; margin-top: 1px;">error</span>
+                    <div>
+                      <strong>TPO Feedback:</strong> {{ d.tpoFeedback || 'Action required before drive can be published.' }}
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
+                    <button (click)="openEditModal(d)" style="background: #ffffff; border: 1px solid #d97706; color: #d97706; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                      <span class="material-symbols-outlined" style="font-size: 14px;">edit</span>
+                      <span>Edit Drive</span>
+                    </button>
+                    <button (click)="resubmitDrive(d._id)" style="background: #d97706; border: none; color: #ffffff; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                      <span class="material-symbols-outlined" style="font-size: 14px;">send</span>
+                      <span>Resubmit for Approval</span>
+                    </button>
+                  </div>
+                </div>
+              }
 
               <!-- Card Metrics Grid -->
               <div style="display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--border);">
@@ -416,6 +454,9 @@
             @if (titleRef.touched && titleRef.errors?.['minlength']) {
               <div class="error-msg">Job Title must be at least 3 characters.</div>
             }
+            @if (newDriveTitle() && getMeaningfulError(newDriveTitle(), 'title')) {
+              <div class="error-msg">{{ getMeaningfulError(newDriveTitle(), 'title') }}</div>
+            }
           </div>
           
           <div class="form-group col-span-2">
@@ -435,6 +476,9 @@
             }
             @if (descRef.touched && descRef.errors?.['minlength']) {
               <div class="error-msg">Description must be at least 10 characters long.</div>
+            }
+            @if (newDriveDesc() && getMeaningfulError(newDriveDesc(), 'description')) {
+              <div class="error-msg">{{ getMeaningfulError(newDriveDesc(), 'description') }}</div>
             }
           </div>
 
@@ -768,4 +812,12 @@
   </div>
   }
 
+  <!-- Manage Resources Modal -->
+  @if (selectedDriveForResources()) {
+    <app-manage-resources-modal
+      [driveId]="selectedDriveForResources()!.id"
+      [driveTitle]="selectedDriveForResources()!.title"
+      (onClose)="closeResourceManager()"
+    ></app-manage-resources-modal>
+  }
 </div>

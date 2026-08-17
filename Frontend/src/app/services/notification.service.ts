@@ -13,6 +13,13 @@ export interface NotificationItem {
   createdAt: string;
 }
 
+export interface ToastItem {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -24,6 +31,8 @@ export class NotificationService {
 
   // Signals for state management
   readonly notifications = signal<NotificationItem[]>([]);
+  readonly activeToasts = signal<ToastItem[]>([]);
+
   readonly unreadCount = computed(() =>
     this.notifications().filter((n) => !n.isRead).length
   );
@@ -33,6 +42,22 @@ export class NotificationService {
     return new HttpHeaders({
       Authorization: `Bearer ${token}`,
     });
+  }
+
+  showToast(title: string, message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info'): void {
+    const id = 'toast_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+    const item: ToastItem = { id, title, message, type };
+
+    this.activeToasts.update((list) => [...list, item]);
+
+    // Automatically disappear after exactly 10 seconds (10,000 ms)
+    setTimeout(() => {
+      this.dismissToast(id);
+    }, 10000);
+  }
+
+  dismissToast(id: string): void {
+    this.activeToasts.update((list) => list.filter((t) => t.id !== id));
   }
 
   initSocket(userId: string): void {
@@ -52,6 +77,12 @@ export class NotificationService {
       console.log('[Socket] New notification received:', newNotification);
       // Prepend to notifications list
       this.notifications.update((list) => [newNotification, ...list]);
+      // Show 10-second toast notification
+      this.showToast(
+        newNotification.title || 'Notification',
+        newNotification.message,
+        newNotification.type || 'info'
+      );
     });
 
     this.socket.on('disconnect', () => {

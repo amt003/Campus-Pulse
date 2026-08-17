@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { RecruiterService } from '../../../services/recruiter.service';
+import { FormControl } from '@angular/forms';
+import { meaningfulTextValidator } from '../../../validators/meaningful-text.validator';
 
 @Component({
   selector: 'app-recruiter-profile',
@@ -82,9 +84,26 @@ export class RecruiterProfileComponent implements OnInit {
     }
   }
 
+  protected getMeaningfulError(val: string): string | null {
+    if (!val || !val.trim()) return null;
+    const control = new FormControl(val);
+    const errors = meaningfulTextValidator(control);
+    if (!errors) return null;
+    if (errors['tooFewLetters']) return 'Please enter at least 2 alphabetic characters.';
+    if (errors['noVowel']) return "Please enter a meaningful value (e.g., 'Software Engineer').";
+    if (errors['keyboardMash']) return 'Please enter a valid, meaningful text without keyboard mash (e.g., asdfghjkl).';
+    if (errors['repeatingChars']) return "Please avoid repeating characters (e.g., 'aaaa').";
+    return null;
+  }
+
   protected onSubmit(): void {
     this.successMessage.set(null);
     this.errorMessage.set(null);
+
+    if (this.companyName() && this.getMeaningfulError(this.companyName())) {
+      this.errorMessage.set(`Company Name: ${this.getMeaningfulError(this.companyName())}`);
+      return;
+    }
 
     // Validate passwords if user attempts to change it
     if (this.password()) {
@@ -145,7 +164,7 @@ export class RecruiterProfileComponent implements OnInit {
         // Let's redirect to dashboard or let them stay
         setTimeout(() => {
           this.successMessage.set(null);
-        }, 4000);
+        }, 10000);
       },
       error: (err) => {
         console.error('Update profile failed:', err);

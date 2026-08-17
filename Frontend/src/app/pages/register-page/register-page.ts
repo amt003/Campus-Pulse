@@ -11,6 +11,10 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 
+import { FormControl } from '@angular/forms';
+import { meaningfulTextValidator } from '../../validators/meaningful-text.validator';
+import { SmoothScrollService } from '../../services/smooth-scroll.service';
+
 @Component({
   selector: 'app-register-page',
   standalone: true,
@@ -20,9 +24,22 @@ import { HttpClient } from '@angular/common/http';
 })
 export class RegisterPage implements AfterViewInit, OnDestroy {
   private readonly elRef = inject(ElementRef);
+  private readonly smoothScroll = inject(SmoothScrollService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  protected getMeaningfulTextError(value: string): string | null {
+    if (!value || !value.trim()) return null;
+    const control = new FormControl(value);
+    const errors = meaningfulTextValidator(control);
+    if (!errors) return null;
+    if (errors['tooFewLetters']) return 'Please enter at least 2 alphabetic characters.';
+    if (errors['noVowel']) return "Please enter a meaningful value (e.g., 'Software Engineer').";
+    if (errors['keyboardMash']) return 'Please enter a valid, meaningful text without keyboard mash (e.g., asdfghjkl).';
+    if (errors['repeatingChars']) return "Please avoid repeating characters (e.g., 'aaaa').";
+    return null;
+  }
 
   // ── Form Model ───────────────────────────────────────────────────────────────
   protected companyName = '';
@@ -78,10 +95,13 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
   protected get isFormValid(): boolean {
     return (
       this.companyName.trim().length > 1 &&
+      !this.getMeaningfulTextError(this.companyName) &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.officialEmail.trim()) &&
       this.websiteValid &&
       this.contactPerson.trim().length > 1 &&
+      !this.getMeaningfulTextError(this.contactPerson) &&
       this.coverNote.trim().length >= 20 &&
+      !this.getMeaningfulTextError(this.coverNote) &&
       this.phoneNumber.trim().startsWith('+') &&
       this.phoneNumber.trim().length >= 12 &&
       this.password.length >= 8 &&
@@ -93,11 +113,11 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
   /** Per-condition checklist shown near the submit button */
   protected get validationItems(): { label: string; met: boolean }[] {
     return [
-      { label: 'Company name entered', met: this.companyName.trim().length > 1 },
+      { label: 'Meaningful company name entered', met: this.companyName.trim().length > 1 && !this.getMeaningfulTextError(this.companyName) },
       { label: 'Valid official email', met: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.officialEmail.trim()) },
       { label: 'Valid official website URL', met: this.websiteValid },
-      { label: 'Contact person name entered', met: this.contactPerson.trim().length > 1 },
-      { label: 'Cover Note / Introduction Letter written (min 20 chars)', met: this.coverNote.trim().length >= 20 },
+      { label: 'Meaningful contact person name entered', met: this.contactPerson.trim().length > 1 && !this.getMeaningfulTextError(this.contactPerson) },
+      { label: 'Meaningful Cover Note written (min 20 chars)', met: this.coverNote.trim().length >= 20 && !this.getMeaningfulTextError(this.coverNote) },
       { label: 'Phone number with + country code (min 12 chars e.g. +919876543210)', met: this.phoneNumber.trim().startsWith('+') && this.phoneNumber.trim().length >= 12 },
       { label: 'Password is at least 8 characters', met: this.password.length >= 8 },
       { label: 'Passwords match', met: this.password.length > 0 && this.password === this.confirmPassword },
@@ -167,19 +187,31 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
 
   private scrollToTop(): void {
     try {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      document.body.scrollTop = 0;
-      document.documentElement.scrollTop = 0;
+      this.smoothScroll.scrollTo(0, { duration: 0.8 });
       const el = this.elRef.nativeElement;
       const panel = el.querySelector('.reg-panel-right');
-      if (panel) { panel.scrollTop = 0; panel.scrollTo({ top: 0, behavior: 'smooth' }); }
+      if (panel) { panel.scrollTop = 0; }
       const wrapper = el.querySelector('.form-wrapper');
-      if (wrapper) { wrapper.scrollTop = 0; wrapper.scrollTo({ top: 0, behavior: 'smooth' }); }
+      if (wrapper) { wrapper.scrollTop = 0; }
     } catch (e) {}
   }
 
   // ── Submit ───────────────────────────────────────────────────────────────────
   protected onSubmit(): void {
+    if (!this.isFormValid) {
+      if (this.getMeaningfulTextError(this.companyName)) {
+        this.errorMessage = `Company Name: ${this.getMeaningfulTextError(this.companyName)}`;
+      } else if (this.getMeaningfulTextError(this.contactPerson)) {
+        this.errorMessage = `Contact Person: ${this.getMeaningfulTextError(this.contactPerson)}`;
+      } else if (this.getMeaningfulTextError(this.coverNote)) {
+        this.errorMessage = `Cover Note: ${this.getMeaningfulTextError(this.coverNote)}`;
+      } else {
+        this.errorMessage = 'Please correct all form errors before submitting.';
+      }
+      this.scrollToTop();
+      return;
+    }
+
     if (!this.companyName.trim()) {
       this.errorMessage = 'Please enter your Company Name.';
       this.scrollToTop();

@@ -2,6 +2,9 @@
   <!-- ===== Header Bar ===== -->
   <header class="rec-header">
     <div class="header-left">
+      <button class="btn-toggle-sidebar" (click)="toggleSidebar()" title="Toggle Sidebar" style="background: none; border: none; cursor: pointer; color: #1C2833; display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 8px; margin-right: 4px; transition: background-color 0.2s;">
+        <span class="material-symbols-outlined" style="font-size: 24px;">{{ isSidebarCollapsed() ? 'menu' : 'menu_open' }}</span>
+      </button>
       <div class="brand-logo">
         <span class="material-symbols-outlined logo-icon">corporate_fare</span>
       </div>
@@ -9,18 +12,6 @@
         <span class="brand-name">CampusPulse</span>
         <span class="brand-sub">Recruiter Portal</span>
       </div>
-      
-      <!-- Nav Tabs -->
-      <nav class="header-nav">
-        <a routerLink="/recruiter/dashboard" routerLinkActive="active-tab" class="nav-tab">
-          <span class="material-symbols-outlined">dashboard</span>
-          <span>Dashboard</span>
-        </a>
-        <a routerLink="/recruiter/profile" routerLinkActive="active-tab" class="nav-tab">
-          <span class="material-symbols-outlined">business</span>
-          <span>Company Profile</span>
-        </a>
-      </nav>
     </div>
 
     <div class="header-right">
@@ -99,8 +90,68 @@
     </div>
   </header>
 
-  <!-- ===== Main Page Content ===== -->
-  <main class="layout-main">
-    <router-outlet></router-outlet>
-  </main>
+  <!-- Sidebar & Main Content Wrapper -->
+  <div class="app-layout-body">
+    <aside class="recruiter-sidebar" [class.collapsed]="isSidebarCollapsed()" data-lenis-prevent>
+      <a class="sidebar-link" routerLink="/recruiter/dashboard" routerLinkActive="active-link">
+        <span class="material-symbols-outlined">explore</span>
+        <span>Dashboard</span>
+      </a>
+      <a class="sidebar-link" routerLink="/recruiter/drives" routerLinkActive="active-link">
+        <span class="material-symbols-outlined">work</span>
+        <span>Job Drives</span>
+      </a>
+      <a class="sidebar-link" routerLink="/recruiter/all-applications" routerLinkActive="active-link">
+        <span class="material-symbols-outlined">assignment</span>
+        <span>Applications</span>
+      </a>
+      <a class="sidebar-link" routerLink="/recruiter/offers" routerLinkActive="active-link">
+        <span class="material-symbols-outlined">workspace_premium</span>
+        <span>Offer Letters</span>
+      </a>
+      <a class="sidebar-link" routerLink="/recruiter/profile" routerLinkActive="active-link">
+        <span class="material-symbols-outlined">business</span>
+        <span>Company Profile</span>
+      </a>
+    </aside>
+
+    <!-- ===== Main Content Area Wrapper ===== -->
+    <div class="main-content-scroll-wrapper" data-lenis-prevent>
+      <main class="rec-main">
+        <router-outlet></router-outlet>
+      </main>
+
+      <!-- Shared Footer Component -->
+      <footer class="tpo-footer" style="background: #ffffff; border-top: 1px solid rgba(0, 59, 90, 0.08); padding: 20px 40px; margin-top: auto; width: 100%; box-sizing: border-box;">
+        <div class="footer-container" style="max-width: 1320px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; width: 100%;">
+          <div class="footer-left" style="display: flex; align-items: center; gap: 10px;">
+            <span class="footer-brand" style="font-weight: 800; color: #1A5276; font-size: 14px;">CampusPulse</span>
+            <span class="footer-divider" style="color: #c1c7cf;">|</span>
+            <span class="footer-text" style="font-size: 13px; color: #41474e; font-weight: 500;">Recruiter Engagement Suite</span>
+          </div>
+          <div class="footer-right">
+            <span class="footer-text" style="font-size: 13px; color: #41474e; font-weight: 500;">© 2026 Alphabet Campus. All rights reserved.</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Real-time 10-Second Toast Overlay -->
+  @if (activeToasts().length > 0) {
+    <div class="toast-container-overlay" style="position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; max-width: 420px; width: calc(100% - 48px); pointer-events: none;">
+      @for (toast of activeToasts(); track toast.id) {
+        <div class="toast-popup" style="pointer-events: auto; display: flex; align-items: flex-start; gap: 12px; background: #ffffff; color: #1C2833; border-radius: 12px; padding: 14px 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16); border-left: 5px solid #2980B9; border: 1px solid rgba(0,0,0,0.08); transition: all 0.3s ease;">
+          <span class="material-symbols-outlined" [style.color]="toast.type === 'success' ? '#27AE60' : (toast.type === 'warning' ? '#F39C12' : (toast.type === 'error' ? '#E74C3C' : '#2980B9'))" style="font-size: 22px; margin-top: 2px;">
+            {{ toast.type === 'success' ? 'check_circle' : (toast.type === 'warning' ? 'warning' : (toast.type === 'error' ? 'error' : 'info')) }}
+          </span>
+          <div style="flex: 1;">
+            <strong style="display: block; font-size: 13.5px; font-weight: 850; color: #1C2833; margin-bottom: 2px;">{{ toast.title }}</strong>
+            <p style="margin: 0; font-size: 12px; color: #566573; line-height: 1.45;">{{ toast.message }}</p>
+          </div>
+          <button (click)="dismissToast(toast.id)" style="background: none; border: none; font-size: 18px; font-weight: 700; color: #95A5A6; cursor: pointer; padding: 0 4px; line-height: 1;">&times;</button>
+        </div>
+      }
+    </div>
+  }
 </div>

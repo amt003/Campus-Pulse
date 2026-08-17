@@ -14,6 +14,26 @@
       <div class="master-list-view">
         <h2 style="font-size: 20px; font-weight: 800; color: var(--primary); margin: 0 0 20px 0;">My Applications</h2>
 
+        @if (isPlaced()) {
+          <div class="placed-congrats-banner" style="background: linear-gradient(135deg, #E8F8F5, #D4EFDF); border: 2px solid #27AE60; border-radius: 16px; padding: 24px 28px; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.12); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div style="width: 52px; height: 52px; border-radius: 50%; background: #27AE60; color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);">
+                🎉
+              </div>
+              <div>
+                <h3 style="font-size: 18px; font-weight: 800; color: #1E8449; margin: 0 0 4px 0;">Congratulations! You are Placed!</h3>
+                <p style="font-size: 13.5px; color: #145A32; margin: 0; font-weight: 600;">
+                  You have accepted a job offer at <strong>{{ placedCompany() || 'Campus Recruiter' }}</strong>. As per institutional placement policy, your applications for other drives are frozen.
+                </p>
+              </div>
+            </div>
+            <div style="background: #27AE60; color: white; padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; display: flex; align-items: center; gap: 6px;">
+              <span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
+              <span>Placement Confirmed</span>
+            </div>
+          </div>
+        }
+
         @if (applications().length === 0) {
           <div class="empty-state-card" style="margin-top: 24px;">
             <span class="material-symbols-outlined empty-icon-large" style="color: var(--border);">assignment_late</span>
@@ -32,9 +52,19 @@
                     <h3 class="app-card-title">{{ app.driveId?.title || 'Job Drive' }}</h3>
                     <p class="app-card-subtitle">{{ app.driveId?.companyName || 'Campus Recruitment Program' }}</p>
                   </div>
-                  <span class="status-pill pill-open" style="font-size: 11px; padding: 4px 10px; border-radius: 20px;">
-                    {{ app.status }}
-                  </span>
+                  @if (isAppPlaced(app)) {
+                    <span class="status-pill" style="font-size: 11px; padding: 5px 12px; border-radius: 20px; background: #27AE60; color: white; font-weight: 800;">
+                      Placed 🎉 (Offer Accepted)
+                    </span>
+                  } @else if (isPlaced()) {
+                    <span class="status-pill" style="font-size: 11px; padding: 5px 12px; border-radius: 20px; background: #7F8C8D; color: white; font-weight: 700;">
+                      🔒 Frozen (Policy Locked)
+                    </span>
+                  } @else {
+                    <span class="status-pill pill-open" style="font-size: 11px; padding: 4px 10px; border-radius: 20px;">
+                      {{ app.status }}
+                    </span>
+                  }
                 </div>
 
                 <div class="app-card-body">
@@ -90,11 +120,30 @@
               </p>
             </div>
           </div>
-          <span class="status-badge-orange">
-            <span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800; vertical-align: middle;">pending_actions</span>
-            <span>{{ selectedApp()!.status }}</span>
-          </span>
+          @if (isAppPlaced(selectedApp())) {
+            <span class="status-badge-green" style="background: #27AE60; color: white; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+              <span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
+              <span>Placed 🎉 (Offer Accepted)</span>
+            </span>
+          } @else if (isPlaced()) {
+            <span class="status-badge-gray" style="background: #7F8C8D; color: white; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+              <span class="material-symbols-outlined" style="font-size: 16px;">lock</span>
+              <span>Frozen (Policy Locked)</span>
+            </span>
+          } @else {
+            <span class="status-badge-orange">
+              <span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800; vertical-align: middle;">pending_actions</span>
+              <span>{{ selectedApp()!.status }}</span>
+            </span>
+          }
         </div>
+
+        @if (isPlaced() && !isAppPlaced(selectedApp())) {
+          <div style="background: #FFF3CD; border: 1.5px solid #FFEEBA; color: #856404; padding: 14px 18px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 13.5px;">
+            <span class="material-symbols-outlined" style="font-size: 20px; color: #856404;">lock</span>
+            <span>Application Frozen: You have already accepted a placement offer at <strong>{{ placedCompany() || 'another company' }}</strong>. In accordance with institutional placement policy, further evaluation for this drive is frozen.</span>
+          </div>
+        }
 
         <!-- 2. Application Journey Card -->
         <div class="journey-card">
@@ -382,29 +431,59 @@
               </button>
             </div>
 
-            <!-- Preparation Resources Card -->
-            <div class="resources-card">
-              <h3 class="resources-card-title">Preparation Resources</h3>
+            <!-- Dynamic Preparation Resources Card -->
+            <div class="resources-card" style="background: #ffffff; border-radius: 12px; border: 1px solid var(--border); padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); box-sizing: border-box; text-align: left;">
+              <h3 class="resources-card-title" style="margin: 0 0 16px 0; font-size: 14.5px; font-weight: 850; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-outlined" style="font-size: 20px;">school</span>
+                <span>Preparation Resources</span>
+              </h3>
               
-              <div class="resources-list" style="display: flex; flex-direction: column; gap: 14px;">
-                <a class="resource-link-item" href="#" (click)="$event.preventDefault()" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
-                  <div style="width: 36px; height: 36px; border-radius: 6px; background: #FDEDEC; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <span class="material-symbols-outlined" style="color: var(--danger); font-size: 18px;">picture_as_pdf</span>
+              <div class="resources-container" style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Recruiter Uploads -->
+                @if (resources().attachments && resources().attachments.length > 0) {
+                  <div class="resource-group">
+                    <h4 style="margin: 0 0 8px 0; font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 4px;">📎 Recruiter Uploads</h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                      @for (file of resources().attachments; track file.fileId || file.fileName) {
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #F8F9FA; border-radius: 8px; padding: 8px 12px; border: 1px solid rgba(0,0,0,0.02);">
+                          <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1;">
+                            <span class="material-symbols-outlined" style="color: var(--secondary); font-size: 18px; flex-shrink: 0;">description</span>
+                            <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; flex-direction: column; gap: 2px;">
+                              <span style="font-size: 12.5px; font-weight: 700; color: var(--text-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ file.fileName }}</span>
+                              <span style="font-size: 10.5px; color: var(--text-muted); font-weight: 600;">{{ formatBytes(file.fileSize) }}</span>
+                            </div>
+                          </div>
+                          <button class="download-btn" (click)="downloadAttachment(file.fileId, file.fileName)" style="background: none; border: none; color: var(--secondary); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: background 0.2s;" title="Download file">
+                            <span class="material-symbols-outlined" style="font-size: 19px;">download</span>
+                          </button>
+                        </div>
+                      }
+                    </div>
                   </div>
-                  <span style="font-size: 13.5px; font-weight: 650; color: var(--text-dark);">{{ selectedApp()!.driveId?.title || 'Drive' }} Interview Guide.pdf</span>
-                </a>
-                <a class="resource-link-item" href="#" (click)="$event.preventDefault()" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
-                  <div style="width: 36px; height: 36px; border-radius: 6px; background: #EBF5FB; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <span class="material-symbols-outlined" style="color: var(--secondary); font-size: 18px;">question_answer</span>
+                }
+
+                <!-- Past Questions -->
+                @if (resources().pastQuestions && resources().pastQuestions.length > 0) {
+                  <div class="resource-group">
+                    <h4 style="margin: 0 0 8px 0; font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 4px;">💬 Past Questions</h4>
+                    <div style="display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto; padding-right: 4px;">
+                      @for (q of resources().pastQuestions; track q.question) {
+                        <div style="display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #F1F4F6; padding-bottom: 8px;">
+                          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <span class="q-type" [class]="q.questionType.toLowerCase()" style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; display: inline-block;">
+                              {{ q.questionType }}
+                            </span>
+                            @if (q.year) {
+                              <span style="font-size: 10px; color: var(--text-muted); font-weight: 600;">Year: {{ q.year }}</span>
+                            }
+                          </div>
+                          <p style="margin: 0; font-size: 12px; color: var(--text-dark); line-height: 1.45; font-weight: 600; text-align: left;">{{ q.question }}</p>
+                        </div>
+                      }
+                    </div>
                   </div>
-                  <span style="font-size: 13.5px; font-weight: 650; color: var(--text-dark);">Past Interview Questions</span>
-                </a>
-                <a class="resource-link-item" href="#" (click)="$event.preventDefault()" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
-                  <div style="width: 36px; height: 36px; border-radius: 6px; background: #FEF9E7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <span class="material-symbols-outlined" style="color: var(--warning); font-size: 18px;">laptop_mac</span>
-                  </div>
-                  <span style="font-size: 13.5px; font-weight: 650; color: var(--text-dark);">Mock Interview Portal</span>
-                </a>
+                }
+
               </div>
             </div>
 

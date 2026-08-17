@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { StudentService, StudentProfile, Drive, Application } from '../../../services/student.service';
-
+import { ToastService } from '../../../services/toast.service';
+import { SmoothScrollService } from '../../../services/smooth-scroll.service';
 import { RouterModule } from '@angular/router';
 
 @Component({
@@ -15,6 +16,8 @@ import { RouterModule } from '@angular/router';
 })
 export class StudentDashboardComponent implements OnInit {
   private readonly studentService = inject(StudentService);
+  private readonly toastService = inject(ToastService);
+  private readonly smoothScroll = inject(SmoothScrollService);
 
   // States
   protected isLoading = signal<boolean>(true);
@@ -343,26 +346,33 @@ export class StudentDashboardComponent implements OnInit {
       this.isCardFlipped.set(false);
     }, 150);
 
-    const el = document.getElementById('application-status-card');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    this.smoothScroll.scrollTo('#application-status-card', { offset: -80, duration: 1.0 });
   }
 
   protected applyToDrive(driveId: string): void {
     const profileData = this.profile();
     if (!profileData || !profileData.resumePath) {
-      alert('Please upload your resume in the "Profile & Resume" section before applying.');
+      this.toastService.warning(
+        'Resume required',
+        'Upload your resume in Profile & Resume before applying'
+      );
       return;
     }
 
     this.studentService.applyToDrive(driveId).subscribe({
       next: () => {
-        alert('Applied to drive successfully!');
+        const drive = this.allDrives().find(d => d._id === driveId);
+        this.toastService.success(
+          'Application submitted',
+          drive?.title ?? drive?.companyName ?? undefined
+        );
         this.fetchDrivesAndApplications();
       },
       error: (err) => {
-        alert(err.error?.message || 'Failed to submit application. Please try again.');
+        this.toastService.error(
+          'Application failed',
+          err.error?.message || 'Try again later'
+        );
       }
     });
   }
@@ -374,10 +384,7 @@ export class StudentDashboardComponent implements OnInit {
   }
 
   protected scrollToDrives(): void {
-    const el = document.getElementById('explore-drives-section');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
+    this.smoothScroll.scrollTo('#explore-drives-section', { offset: -80, duration: 1.2 });
   }
 
   // Rich Real-time Stepper Journey helper

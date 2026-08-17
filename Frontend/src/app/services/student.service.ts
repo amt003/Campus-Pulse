@@ -40,7 +40,7 @@ export interface Drive {
 export interface Application {
   _id: string;
   studentId: string;
-  driveId: Drive;
+  driveId?: Drive;
   status: string;
   offer: {
     status: string;
@@ -132,8 +132,8 @@ export class StudentService {
     });
   }
 
-  getApplications(): Observable<{ applications: Application[] }> {
-    return this.http.get<{ applications: Application[] }>(`${this.apiUrl}/applications`, {
+  getApplications(): Observable<{ applications: Application[]; isPlaced?: boolean; placedCompany?: string; placedDriveTitle?: string }> {
+    return this.http.get<{ applications: Application[]; isPlaced?: boolean; placedCompany?: string; placedDriveTitle?: string }>(`${this.apiUrl}/applications`, {
       headers: this.getAuthHeaders(),
     });
   }
@@ -178,5 +178,11 @@ export class StudentService {
       { reason },
       { headers: this.getAuthHeaders() }
     );
+  }
+
+  getPreparationResources(driveId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/resources/${driveId}`, {
+      headers: this.getAuthHeaders(),
+    });
   }
 }

@@ -2,6 +2,9 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StudentService, StudentProfile } from '../../../services/student.service';
+import { FormControl } from '@angular/forms';
+import { meaningfulTextValidator } from '../../../validators/meaningful-text.validator';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-student-profile',
@@ -12,6 +15,7 @@ import { StudentService, StudentProfile } from '../../../services/student.servic
 })
 export class StudentProfileComponent implements OnInit {
   private readonly studentService = inject(StudentService);
+  private readonly toastService = inject(ToastService);
   protected profile = signal<StudentProfile | null>(null);
   protected isLoading = signal<boolean>(true);
 
@@ -40,6 +44,17 @@ export class StudentProfileComponent implements OnInit {
   protected confirmPasswordError = signal<boolean>(false);
   protected globalSaveError = signal<string | null>(null);
   protected globalSaveSuccess = signal<string | null>(null);
+
+  protected getMeaningfulError(val: string): string | null {
+    if (!val || !val.trim()) return null;
+    const control = new FormControl(val);
+    const errors = meaningfulTextValidator(control);
+    if (!errors) return null;
+    if (errors['tooFewLetters']) return 'Please enter at least 2 alphabetic characters.';
+    if (errors['noVowel']) return "Please enter a meaningful value (e.g., 'Software Engineer').";
+    if (errors['repeatingChars']) return "Please avoid repeating characters (e.g., 'aaaa').";
+    return null;
+  }
 
   // Resume upload indicators
   protected isUploadingResume = signal<boolean>(false);
@@ -98,7 +113,10 @@ export class StudentProfileComponent implements OnInit {
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert('File size exceeds the 2MB limit.');
+        this.toastService.error(
+          'Photo too large',
+          'Profile photo must be under 2 MB'
+        );
         return;
       }
       this.selectedPhotoFile = file;
@@ -114,7 +132,10 @@ export class StudentProfileComponent implements OnInit {
     const file = event.target.files?.[0];
     if (file) {
       if (file.type !== 'application/pdf') {
-        alert('Please select a valid PDF document.');
+        this.toastService.error(
+          'Invalid file type',
+          'Only PDF files are accepted for resume uploads'
+        );
         return;
       }
       this.isUploadingResume.set(true);
