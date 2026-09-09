@@ -45,6 +45,9 @@ export class StudentProfileComponent implements OnInit {
   protected globalSaveError = signal<string | null>(null);
   protected globalSaveSuccess = signal<string | null>(null);
 
+  protected availableBranches = signal<string[]>(['CSE', 'ECE', 'IT', 'ME', 'CE', 'BCA', 'MCA', 'INMCA', 'EEE', 'AD']);
+  protected availablePassoutYears = signal<number[]>([2024, 2025, 2026, 2027, 2028]);
+
   protected getMeaningfulError(val: string): string | null {
     if (!val || !val.trim()) return null;
     const control = new FormControl(val);
@@ -90,7 +93,24 @@ export class StudentProfileComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.loadCollegeConfig();
     this.loadProfile();
+  }
+
+  private loadCollegeConfig(): void {
+    this.studentService.getCollegeConfig().subscribe({
+      next: (res) => {
+        if (res && res.data) {
+          if (Array.isArray(res.data.branches) && res.data.branches.length > 0) {
+            this.availableBranches.set(res.data.branches);
+          }
+          if (Array.isArray(res.data.passoutYears) && res.data.passoutYears.length > 0) {
+            this.availablePassoutYears.set(res.data.passoutYears);
+          }
+        }
+      },
+      error: (err) => console.error('Failed to load college configuration:', err)
+    });
   }
 
   protected loadProfile(): void {
@@ -173,6 +193,13 @@ export class StudentProfileComponent implements OnInit {
     return parts[parts.length - 1];
   }
 
+  protected getResumeUrl(): string {
+    const path = this.profile()?.resumePath;
+    if (!path) return '#';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return `http://localhost:5000${path.startsWith('/') ? '' : '/'}${path}`;
+  }
+
   protected saveAllChanges(): void {
     this.isSaveTriggered.set(true);
     this.isSaveSuccess.set(false);
@@ -197,12 +224,12 @@ export class StudentProfileComponent implements OnInit {
       hasError = true;
     }
 
-    if (!p.branch || !['CSE', 'ECE', 'IT', 'ME', 'Civil', 'BCA', 'MCA', 'INMCA', 'EEE', 'CE', 'AD'].includes(p.branch)) {
+    if (!p.branch || !p.branch.trim()) {
       this.branchError.set(true);
       hasError = true;
     }
 
-    if (!p.passoutYear || p.passoutYear < 2020 || p.passoutYear > 2030) {
+    if (!p.passoutYear || p.passoutYear < 2000 || p.passoutYear > 2100) {
       this.passoutYearError.set(true);
       hasError = true;
     }

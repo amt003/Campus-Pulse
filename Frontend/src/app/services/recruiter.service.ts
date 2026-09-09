@@ -234,4 +234,10 @@ export class RecruiterService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  getSeasonConfig(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/season-config`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
 }

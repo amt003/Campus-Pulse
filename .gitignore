@@ -1,18 +1,37 @@
-# Node
+# Node & Dependencies
 node_modules/
-.env
 npm-debug.log
-backend/uploads/
+yarn-error.log
 
-# Angular
+# Python Virtual Environments & Caches
+venv/
+*/venv/
+env/
+*/env/
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+
+# File Uploads & Local Scratch
+backend/uploads/
+backend/scratch/
+
+# Angular & Build Outputs
 dist/
 tmp/
 *.log
+.angular/
 
-# OS
+# OS Specific
 .DS_Store
 Thumbs.db
 
-# IDE
+# IDE Specific
 .vscode/
 .idea/

@@ -6,9 +6,11 @@ const Student = require("./models/Student");
 const Recruiter = require("./models/Recruiter");
 const JobDrive = require("./models/JobDrive");
 const Application = require("./models/Application");
+const { ensureSampleResumesExist } = require("./utils/initSampleResumes");
 
 async function seedDatabase() {
   try {
+    ensureSampleResumesExist();
     console.log("Connecting to MongoDB Atlas...");
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("Connected to MongoDB!");

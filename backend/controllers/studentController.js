@@ -4,6 +4,7 @@ const Application = require("../models/Application");
 const Schedule = require("../models/Schedule");
 const User = require("../models/User");
 const Recruiter = require("../models/Recruiter");
+const CollegeConfig = require("../models/CollegeConfig");
 const aiService = require("../services/aiService");
 const socketService = require("../services/socketService");
 const { getStudentPlacementStatus } = require("../utils/studentStatus");
@@ -812,6 +813,30 @@ const getPreparationResources = async (req, res) => {
   }
 };
 
+// GET /api/student/season-config
+const getSeasonConfig = async (req, res) => {
+  try {
+    let config = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+    if (!config) {
+      const currentYear = new Date().getFullYear();
+      config = await CollegeConfig.create({
+        seasonStart: new Date(currentYear, 7, 1),
+        seasonEnd: new Date(currentYear, 11, 15),
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      data: config,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch placement season configuration",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createStudentProfile,
   getStudentProfile,
@@ -827,4 +852,5 @@ module.exports = {
   getOfferDetails,
   getOfferPdf,
   getPreparationResources,
+  getSeasonConfig,
 };

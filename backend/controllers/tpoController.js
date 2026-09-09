@@ -3,6 +3,7 @@ const Student = require("../models/Student");
 const Recruiter = require("../models/Recruiter");
 const JobDrive = require("../models/JobDrive");
 const Application = require("../models/Application");
+const CollegeConfig = require("../models/CollegeConfig");
 const verificationService = require("../services/verificationService");
 const socketService = require("../services/socketService");
 const sendEmail = require("../utils/sendEmail");
@@ -492,12 +493,22 @@ const putRecruiterOnHold = async (req, res) => {
 const bulkImportStudents = async (req, res) => {
   try {
     const { students } = req.body;
-    const studentList = Array.isArray(students) ? students : Array.isArray(req.body) ? req.body : null;
+    let studentList = null;
+
+    if (Array.isArray(students)) {
+      studentList = students;
+    } else if (students && typeof students === "object") {
+      studentList = [students];
+    } else if (Array.isArray(req.body)) {
+      studentList = req.body;
+    } else if (req.body && typeof req.body === "object" && req.body.rollNumber) {
+      studentList = [req.body];
+    }
 
     if (!studentList || studentList.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Please provide an array of students to import",
+        message: "Please provide student details (single student object or array) to import.",
       });
     }
 
@@ -509,56 +520,70 @@ const bulkImportStudents = async (req, res) => {
         const { rollNumber, name, email, phone, cgpa, branch, passoutYear, activeBacklogs } = item;
 
         if (!name || !email || !rollNumber || cgpa === undefined || !branch || !passoutYear) {
-          errors.push({ index, email: email || rollNumber, error: "Missing required fields" });
+          errors.push({ index, email: email || rollNumber, error: "Missing required fields (rollNumber, name, email, cgpa, branch, passoutYear)" });
           continue;
         }
 
         // Check 1: Duplicate by email
-        let user = await User.findOne({ email: email.toLowerCase() });
+        let user = await User.findOne({ email: email.toString().toLowerCase().trim() });
         if (user) {
-          errors.push({ index, email, error: "User email already exists" });
+          errors.push({ index, email, error: `Student with email "${email}" already exists in the system.` });
           continue;
         }
 
-        // Check 2: Duplicate by roll number (secondary guard)
+        // Check 2: Duplicate by roll number
         const existingStudent = await Student.findOne({ rollNumber: rollNumber.toString().trim() });
         if (existingStudent) {
-          errors.push({ index, email, rollNumber, error: `Roll number "${rollNumber}" already exists in the system` });
+          errors.push({ index, email, rollNumber, error: `Student with Roll Number "${rollNumber}" already exists.` });
           continue;
         }
 
-        // 1. Set password for User to student's rollNumber (hashed securely by User model pre-save hook)
+        // Create User account for student
         user = await User.create({
-          name: name.trim(),
-          email: email.toLowerCase().trim(),
+          name: name.toString().trim(),
+          email: email.toString().toLowerCase().trim(),
           password: rollNumber.toString().trim(), // Default password is their roll number
           role: "Student",
           phone: phone ? phone.toString().trim() : "",
           isActive: true,
         });
 
-        // 2. No activation email is sent
-        // await sendWelcomeEmail(user.email, rollNumber);
-
+        // Create Student profile
         const student = await Student.create({
           userId: user._id,
           rollNumber: rollNumber.toString().trim(),
           cgpa: Number(cgpa),
-          branch: branch.trim(),
+          branch: branch.toString().trim(),
           passoutYear: Number(passoutYear),
           activeBacklogs: Number(activeBacklogs || 0),
           isProfileComplete: true,
         });
 
-        createdRecords.push({ userId: user._id, studentId: student._id, email: user.email, rollNumber: student.rollNumber });
+        createdRecords.push({
+          userId: user._id,
+          studentId: student._id,
+          email: user.email,
+          rollNumber: student.rollNumber,
+          name: user.name,
+        });
       } catch (err) {
         errors.push({ index, email: item.email, error: err.message });
       }
     }
 
+    if (createdRecords.length === 0 && errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Import failed: ${errors[0].error}`,
+        importedCount: 0,
+        errorsCount: errors.length,
+        errors,
+      });
+    }
+
     return res.status(201).json({
       success: true,
-      message: `${createdRecords.length} students imported successfully. Default password is their roll number.`,
+      message: `Successfully imported ${createdRecords.length} student(s)! Default password is their roll number.`,
       note: "Students can login using their roll number as the default password.",
       importedCount: createdRecords.length,
       errorsCount: errors.length,
@@ -921,6 +946,482 @@ const holdDrive = async (req, res) => {
   }
 };
 
+const getSeasonConfig = async (req, res) => {
+  try {
+    let config = await CollegeConfig.findOne()
+      .populate("updatedBy", "name email")
+      .sort({ updatedAt: -1 });
+
+    if (!config) {
+      const currentYear = new Date().getFullYear();
+      config = await CollegeConfig.create({
+        seasonStart: new Date(currentYear, 7, 1), // Aug 1
+        seasonEnd: new Date(currentYear, 11, 15), // Dec 15
+        updatedBy: req.user ? req.user._id : null,
+        updatedAt: new Date(),
+      });
+      if (req.user && req.user._id) {
+        config = await CollegeConfig.findById(config._id).populate("updatedBy", "name email");
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: config,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch placement season configuration",
+      error: error.message,
+    });
+  }
+};
+
+const updateSeasonConfig = async (req, res) => {
+  try {
+    const { seasonStart, seasonEnd } = req.body;
+
+    if (!seasonStart || !seasonEnd) {
+      return res.status(400).json({
+        success: false,
+        message: "Both seasonStart and seasonEnd are required",
+      });
+    }
+
+    const startDate = new Date(seasonStart);
+    const endDate = new Date(seasonEnd);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format provided for season dates",
+      });
+    }
+
+    if (startDate > endDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Placement season start date cannot be after season end date",
+      });
+    }
+
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    if (diffDays < 180) {
+      return res.status(400).json({
+        success: false,
+        message: "Placement season duration must be at least 6 months (minimum 180 days).",
+      });
+    }
+
+    if (diffDays > 366) {
+      return res.status(400).json({
+        success: false,
+        message: "Placement season duration cannot exceed 1 year (maximum 365 days).",
+      });
+    }
+
+    let config = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+    if (!config) {
+      config = new CollegeConfig({
+        seasonStart: startDate,
+        seasonEnd: endDate,
+        updatedBy: req.user ? req.user._id : null,
+        updatedAt: new Date(),
+      });
+    } else {
+      config.seasonStart = startDate;
+      config.seasonEnd = endDate;
+      config.updatedBy = req.user ? req.user._id : null;
+      config.updatedAt = new Date();
+    }
+
+    await config.save();
+
+    const populatedConfig = await CollegeConfig.findById(config._id).populate(
+      "updatedBy",
+      "name email"
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Placement season configuration updated successfully",
+      data: populatedConfig,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update placement season configuration",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/tpo/student/:rollNumber/audit
+const getStudentAuditDetails = async (req, res) => {
+  try {
+    const { rollNumber } = req.params;
+
+    const student = await Student.findOne({ rollNumber: rollNumber.toString().trim() }).populate(
+      "userId",
+      "name email phone isActive"
+    );
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: `Student with Roll Number "${rollNumber}" not found`,
+      });
+    }
+
+    const applications = await Application.find({ studentId: student._id })
+      .populate({
+        path: "driveId",
+        select: "title ctc location applicationDeadline recruiterId status",
+        populate: {
+          path: "recruiterId",
+          select: "name email companyName",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    // Collect all recruiter userIds to map exact Recruiter profile details (companyName)
+    const recruiterUserIds = applications
+      .map((app) => app.driveId?.recruiterId?._id || app.driveId?.recruiterId)
+      .filter(Boolean);
+
+    const recruiterProfiles = await Recruiter.find({
+      $or: [
+        { userId: { $in: recruiterUserIds } },
+        { _id: { $in: recruiterUserIds } },
+      ],
+    });
+
+    const recruiterMap = new Map();
+    recruiterProfiles.forEach((r) => {
+      recruiterMap.set(r.userId.toString(), r);
+      recruiterMap.set(r._id.toString(), r);
+    });
+
+    // Determine overall student status
+    let overallStatus = "Not Applied";
+    if (applications.length > 0) {
+      const isPlaced = applications.some(
+        (app) => app.status === "Placed" || app.status === "Offer Accepted" || app.offer?.status === "Accepted"
+      );
+      if (isPlaced) {
+        overallStatus = "Placed";
+      } else {
+        const hasInProgress = applications.some(
+          (app) => app.status !== "Rejected" && app.status !== "Withdrawn"
+        );
+        overallStatus = hasInProgress ? "In Progress" : "Not Placed";
+      }
+    }
+
+    const formattedApplications = applications.map((app) => {
+      const drive = app.driveId || {};
+      const recUser = drive.recruiterId || {};
+      const recUserIdStr = recUser._id ? recUser._id.toString() : recUser.toString ? recUser.toString() : null;
+      const recProfile = recUserIdStr ? recruiterMap.get(recUserIdStr) : null;
+
+      const companyName = recProfile?.companyName || recUser.companyName || recUser.name || "Campus Recruiter";
+      const companyLogo = recProfile?.companyLogo || null;
+
+      return {
+        _id: app._id,
+        driveTitle: drive.title || "Job Drive",
+        companyName,
+        companyLogo,
+        ctc: drive.ctc ? drive.ctc.toLocaleString("en-IN") : "N/A",
+        appliedDate: app.appliedAt || app.createdAt,
+        status: app.status,
+        aiMatchScore: app.aiMatchScore || 85,
+        aptitude: {
+          status: app.aptitude?.status || "Pending",
+          score: app.aptitude?.score ?? null,
+          testDate: app.aptitude?.testDate || null,
+        },
+        gd: {
+          status: app.gd?.status || "Pending",
+          score: app.gd?.score ?? null,
+          gdDate: app.gd?.gdDate || null,
+        },
+        interview: {
+          result: app.interview?.result || app.interview?.status || "Pending",
+          feedback: app.interview?.feedback || null,
+          scheduledDate: app.interview?.scheduledDate || null,
+        },
+        offer: {
+          status: app.offer?.status || (app.status === "Placed" ? "Accepted" : "None"),
+          acceptedAt: app.offer?.acceptedAt || null,
+          ctcOffered: app.offer?.ctcOffered || drive.ctc,
+          fileId: app.offer?.fileId || null,
+          filePath: app.offer?.filePath || null,
+        },
+      };
+    });
+
+    const studentPhone = student.userId?.phone && student.userId.phone !== "N/A" && student.userId.phone.trim() !== "" 
+      ? student.userId.phone 
+      : null;
+
+    return res.status(200).json({
+      success: true,
+      student: {
+        _id: student._id,
+        rollNumber: student.rollNumber,
+        name: student.userId?.name || "N/A",
+        email: student.userId?.email || "N/A",
+        phone: studentPhone,
+        branch: student.branch,
+        cgpa: student.cgpa,
+        passoutYear: student.passoutYear,
+        activeBacklogs: student.activeBacklogs,
+        resumePath: student.resumePath,
+        isProfileComplete: student.isProfileComplete,
+      },
+      overallStatus,
+      applications: formattedApplications,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch student audit details",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/tpo/college-config
+const getCollegeConfig = async (req, res) => {
+  try {
+    let config = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+    if (!config) {
+      config = await CollegeConfig.create({
+        seasonStart: new Date(new Date().getFullYear(), 7, 1),
+        seasonEnd: new Date(new Date().getFullYear(), 11, 15),
+        branches: ['BCA', 'MCA', 'INMCA', 'ECE', 'CSE', 'IT', 'EEE', 'ME', 'CE', 'AD'],
+        passoutYears: [2024, 2025, 2026, 2027, 2028],
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      data: config,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch college configuration",
+      error: error.message,
+    });
+  }
+};
+
+// PUT /api/tpo/college-config
+const updateCollegeConfig = async (req, res) => {
+  try {
+    const { branches, passoutYears, seasonStart, seasonEnd } = req.body;
+
+    let config = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+    if (!config) {
+      config = new CollegeConfig();
+    }
+
+    if (Array.isArray(branches)) {
+      const cleanBranches = branches
+        .map((b) => b.toString().trim().toUpperCase())
+        .filter((b) => b.length > 0);
+      config.branches = Array.from(new Set(cleanBranches));
+    }
+
+    if (Array.isArray(passoutYears)) {
+      const cleanYears = passoutYears
+        .map((y) => Number(y))
+        .filter((y) => !isNaN(y) && y > 1990 && y < 2100);
+      config.passoutYears = Array.from(new Set(cleanYears)).sort((a, b) => a - b);
+    }
+
+    if (seasonStart) config.seasonStart = new Date(seasonStart);
+    if (seasonEnd) config.seasonEnd = new Date(seasonEnd);
+
+    config.updatedBy = req.user ? req.user._id : null;
+    config.updatedAt = new Date();
+
+    await config.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "College configuration updated successfully",
+      data: config,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update college configuration",
+      error: error.message,
+    });
+  }
+};
+
+// POST /api/tpo/college-config/branch
+const addBranch = async (req, res) => {
+  try {
+    const { branch } = req.body;
+    if (!branch || typeof branch !== "string" || !branch.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid branch name",
+      });
+    }
+
+    const cleanBranch = branch.trim().toUpperCase();
+    let config = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+    if (!config) {
+      config = new CollegeConfig();
+    }
+
+    if (!config.branches.includes(cleanBranch)) {
+      config.branches.push(cleanBranch);
+      config.updatedBy = req.user ? req.user._id : null;
+      config.updatedAt = new Date();
+      await config.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Branch "${cleanBranch}" added successfully`,
+      data: config,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to add branch",
+      error: error.message,
+    });
+  }
+};
+
+// DELETE /api/tpo/college-config/branch/:branch
+const deleteBranch = async (req, res) => {
+  try {
+    const targetBranch = req.params.branch.trim().toUpperCase();
+
+    // Check if branch is currently in use by any student
+    const studentInBranch = await Student.findOne({ branch: { $regex: new RegExp(`^${targetBranch}$`, "i") } });
+    if (studentInBranch) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot delete branch. Students are currently enrolled in this branch.`,
+      });
+    }
+
+    let config = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+    if (!config) {
+      return res.status(404).json({ success: false, message: "College configuration not found" });
+    }
+
+    config.branches = config.branches.filter((b) => b.toUpperCase() !== targetBranch);
+    config.updatedBy = req.user ? req.user._id : null;
+    config.updatedAt = new Date();
+    await config.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Branch "${targetBranch}" deleted successfully`,
+      data: config,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete branch",
+      error: error.message,
+    });
+  }
+};
+
+// POST /api/tpo/college-config/passout-year
+const addPassoutYear = async (req, res) => {
+  try {
+    const { year } = req.body;
+    const yearNum = Number(year);
+    if (!yearNum || isNaN(yearNum) || yearNum < 1990 || yearNum > 2100) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid 4-digit passout year",
+      });
+    }
+
+    let config = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+    if (!config) {
+      config = new CollegeConfig();
+    }
+
+    if (!config.passoutYears.includes(yearNum)) {
+      config.passoutYears.push(yearNum);
+      config.passoutYears.sort((a, b) => a - b);
+      config.updatedBy = req.user ? req.user._id : null;
+      config.updatedAt = new Date();
+      await config.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Passout year ${yearNum} added successfully`,
+      data: config,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to add passout year",
+      error: error.message,
+    });
+  }
+};
+
+// DELETE /api/tpo/college-config/passout-year/:year
+const deletePassoutYear = async (req, res) => {
+  try {
+    const targetYear = Number(req.params.year);
+    if (isNaN(targetYear)) {
+      return res.status(400).json({ success: false, message: "Invalid passout year parameter" });
+    }
+
+    // Check if year is currently in use by any student
+    const studentInYear = await Student.findOne({ passoutYear: targetYear });
+    if (studentInYear) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot delete year. Students are currently graduating in this year.`,
+      });
+    }
+
+    let config = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+    if (!config) {
+      return res.status(404).json({ success: false, message: "College configuration not found" });
+    }
+
+    config.passoutYears = config.passoutYears.filter((y) => y !== targetYear);
+    config.updatedBy = req.user ? req.user._id : null;
+    config.updatedAt = new Date();
+    await config.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Passout year ${targetYear} deleted successfully`,
+      data: config,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete passout year",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getStudentsList,
   getDashboardAnalytics,
@@ -943,5 +1444,14 @@ module.exports = {
   approveDrive,
   rejectDrive,
   holdDrive,
+  getSeasonConfig,
+  updateSeasonConfig,
+  getStudentAuditDetails,
+  getCollegeConfig,
+  updateCollegeConfig,
+  addBranch,
+  deleteBranch,
+  addPassoutYear,
+  deletePassoutYear,
 };
 

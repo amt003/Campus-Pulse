@@ -185,4 +185,16 @@ export class StudentService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  getSeasonConfig(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/season-config`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  getCollegeConfig(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/season-config`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
 }

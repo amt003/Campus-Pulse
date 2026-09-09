@@ -108,12 +108,56 @@ export class RecruiterDashboardComponent implements OnInit {
   protected newDriveHasAptitude = signal<boolean>(false);
   protected newDriveHasGD = signal<boolean>(false);
   
-  protected availableBranches = ['BCA', 'MCA', 'INMCA', 'ECE', 'CSE', 'IT', 'EEE', 'ME', 'CE', 'AD'];
+  protected availableBranches = signal<string[]>(['BCA', 'MCA', 'INMCA', 'ECE', 'CSE', 'IT', 'EEE', 'ME', 'CE', 'AD']);
   protected selectedBranches = signal<string[]>(['CSE', 'IT', 'ECE']);
   protected todayDate = new Date().toISOString().split('T')[0];
+  protected seasonConfig = signal<{ seasonStart: string; seasonEnd: string } | null>(null);
+
+  protected seasonMinDate = computed(() => {
+    const start = this.seasonConfig()?.seasonStart;
+    if (!start) return '';
+    const d = new Date(start);
+    return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
+  });
+
+  protected seasonMaxDate = computed(() => {
+    const end = this.seasonConfig()?.seasonEnd;
+    if (!end) return '';
+    const d = new Date(end);
+    return isNaN(d.getTime()) ? '' : d.toISOString().split('T')[0];
+  });
+
+  protected isDeadlineAfterSeasonEnd = computed(() => {
+    const deadline = this.newDriveDeadline();
+    const max = this.seasonMaxDate();
+    if (!deadline || !max) return false;
+    return deadline > max;
+  });
+
+  protected isDeadlineBeforeSeasonStart = computed(() => {
+    const deadline = this.newDriveDeadline();
+    const min = this.seasonMinDate();
+    if (!deadline || !min) return false;
+    return deadline < min;
+  });
 
   ngOnInit(): void {
     this.fetchProfile();
+    this.fetchSeasonConfig();
+  }
+
+  private fetchSeasonConfig(): void {
+    this.recruiterService.getSeasonConfig().subscribe({
+      next: (res) => {
+        if (res && res.data) {
+          this.seasonConfig.set(res.data);
+          if (Array.isArray(res.data.branches) && res.data.branches.length > 0) {
+            this.availableBranches.set(res.data.branches);
+          }
+        }
+      },
+      error: (err) => console.error('Failed to load season config:', err),
+    });
   }
 
   protected fetchProfile(): void {
@@ -293,6 +337,7 @@ export class RecruiterDashboardComponent implements OnInit {
     if (!desc || desc.length < 10 || !!this.getMeaningfulError(desc, 'description')) return true;
     if (!ctc || ctc < 10000) return true;
     if (!deadline || deadline < this.todayDate) return true;
+    if (this.isDeadlineAfterSeasonEnd() || this.isDeadlineBeforeSeasonStart()) return true;
     if (minCGPA !== undefined && minCGPA !== null && (minCGPA < 0 || minCGPA > 10)) return true;
     if (maxBacklogs !== undefined && maxBacklogs !== null && maxBacklogs < 0) return true;
     if (branches.length === 0) return true;

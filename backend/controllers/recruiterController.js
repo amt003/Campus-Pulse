@@ -4,6 +4,7 @@ const Schedule = require("../models/Schedule");
 const Recruiter = require("../models/Recruiter");
 const User = require("../models/User");
 const Student = require("../models/Student");
+const CollegeConfig = require("../models/CollegeConfig");
 const socketService = require("../services/socketService");
 const sendEmail = require("../utils/sendEmail");
 const emailTemplates = require("../utils/emailTemplates");
@@ -271,6 +272,18 @@ const createJobDrive = async (req, res) => {
       });
     }
 
+    // Guardrail: Validate application deadline against placement season configuration
+    const seasonConfig = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+    if (seasonConfig && seasonConfig.seasonEnd) {
+      const deadlineDate = new Date(applicationDeadline);
+      if (deadlineDate > new Date(seasonConfig.seasonEnd)) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot schedule outside the placement season.",
+        });
+      }
+    }
+
     const jobDrive = await JobDrive.create({
       recruiterId: req.user._id,
       title,
@@ -389,6 +402,19 @@ const updateJobDrive = async (req, res) => {
       "hasAptitudeTest",
       "hasGD",
     ];
+
+    if (req.body.applicationDeadline) {
+      const seasonConfig = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+      if (seasonConfig && seasonConfig.seasonEnd) {
+        const deadlineDate = new Date(req.body.applicationDeadline);
+        if (deadlineDate > new Date(seasonConfig.seasonEnd)) {
+          return res.status(400).json({
+            success: false,
+            message: "Cannot schedule outside the placement season.",
+          });
+        }
+      }
+    }
 
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
@@ -582,6 +608,19 @@ const scheduleStage = async (req, res) => {
 
     const scheduledDate = new Date(date);
 
+    // Guardrail: Validate event date against placement season configuration
+    const seasonConfig = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+    if (seasonConfig) {
+      const seasonStart = new Date(seasonConfig.seasonStart);
+      const seasonEnd = new Date(seasonConfig.seasonEnd);
+      if (scheduledDate < seasonStart || scheduledDate > seasonEnd) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot schedule outside the placement season.",
+        });
+      }
+    }
+
     // Conflict Detection Engine
     const conflicts = [];
     const createdSchedules = [];
@@ -731,6 +770,20 @@ const scheduleEvent = async (req, res) => {
     }
 
     const scheduledDate = new Date(date);
+
+    // Guardrail: Validate event date against placement season configuration
+    const seasonConfig = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+    if (seasonConfig) {
+      const seasonStart = new Date(seasonConfig.seasonStart);
+      const seasonEnd = new Date(seasonConfig.seasonEnd);
+      if (scheduledDate < seasonStart || scheduledDate > seasonEnd) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot schedule outside the placement season.",
+        });
+      }
+    }
+
     const conflicts = [];
     const applications = [];
 
@@ -2177,6 +2230,29 @@ const getRecruiterOfferPdf = async (req, res) => {
   }
 };
 
+const getSeasonConfig = async (req, res) => {
+  try {
+    let config = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+    if (!config) {
+      const currentYear = new Date().getFullYear();
+      config = await CollegeConfig.create({
+        seasonStart: new Date(currentYear, 7, 1),
+        seasonEnd: new Date(currentYear, 11, 15),
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      data: config,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch placement season configuration",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getRecruiterProfile,
   getDriveApplications,
@@ -2210,5 +2286,6 @@ module.exports = {
   getAllRecruiterOffers,
   getRecruiterOfferPdf,
   resubmitDriveForApproval,
+  getSeasonConfig,
 };
 

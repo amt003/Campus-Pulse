@@ -5,6 +5,29 @@
        ============================================= -->
   <main class="dashboard-container">
 
+    <!-- Placement Season Banner -->
+    @if (seasonConfig()) {
+      <div style="background: #006497; color: white; border-radius: 14px; padding: 14px 22px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(255, 255, 255, 0.12); color: #38bdf8; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+            <span class="material-symbols-outlined" style="font-size: 22px;">date_range</span>
+          </div>
+          <div>
+            <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #ffffff; display: block; margin-bottom: 2px;">Active Placement Season Window</span>
+            <span style="font-size: 15px; font-weight: 800; color:#ffffff;">
+              📅 {{ seasonConfig()?.seasonStart | date:'mediumDate' }} &nbsp;&rarr;&nbsp; {{ seasonConfig()?.seasonEnd | date:'mediumDate' }}
+            </span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button (click)="router.navigate(['/tpo/settings'])" style="font-size: 12.5px; font-weight: 750; color: #ffffff; background: transparent; border: 1px solid #ffffff; padding: 7px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+            <span class="material-symbols-outlined" style="font-size: 16px;">settings</span>
+            <span>Configure Season</span>
+          </button>
+        </div>
+      </div>
+    }
+
     <!-- ══════════════════════════════════════════
          2. Top Row Stats Cards (4 Cards)
          ══════════════════════════════════════════ -->
@@ -378,47 +401,109 @@
   </main>
 
   <!-- =============================================
-       6. Bulk Import Modal
+       6. Student Import Modal (Single & Bulk)
        ============================================= -->
   @if (isImportModalOpen()) {
   <div class="modal-backdrop" (click)="closeImportModal()">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3 class="modal-title">Import Student Records</h3>
+        <h3 class="modal-title">🎓 Import Student Records</h3>
         <button class="btn-close" (click)="closeImportModal()">&times;</button>
       </div>
 
       <div class="modal-body">
-        <p class="modal-desc">
-          Upload CSV file or paste student records to enroll batch students.
-        </p>
-
-        <div class="file-dropzone">
-          <input type="file" accept=".csv" (change)="onFileSelect($event)" id="csv-input" />
-          <label for="csv-input" class="dropzone-inner">
-            <span class="material-symbols-outlined dropzone-icon">cloud_upload</span>
-            <span>Click to select CSV File</span>
-            <small>Columns: rollNumber, name, email, cgpa, branch, passoutYear</small>
-          </label>
+        <!-- Mode Switcher -->
+        <div style="display: flex; gap: 8px; margin-bottom: 18px; border-bottom: 1.5px solid var(--outline-variant); padding-bottom: 10px;">
+          <button
+            type="button"
+            (click)="importMode.set('single')"
+            style="padding: 7px 16px; border-radius: 20px; font-weight: 700; font-size: 13px; cursor: pointer; border: none; transition: all 0.2s;"
+            [style.background]="importMode() === 'single' ? 'var(--primary)' : 'var(--surface-low)'"
+            [style.color]="importMode() === 'single' ? '#ffffff' : 'var(--on-surface-var)'"
+          >
+            👤 Single Student Entry
+          </button>
+          <button
+            type="button"
+            (click)="importMode.set('bulk')"
+            style="padding: 7px 16px; border-radius: 20px; font-weight: 700; font-size: 13px; cursor: pointer; border: none; transition: all 0.2s;"
+            [style.background]="importMode() === 'bulk' ? 'var(--primary)' : 'var(--surface-low)'"
+            [style.color]="importMode() === 'bulk' ? '#ffffff' : 'var(--on-surface-var)'"
+          >
+            📁 Bulk CSV / JSON Upload
+          </button>
         </div>
 
-        <div class="modal-or">
-          <span>OR paste JSON data</span>
-          <button class="btn-link" (click)="loadSampleJSON()">Load Sample</button>
-        </div>
+        @if (importMode() === 'single') {
+          <!-- Single Student Form -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; text-align: left;">
+            <div>
+              <label style="display: block; font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 4px;">Roll Number *</label>
+              <input type="text" placeholder="e.g. CS26B042" [ngModel]="singleRoll()" (ngModelChange)="singleRoll.set($event)" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1.5px solid var(--outline); font-size: 13.5px; box-sizing: border-box;" required />
+            </div>
 
-        <textarea class="modal-textarea" rows="4" [ngModel]="importRawInput()"
-          (ngModelChange)="importRawInput.set($event)"
-          placeholder='[{"rollNumber": "CS24B001", "name": "Aarav", "email": "aarav@alphabet.edu", "cgpa": 9.1, "branch": "CSE", "passoutYear": 2024}]'></textarea>
+            <div>
+              <label style="display: block; font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 4px;">Student Name *</label>
+              <input type="text" placeholder="e.g. Aarav Sharma" [ngModel]="singleName()" (ngModelChange)="singleName.set($event)" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1.5px solid var(--outline); font-size: 13.5px; box-sizing: border-box;" required />
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 4px;">Email Address *</label>
+              <input type="email" placeholder="e.g. aarav@alphabet.edu" [ngModel]="singleEmail()" (ngModelChange)="singleEmail.set($event)" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1.5px solid var(--outline); font-size: 13.5px; box-sizing: border-box;" required />
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 4px;">Branch *</label>
+              <select [ngModel]="singleBranch()" (ngModelChange)="singleBranch.set($event)" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1.5px solid var(--outline); font-size: 13.5px; box-sizing: border-box;">
+                @for (b of availableBranches(); track b) {
+                  <option [value]="b">{{ b }}</option>
+                }
+              </select>
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 4px;">CGPA *</label>
+              <input type="number" step="0.1" min="0" max="10" placeholder="e.g. 8.5" [ngModel]="singleCgpa()" (ngModelChange)="singleCgpa.set($event)" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1.5px solid var(--outline); font-size: 13.5px; box-sizing: border-box;" required />
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 4px;">Passout Year *</label>
+              <input type="number" placeholder="2026" [ngModel]="singlePassoutYear()" (ngModelChange)="singlePassoutYear.set($event)" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1.5px solid var(--outline); font-size: 13.5px; box-sizing: border-box;" required />
+            </div>
+          </div>
+        } @else {
+          <!-- Bulk Import Controls -->
+          <div class="file-dropzone">
+            <input type="file" accept=".csv" (change)="onFileSelect($event)" id="csv-input" />
+            <label for="csv-input" class="dropzone-inner">
+              <span class="material-symbols-outlined dropzone-icon">cloud_upload</span>
+              <span>Click to select CSV File</span>
+              <small>Columns: rollNumber, name, email, cgpa, branch, passoutYear</small>
+            </label>
+          </div>
+
+          <div class="modal-or">
+            <span>OR paste JSON data</span>
+            <button class="btn-link" (click)="loadSampleJSON()">Load Sample</button>
+          </div>
+
+          <textarea class="modal-textarea" rows="4" [ngModel]="importRawInput()"
+            (ngModelChange)="importRawInput.set($event)"
+            placeholder='[{"rollNumber": "CS24B001", "name": "Aarav", "email": "aarav@alphabet.edu", "cgpa": 9.1, "branch": "CSE", "passoutYear": 2024}]'></textarea>
+        }
 
         @if (importErrorMsg()) {
-        <p class="error-text">{{ importErrorMsg() }}</p>
+          <div style="background: #fdedec; border: 1px solid #f5b7b1; color: #922b21; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-top: 14px;">
+            ⚠️ {{ importErrorMsg() }}
+          </div>
         }
         @if (importSuccessMsg()) {
-        <p class="success-text">{{ importSuccessMsg() }}</p>
+          <div style="background: #eafaf1; border: 1px solid #a9dfbf; color: #1e8449; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-top: 14px;">
+            ✅ {{ importSuccessMsg() }}
+          </div>
         }
 
-        @if (previewStudents().length > 0) {
+        @if (importMode() === 'bulk' && previewStudents().length > 0) {
         <div class="preview-box">
           <span class="preview-head">Preview ({{ previewStudents().length }} students)</span>
           <div class="preview-scroll">
@@ -451,9 +536,16 @@
 
       <div class="modal-footer">
         <button class="btn-cancel" (click)="closeImportModal()">Cancel</button>
-        <button class="btn-import-submit" [disabled]="previewStudents().length === 0 || isImporting()"
-          (click)="submitBulkImport()">
-          Confirm & Import
+        <button
+          class="btn-import-submit"
+          [disabled]="isImporting()"
+          (click)="submitBulkImport()"
+        >
+          @if (isImporting()) {
+            <span>Importing...</span>
+          } @else {
+            <span>{{ importMode() === 'single' ? '➕ Import Student' : '📥 Import Students' }}</span>
+          }
         </button>
       </div>
     </div>

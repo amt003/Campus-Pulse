@@ -306,7 +306,9 @@
                   <div class="td-student">
                     <div class="student-avatar">{{ (s.userId?.name || 'S')[0].toUpperCase() }}</div>
                     <div class="student-info">
-                      <span class="student-name">{{ s.userId?.name || '—' }}</span>
+                      <span class="student-name clickable-audit" (click)="openAuditPanel(s.rollNumber, $event)" title="Click to view placement audit">
+                        {{ s.userId?.name || '—' }}
+                      </span>
                       <span class="student-email">{{ s.userId?.email || '—' }}</span>
                     </div>
                   </div>
@@ -324,7 +326,11 @@
                     {{ s.userId?.isActive ? 'Active' : 'Inactive' }}
                   </span>
                 </td>
-                <td class="td-expand">
+                <td class="td-expand" style="display: flex; align-items: center; gap: 8px;">
+                  <button class="btn-audit-drill" (click)="openAuditPanel(s.rollNumber, $event)" title="View Placement Audit" style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 6px; border: 1px solid #0284c7; background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                    <span class="material-symbols-outlined" style="font-size: 15px;">analytics</span>
+                    <span>Audit</span>
+                  </button>
                   <span class="expand-chevron material-symbols-outlined">expand_more</span>
                 </td>
               </tr>
@@ -390,3 +396,10 @@
   </main>
 
 </div>
+
+@if (selectedRollNumberForAudit()) {
+  <app-student-audit-panel
+    [rollNumber]="selectedRollNumberForAudit()!"
+    (close)="closeAuditPanel()"
+  ></app-student-audit-panel>
+}

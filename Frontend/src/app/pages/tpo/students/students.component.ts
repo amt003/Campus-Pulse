@@ -8,10 +8,12 @@ import {
   StudentsResponse,
 } from '../../../services/tpo.service';
 
+import { StudentAuditPanelComponent } from '../../../components/tpo/student-audit-panel/student-audit-panel.component';
+
 @Component({
   selector: 'app-tpo-students',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, StudentAuditPanelComponent],
   templateUrl: './students.component.html',
   styleUrl: './students.component.css',
 })
@@ -23,6 +25,9 @@ export class TpoStudentsComponent implements OnInit, OnDestroy {
   protected students = signal<StudentRecord[]>([]);
   protected isLoading = signal<boolean>(true);
   protected errorMsg = signal<string | null>(null);
+
+  // ── Audit Drawer State ───────────────────────────────────────────────────
+  protected selectedRollNumberForAudit = signal<string | null>(null);
 
   // ── Filter State ─────────────────────────────────────────────────────────
   protected searchQuery = signal<string>('');
@@ -188,6 +193,17 @@ export class TpoStudentsComponent implements OnInit, OnDestroy {
     a.download = `students_export_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  protected openAuditPanel(rollNumber: string, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.selectedRollNumberForAudit.set(rollNumber);
+  }
+
+  protected closeAuditPanel(): void {
+    this.selectedRollNumberForAudit.set(null);
   }
 
   protected get activeFiltersCount(): number {

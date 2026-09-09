@@ -14,6 +14,7 @@ const {
   getOfferDetails,
   getOfferPdf,
   getPreparationResources,
+  getSeasonConfig,
 } = require("../controllers/studentController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
@@ -22,6 +23,7 @@ const { downloadDriveAttachment } = require("../controllers/recruiterController"
 const router = express.Router();
 
 router.use(protect, authorizeRoles("Student"));
+router.get("/season-config", getSeasonConfig);
 router.get("/drive/attachment/download/:fileId", downloadDriveAttachment);
 
 router.post("/profile", createStudentProfile);

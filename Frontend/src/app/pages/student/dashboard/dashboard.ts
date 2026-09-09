@@ -26,6 +26,7 @@ export class StudentDashboardComponent implements OnInit {
   protected applications = signal<Application[]>([]);
   protected filterEligibleOnly = signal<boolean>(false);
   protected isAlreadyPlaced = signal<boolean>(false);
+  protected seasonConfig = signal<{ seasonStart: string; seasonEnd: string } | null>(null);
   
   protected selectedApplication = signal<any | null>(null);
   protected schedules = signal<any[]>([]);
@@ -165,6 +166,17 @@ export class StudentDashboardComponent implements OnInit {
 
   protected loadDashboardData(): void {
     this.isLoading.set(true);
+
+    // Fetch season config
+    this.studentService.getSeasonConfig().subscribe({
+      next: (res) => {
+        if (res && res.data) {
+          this.seasonConfig.set(res.data);
+        }
+      },
+      error: (err) => console.error('Failed to load season config:', err),
+    });
+
     // Fetch profile first, then drives and applications
     this.studentService.getProfile().subscribe({
       next: (res) => {

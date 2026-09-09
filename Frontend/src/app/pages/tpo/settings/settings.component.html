@@ -1,0 +1,248 @@
+<div class="settings-root">
+
+  <!-- =============================================
+       Page Header
+       ============================================= -->
+  <header class="settings-header">
+    <div class="header-left">
+      
+      <div class="title-wrap">
+        <h1 class="page-title"> Placement Season Configuration</h1>
+        <p class="page-subtitle">Configure the active placement season window to safeguard recruitment timelines</p>
+      </div>
+    </div>
+
+    <div class="header-right">
+      @if (hasDatesConfigured()) {
+        <div class="status-chip" [class.status-active]="isSeasonActiveNow()" [class.status-inactive]="!isSeasonActiveNow()">
+          <span class="status-dot"></span>
+          <span>{{ isSeasonActiveNow() ? 'Season In Progress' : 'Season Window Inactive' }}</span>
+        </div>
+      }
+     
+    </div>
+  </header>
+
+  <div class="settings-container">
+
+    <!-- =============================================
+         Loading State
+         ============================================= -->
+    @if (isLoading()) {
+      <div class="loading-box">
+        <div class="loader-spinner"></div>
+        <p>Loading placement season settings...</p>
+      </div>
+    } @else {
+
+      <!-- =============================================
+           Warning Banner (If dates not set)
+           ============================================= -->
+      @if (!hasDatesConfigured()) {
+        <div class="warning-banner" id="settings-warning-banner">
+          <div class="banner-icon-col">
+            <span class="material-symbols-outlined">warning</span>
+          </div>
+          <div class="banner-text-col">
+            <h4 class="banner-title">⚠️ Placement Season Dates Not Set!</h4>
+            <p class="banner-desc">
+              Please specify both <strong>Season Start Date</strong> and <strong>Season End Date</strong>. Without an active season window, recruiters cannot schedule events or post new job drives.
+            </p>
+          </div>
+        </div>
+      }
+
+      <!-- =============================================
+           Error / Success Alerts
+           ============================================= -->
+      @if (errorMessage()) {
+        <div class="alert-box alert-error">
+          <span class="material-symbols-outlined">error</span>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      @if (successMessage()) {
+        <div class="alert-box alert-success">
+          <span class="material-symbols-outlined">check_circle</span>
+          <span>{{ successMessage() }}</span>
+        </div>
+      }
+
+      <!-- =============================================
+           Main Configuration Card
+           ============================================= -->
+      <div class="settings-card">
+        <div class="card-header">
+          <div class="card-header-title">
+            <span class="material-symbols-outlined card-icon">calendar_month</span>
+            <div class="card-heading-group">
+              <h2 class="card-title">Set Placement Season Dates</h2>
+              <span class="card-subtitle">Define the global calendar boundaries for all on-campus and off-campus recruitment activities</span>
+            </div>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="presets-group">
+            <span class="presets-label">Quick Presets:</span>
+            <button type="button" class="btn-preset" (click)="setPreset('fall')">🍁 Fall (Aug - Dec)</button>
+            <button type="button" class="btn-preset" (click)="setPreset('spring')">🌸 Spring (Jan - May)</button>
+            <button type="button" class="btn-preset" (click)="setPreset('fullYear')">🎓 Full Academic Year</button>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <form (ngSubmit)="saveConfiguration()" class="season-form">
+
+            <!-- Live Validation Feedback Banner -->
+            @if (liveValidationMessage(); as validation) {
+              <div
+                class="live-validation-box"
+                [class.live-val-error]="validation.type === 'error'"
+                [class.live-val-warning]="validation.type === 'warning'"
+                [class.live-val-success]="validation.type === 'success'"
+              >
+                <span class="material-symbols-outlined live-val-icon">
+                  {{ validation.type === 'error' ? 'cancel' : validation.type === 'warning' ? 'warning' : 'check_circle' }}
+                </span>
+                <span class="live-val-text">{{ validation.text }}</span>
+              </div>
+            }
+
+            <!-- Date Pickers Grid -->
+            <div class="form-grid">
+              
+              <!-- Field 1: Season Start Date -->
+              <div class="form-field">
+                <label for="seasonStartInput" class="field-label">
+                  <span class="material-symbols-outlined label-icon">event_available</span>
+                  <span>Season Start Date</span>
+                  <span class="required-asterisk">*</span>
+                </label>
+                <div class="input-wrapper" [class.input-valid]="seasonStart() && isDateOrderValid()" [class.input-invalid]="!seasonStart()">
+                  <input
+                    type="date"
+                    id="seasonStartInput"
+                    name="seasonStart"
+                    [ngModel]="seasonStart()"
+                    (ngModelChange)="seasonStart.set($event)"
+                    class="date-input"
+                    required
+                  />
+                  @if (seasonStart() && isDateOrderValid()) {
+                    <span class="material-symbols-outlined input-status-icon success-icon">check</span>
+                  }
+                </div>
+                <span class="field-hint">Initial date when recruiters can start campus activities</span>
+              </div>
+
+              <!-- Field 2: Season End Date -->
+              <div class="form-field">
+                <label for="seasonEndInput" class="field-label">
+                  <span class="material-symbols-outlined label-icon">event_busy</span>
+                  <span>Season End Date</span>
+                  <span class="required-asterisk">*</span>
+                </label>
+                <div class="input-wrapper" [class.input-valid]="seasonEnd() && isDateOrderValid()" [class.input-invalid]="!isDateOrderValid() || !seasonEnd()">
+                  <input
+                    type="date"
+                    id="seasonEndInput"
+                    name="seasonEnd"
+                    [ngModel]="seasonEnd()"
+                    (ngModelChange)="seasonEnd.set($event)"
+                    class="date-input"
+                    required
+                  />
+                  @if (seasonEnd() && isDateOrderValid()) {
+                    <span class="material-symbols-outlined input-status-icon success-icon">check</span>
+                  }
+                </div>
+                @if (!isDateOrderValid()) {
+                  <span class="field-error">Season End Date cannot be before Season Start Date</span>
+                } @else {
+                  <span class="field-hint">Final date for application deadlines & event scheduling</span>
+                }
+              </div>
+
+            </div>
+
+            <!-- Season Summary Pill if valid -->
+            @if (hasDatesConfigured() && isDateOrderValid() && durationDays()) {
+              <div class="season-summary-strip">
+                <div class="summary-item">
+                  <span class="material-symbols-outlined">timelapse</span>
+                  <span><strong>Total Duration:</strong> {{ durationDays() }} days</span>
+                </div>
+                <div class="summary-item">
+                  <span class="material-symbols-outlined">date_range</span>
+                  <span><strong>Active Window:</strong> {{ seasonStart() | date:'mediumDate' }} &rarr; {{ seasonEnd() | date:'mediumDate' }}</span>
+                </div>
+              </div>
+            }
+
+            <!-- =============================================
+                 Info Box
+                 ============================================= -->
+            <div class="info-box" id="settings-info-box">
+              <div class="info-icon">
+                <span class="material-symbols-outlined">shield</span>
+              </div>
+              <div class="info-content">
+                <h4 class="info-title">System Policy & Guardrail Note</h4>
+                <p class="info-desc">
+                  Drives and events cannot be scheduled outside this window. Students of previous batches remain for reports.
+                </p>
+              </div>
+            </div>
+
+            <!-- Card Actions -->
+            <div class="form-actions">
+              <button
+                type="button"
+                class="btn-secondary"
+                (click)="clearDates()"
+                [disabled]="isSaving()"
+              >
+                <span class="material-symbols-outlined">restart_alt</span>
+                <span>Reset Fields</span>
+              </button>
+
+              <button
+                type="submit"
+                class="btn-primary"
+                [disabled]="isSaving() || !seasonStart() || !seasonEnd() || !isDateOrderValid() || !isDurationValid()"
+                id="btn-save-season-config"
+              >
+                @if (isSaving()) {
+                  <span class="loader-spinner-sm"></span>
+                  <span>Saving Configuration...</span>
+                } @else {
+                  <span class="material-symbols-outlined">save</span>
+                  <span>💾 Save Configuration</span>
+                }
+              </button>
+            </div>
+
+          </form>
+        </div>
+
+        <!-- Card Footer / Audit Info -->
+        @if (configData()?.updatedAt) {
+          <div class="card-footer">
+            <span class="material-symbols-outlined footer-icon">history</span>
+            <span>
+              Last updated on <strong>{{ configData()?.updatedAt | date:'medium' }}</strong>
+              @if (configData()?.updatedBy?.name) {
+                by <strong>{{ configData()?.updatedBy?.name }}</strong> ({{ configData()?.updatedBy?.email }})
+              }
+            </span>
+          </div>
+        }
+
+      </div>
+
+    }
+
+  </div>
+
+</div>

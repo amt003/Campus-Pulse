@@ -22,9 +22,17 @@ const {
   getPendingDrives,
   approveDrive,
   rejectDrive,
-  holdDrive
+  holdDrive,
+  getSeasonConfig,
+  updateSeasonConfig,
+  getStudentAuditDetails,
+  getCollegeConfig,
+  updateCollegeConfig,
+  addBranch,
+  deleteBranch,
+  addPassoutYear,
+  deletePassoutYear,
 } = require('../controllers/tpoController');
-
 
 // All routes require authentication and TPO role
 router.use(protect);
@@ -36,6 +44,17 @@ router.use((req, res, next) => {
   next();
 });
 
+// College configuration & Season routes
+router.get('/college-config', getCollegeConfig);
+router.put('/college-config', updateCollegeConfig);
+router.post('/college-config/branch', addBranch);
+router.delete('/college-config/branch/:branch', deleteBranch);
+router.post('/college-config/passout-year', addPassoutYear);
+router.delete('/college-config/passout-year/:year', deletePassoutYear);
+
+router.get('/season-config', getSeasonConfig);
+router.put('/season-config', updateSeasonConfig);
+
 // Analytics routes
 router.get('/analytics', getDashboardAnalytics);
 router.get('/funnel', getPlacementFunnel);
@@ -44,6 +63,7 @@ router.get('/offer-trends', getOfferAcceptanceTrends);
 
 // Students management routes
 router.get('/students', getStudentsList);
+router.get('/student/:rollNumber/audit', getStudentAuditDetails);
 
 // Drive Approval routes
 router.get('/drives/pending', getPendingDrives);

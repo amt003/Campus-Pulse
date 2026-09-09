@@ -66,17 +66,13 @@
             <label class="profile-field-label">Branch</label>
             <select [(ngModel)]="profile()!.branch" name="profileBranch" class="profile-input" required
               [class.is-invalid]="isSaveTriggered() && branchError()" [class.is-valid]="isSaveTriggered() && !branchError()" style="background: white;">
-              <option value="CSE">CSE</option>
-              <option value="ECE">ECE</option>
-              <option value="IT">IT</option>
-              <option value="ME">ME</option>
-              <option value="Civil">Civil</option>
-              <option value="BCA">BCA</option>
-              <option value="MCA">MCA</option>
-              <option value="INMCA">INMCA</option>
-              <option value="EEE">EEE</option>
-              <option value="CE">CE</option>
-              <option value="AD">AD</option>
+              <option value="">Select Branch</option>
+              @for (b of availableBranches(); track b) {
+                <option [value]="b">{{ b }}</option>
+              }
+              @if (profile()?.branch && !availableBranches().includes(profile()!.branch)) {
+                <option [value]="profile()!.branch">{{ profile()!.branch }}</option>
+              }
             </select>
             @if (isSaveTriggered() && branchError()) {
               <span class="field-error-text">Please select a valid branch</span>
@@ -87,10 +83,13 @@
             <label class="profile-field-label">Passout Year</label>
             <select [(ngModel)]="profile()!.passoutYear" name="profileYear" class="profile-input" required
               [class.is-invalid]="isSaveTriggered() && passoutYearError()" [class.is-valid]="isSaveTriggered() && !passoutYearError()" style="background: white;">
-              <option [value]="2024">2024</option>
-              <option [value]="2025">2025</option>
-              <option [value]="2026">2026</option>
-              <option [value]="2027">2027</option>
+              <option value="">Select Year</option>
+              @for (yr of availablePassoutYears(); track yr) {
+                <option [value]="yr">{{ yr }}</option>
+              }
+              @if (profile()?.passoutYear && !availablePassoutYears().includes(profile()!.passoutYear)) {
+                <option [value]="profile()!.passoutYear">{{ profile()!.passoutYear }}</option>
+              }
             </select>
             @if (isSaveTriggered() && passoutYearError()) {
               <span class="field-error-text">Please select a passout year</span>
@@ -127,7 +126,7 @@
             </div>
             @if (profile()?.resumePath) {
               <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                <a [href]="'http://localhost:5000' + profile()!.resumePath" target="_blank" class="btn-view-resume">
+                <a [href]="getResumeUrl()" target="_blank" class="btn-view-resume">
                   <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
                   <span>View Resume</span>
                 </a>

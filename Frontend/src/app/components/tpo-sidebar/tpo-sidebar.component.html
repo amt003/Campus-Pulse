@@ -1,0 +1,36 @@
+<aside class="tpo-sidebar" [class.collapsed]="isCollapsed()" data-lenis-prevent>
+  <div class="sidebar-links-wrapper">
+    <a class="sidebar-link" routerLink="/tpo/dashboard" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" id="tpo-sidebar-dashboard">
+      <span class="material-symbols-outlined">dashboard</span>
+      <span class="link-label">Dashboard</span>
+    </a>
+
+    <a class="sidebar-link" routerLink="/tpo/students" routerLinkActive="active-link" id="tpo-sidebar-students">
+      <span class="material-symbols-outlined">school</span>
+      <span class="link-label">Students Directory</span>
+    </a>
+
+    <a class="sidebar-link" routerLink="/tpo/approval" routerLinkActive="active-link" id="tpo-sidebar-approval">
+      <span class="material-symbols-outlined">verified_user</span>
+      <span class="link-label">Approve Recruiters</span>
+      @if (pendingCount() > 0) {
+        <span class="sidebar-badge">{{ pendingCount() }}</span>
+      }
+    </a>
+
+    <a class="sidebar-link" routerLink="/tpo/drive-approvals" routerLinkActive="active-link" id="tpo-sidebar-drive-approvals">
+      <span class="material-symbols-outlined">assignment_turned_in</span>
+      <span class="link-label">Pending Drives</span>
+      @if (pendingDriveCount() > 0) {
+        <span class="sidebar-badge">{{ pendingDriveCount() }}</span>
+      }
+    </a>
+
+    <div class="sidebar-divider"></div>
+
+    <a class="sidebar-link" routerLink="/tpo/settings" routerLinkActive="active-link" id="tpo-sidebar-settings">
+      <span class="material-symbols-outlined">settings</span>
+      <span class="link-label">Season Settings</span>
+    </a>
+  </div>
+</aside>

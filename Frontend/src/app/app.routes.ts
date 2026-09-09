@@ -7,6 +7,8 @@ import { TpoDashboardComponent } from './pages/tpo/dashboard/dashboard';
 import { TpoApprovalComponent } from './pages/tpo/approval/approval.component';
 import { TpoStudentsComponent } from './pages/tpo/students/students.component';
 import { TpoDriveApprovalComponent } from './pages/tpo/drive-approval/drive-approval.component';
+import { TpoCollegeConfigComponent } from './pages/tpo/college-config/college-config.component';
+import { TpoSettingsComponent } from './pages/tpo/settings/settings.component';
 import { RecruiterDashboardComponent } from './pages/recruiter/dashboard/dashboard';
 import { RecruiterLayoutComponent } from './pages/recruiter/layout/layout.component';
 import { RecruiterProfileComponent } from './pages/recruiter/profile/profile';
@@ -79,6 +81,14 @@ export const routes: Routes = [
       {
         path: 'students',
         component: TpoStudentsComponent,
+      },
+      {
+        path: 'settings',
+        component: TpoSettingsComponent,
+      },
+      {
+        path: 'college-config',
+        component: TpoCollegeConfigComponent,
       },
     ],
   },

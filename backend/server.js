@@ -23,14 +23,43 @@ const server = http.createServer(app);
 // Initialize Socket.io
 socketService.init(server);
 
+const fs = require("fs");
+const { ensureSampleResumesExist } = require("./utils/initSampleResumes");
+
+// Ensure default and sample resume PDFs exist on disk
+ensureSampleResumesExist();
+
 // --- Middleware ---
 app.use(cors()); // Allow Angular frontend to call this API
 app.use(express.json({ limit: '50mb' })); // Parse incoming JSON requests with increased limit
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Dedicated Resume route with fallback to ensure PDFs load cleanly
+app.get("/uploads/resumes/:filename", (req, res) => {
+  const requestedFile = req.params.filename;
+  const filePath = path.join(__dirname, "uploads", "resumes", requestedFile);
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  // Fallback to sample resume if specific file is missing on disk
+  const defaultResumePath = path.join(__dirname, "uploads", "resumes", "default_resume.pdf");
+  if (fs.existsSync(defaultResumePath)) {
+    return res.sendFile(defaultResumePath);
+  }
+
+  return res.status(404).send("Resume file not found");
+});
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+const { initializeCollegeConfig } = require("./utils/initCollegeConfig");
+
 // --- Connect to Database ---
-connectDB();
+connectDB().then(() => {
+  initializeCollegeConfig();
+});
 
 // --- Initialize Background Cron Jobs ---
 initCronScheduler();

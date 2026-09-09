@@ -32,6 +32,7 @@ const {
   getAllRecruiterOffers,
   getRecruiterOfferPdf,
   resubmitDriveForApproval,
+  getSeasonConfig,
 } = require("../controllers/recruiterController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const { uploadImage, uploadOffer } = require("../middleware/uploadMiddleware");
@@ -47,6 +48,7 @@ const router = express.Router();
 
 router.use(protect, authorizeRoles("Recruiter"));
 
+router.get("/season-config", getSeasonConfig);
 router.get("/profile", getRecruiterProfile);
 router.get("/analytics", getRecruiterAnalytics);
 router.put("/profile", uploadImage.single("logo"), updateRecruiterProfile);

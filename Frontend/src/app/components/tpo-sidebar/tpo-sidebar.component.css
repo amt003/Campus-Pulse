@@ -1,0 +1,101 @@
+/* =============================================
+   CampusPulse — TPO Sidebar Navigation Styles
+   ============================================= */
+
+:host {
+  display: block;
+}
+
+.tpo-sidebar {
+  width: 250px;
+  background: #ffffff;
+  border-right: 1px solid rgba(193, 199, 207, 0.4);
+  min-height: calc(100vh - 70px);
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 2px 0 8px rgba(0, 59, 90, 0.03);
+}
+
+.tpo-sidebar.collapsed {
+  width: 72px;
+}
+
+.sidebar-links-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: #41474e;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.sidebar-link:hover {
+  background: #edf4ff;
+  color: #003b5a;
+  transform: translateX(2px);
+}
+
+.sidebar-link.active-link {
+  background: linear-gradient(90deg, #003b5a 0%, #005a8a 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 59, 90, 0.2);
+}
+
+.sidebar-link.active-link .material-symbols-outlined {
+  color: #ffffff;
+}
+
+.material-symbols-outlined {
+  font-size: 22px;
+  color: #006497;
+  flex-shrink: 0;
+}
+
+.link-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tpo-sidebar.collapsed .link-label {
+  display: none;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: rgba(193, 199, 207, 0.35);
+  margin: 8px 4px;
+}
+
+.sidebar-badge {
+  margin-left: auto;
+  background: #e74c3c;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 6px rgba(231, 76, 60, 0.35);
+}
+
+.tpo-sidebar.collapsed .sidebar-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 2px 5px;
+  font-size: 10px;
+}

@@ -68,6 +68,7 @@ export class TpoDashboardComponent implements OnInit, OnDestroy {
   protected importErrorMsg = signal<string | null>(null);
 
   protected currentUser = signal<{ name: string; email: string; role: string } | null>(null);
+  protected seasonConfig = signal<{ seasonStart: string; seasonEnd: string } | null>(null);
 
   // Pagination for pending table
   protected currentPage = signal<number>(1);
@@ -114,6 +115,7 @@ export class TpoDashboardComponent implements OnInit, OnDestroy {
   };
 
   ngOnInit(): void {
+    this.loadCollegeConfig();
     this.loadAllDashboardData(true);
     // Real-time Live Polling every 5 seconds
     this.livePollingTimer = setInterval(() => {
@@ -139,8 +141,9 @@ export class TpoDashboardComponent implements OnInit, OnDestroy {
       this.tpoService.getPendingRecruiters().toPromise(),
       this.tpoService.getApprovedRecruiters().toPromise(),
       this.tpoService.getPendingDrives().toPromise(),
+      this.tpoService.getSeasonConfig().toPromise(),
     ])
-      .then(([analytics, funnel, branch, offer, pending, approved, pendingDrives]) => {
+      .then(([analytics, funnel, branch, offer, pending, approved, pendingDrives, seasonRes]) => {
         this.analytics.set(analytics || this.zeroAnalytics);
         this.funnelData.set(funnel && funnel.length > 0 ? funnel : this.zeroFunnel);
         this.branchStats.set(branch && branch.length > 0 ? branch : this.zeroBranchStats);
@@ -148,6 +151,9 @@ export class TpoDashboardComponent implements OnInit, OnDestroy {
         this.pendingRecruiters.set(pending || []);
         this.approvedRecruiters.set(approved || []);
         this.pendingDriveCount.set(pendingDrives?.drives?.length || 0);
+        if (seasonRes && seasonRes.data) {
+          this.seasonConfig.set(seasonRes.data);
+        }
 
         this.lastUpdatedText.set(new Date().toLocaleTimeString());
         this.isLoading.set(false);
@@ -285,9 +291,40 @@ export class TpoDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  // --- Bulk Import ---
+  // Single / Bulk Import state
+  protected importMode = signal<'single' | 'bulk'>('single');
+  protected singleRoll = signal<string>('');
+  protected singleName = signal<string>('');
+  protected singleEmail = signal<string>('');
+  protected singleBranch = signal<string>('CSE');
+  protected singleCgpa = signal<number | null>(8.5);
+  protected singlePassoutYear = signal<number>(2026);
+  protected availableBranches = signal<string[]>(['CSE', 'IT', 'ECE', 'INMCA', 'MCA', 'BCA', 'EEE', 'ME', 'CE', 'AD']);
+
+  private loadCollegeConfig(): void {
+    this.tpoService.getCollegeConfig().subscribe({
+      next: (res) => {
+        if (res && res.data && Array.isArray(res.data.branches) && res.data.branches.length > 0) {
+          this.availableBranches.set(res.data.branches);
+          if (res.data.branches.length > 0 && !res.data.branches.includes(this.singleBranch())) {
+            this.singleBranch.set(res.data.branches[0]);
+          }
+        }
+      },
+      error: (err) => console.error('Failed to load college config:', err)
+    });
+  }
+
+  // --- Student Import Handlers ---
   protected openImportModal(): void {
     this.isImportModalOpen.set(true);
+    this.importMode.set('single');
+    this.singleRoll.set('');
+    this.singleName.set('');
+    this.singleEmail.set('');
+    this.singleBranch.set('CSE');
+    this.singleCgpa.set(8.5);
+    this.singlePassoutYear.set(2026);
     this.importRawInput.set('');
     this.previewStudents.set([]);
     this.importSuccessMsg.set(null);
@@ -337,30 +374,78 @@ export class TpoDashboardComponent implements OnInit, OnDestroy {
   }
 
   protected loadSampleJSON(): void {
+    const currentYear = new Date().getFullYear();
+    const r = Math.floor(100 + Math.random() * 900);
     const sample = [
-      { rollNumber: 'CS24B001', name: 'Aarav Sharma', email: 'aarav@alphabet.edu', cgpa: 9.1, branch: 'CSE', passoutYear: 2024, activeBacklogs: 0 },
-      { rollNumber: 'IT24B002', name: 'Diya Patel', email: 'diya@alphabet.edu', cgpa: 8.5, branch: 'IT', passoutYear: 2024, activeBacklogs: 0 },
-      { rollNumber: 'EC24B003', name: 'Rohan Gupta', email: 'rohan@alphabet.edu', cgpa: 7.8, branch: 'ECE', passoutYear: 2024, activeBacklogs: 0 },
+      { rollNumber: `CS26B${r}`, name: `Aarav Sharma`, email: `aarav.${r}@alphabet.edu`, cgpa: 9.1, branch: 'CSE', passoutYear: currentYear, activeBacklogs: 0 },
     ];
     this.importRawInput.set(JSON.stringify(sample, null, 2));
     this.previewStudents.set(sample);
   }
 
   protected submitBulkImport(): void {
-    const data = this.previewStudents();
-    if (data.length === 0) return;
+    this.importErrorMsg.set(null);
+    this.importSuccessMsg.set(null);
+    let dataToImport: any[] = [];
+
+    if (this.importMode() === 'single') {
+      const roll = this.singleRoll().trim();
+      const name = this.singleName().trim();
+      const email = this.singleEmail().trim();
+      const cgpa = this.singleCgpa();
+
+      if (!roll || !name || !email || cgpa === null || cgpa === undefined) {
+        this.importErrorMsg.set('Please fill out all required fields (Roll Number, Name, Email, CGPA).');
+        return;
+      }
+
+      dataToImport = [{
+        rollNumber: roll,
+        name: name,
+        email: email,
+        cgpa: Number(cgpa),
+        branch: this.singleBranch().trim(),
+        passoutYear: Number(this.singlePassoutYear() || 2026),
+        activeBacklogs: 0
+      }];
+    } else {
+      dataToImport = this.previewStudents();
+
+      if (dataToImport.length === 0 && this.importRawInput().trim()) {
+        try {
+          const parsed = JSON.parse(this.importRawInput().trim());
+          dataToImport = Array.isArray(parsed) ? parsed : [parsed];
+        } catch (e) {
+          this.importErrorMsg.set('Invalid JSON format. Please check your JSON input syntax.');
+          return;
+        }
+      }
+    }
+
+    if (dataToImport.length === 0) {
+      this.importErrorMsg.set('Please enter student details or select a CSV file to import.');
+      return;
+    }
 
     this.isImporting.set(true);
-    this.tpoService.importStudents(data).subscribe({
+    this.tpoService.importStudents(dataToImport).subscribe({
       next: (res) => {
         this.isImporting.set(false);
-        this.importSuccessMsg.set(res.message || 'Students imported successfully!');
-        this.loadAllDashboardData(false);
-        setTimeout(() => this.closeImportModal(), 2000);
+        if (res && res.importedCount > 0) {
+          this.importSuccessMsg.set(res.message || 'Student(s) imported successfully!');
+          this.loadAllDashboardData(false);
+          setTimeout(() => this.closeImportModal(), 1800);
+        } else if (res && res.errorsCount > 0) {
+          const errDetail = res.errors?.[0]?.error || res.message || 'Failed to import student.';
+          this.importErrorMsg.set(errDetail);
+        } else {
+          this.importErrorMsg.set(res?.message || 'No students were imported.');
+        }
       },
       error: (err) => {
         this.isImporting.set(false);
-        this.importErrorMsg.set(err.error?.message || 'Failed to import students');
+        const errDetail = err.error?.message || err.error?.errors?.[0]?.error || 'Failed to import student. Please check for duplicate email or roll number.';
+        this.importErrorMsg.set(errDetail);
       },
     });
   }

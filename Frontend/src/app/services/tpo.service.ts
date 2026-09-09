@@ -30,6 +30,19 @@ export interface OfferTrends {
   acceptanceRate: number;
 }
 
+export interface SeasonConfig {
+  _id?: string;
+  seasonStart: string;
+  seasonEnd: string;
+  updatedBy?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  updatedAt?: string;
+  createdAt?: string;
+}
+
 export interface VerificationDetails {
   breakdown?: {
     domainAge: number;
@@ -279,5 +292,72 @@ export class TpoService {
 
   holdDrive(driveId: string, reason: string): Observable<any> {
     return this.http.put(`${this.apiUrl}/drive/${driveId}/hold`, { reason }, { headers: this.getAuthHeaders() });
+  }
+
+  getSeasonConfig(): Observable<{ success: boolean; data: SeasonConfig }> {
+    return this.http.get<{ success: boolean; data: SeasonConfig }>(
+      `${this.apiUrl}/season-config`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  updateSeasonConfig(config: { seasonStart: string; seasonEnd: string }): Observable<{ success: boolean; message: string; data: SeasonConfig }> {
+    return this.http.put<{ success: boolean; message: string; data: SeasonConfig }>(
+      `${this.apiUrl}/season-config`,
+      config,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getStudentAuditDetails(rollNumber: string): Observable<{ success: boolean; student: any; overallStatus: string; applications: any[] }> {
+    return this.http.get<{ success: boolean; student: any; overallStatus: string; applications: any[] }>(
+      `${this.apiUrl}/student/${rollNumber}/audit`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getCollegeConfig(): Observable<{ success: boolean; data: { branches: string[]; passoutYears: number[]; seasonStart?: string; seasonEnd?: string } }> {
+    return this.http.get<{ success: boolean; data: { branches: string[]; passoutYears: number[]; seasonStart?: string; seasonEnd?: string } }>(
+      `${this.apiUrl}/college-config`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  updateCollegeConfig(data: { branches?: string[]; passoutYears?: number[] }): Observable<any> {
+    return this.http.put<any>(
+      `${this.apiUrl}/college-config`,
+      data,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  addBranch(branch: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/college-config/branch`,
+      { branch },
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  deleteBranch(branch: string): Observable<any> {
+    return this.http.delete<any>(
+      `${this.apiUrl}/college-config/branch/${encodeURIComponent(branch)}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  addPassoutYear(year: number): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/college-config/passout-year`,
+      { year },
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  deletePassoutYear(year: number): Observable<any> {
+    return this.http.delete<any>(
+      `${this.apiUrl}/college-config/passout-year/${year}`,
+      { headers: this.getAuthHeaders() }
+    );
   }
 }
