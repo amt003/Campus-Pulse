@@ -8,6 +8,7 @@ const CollegeConfig = require("../models/CollegeConfig");
 const aiService = require("../services/aiService");
 const socketService = require("../services/socketService");
 const { getStudentPlacementStatus } = require("../utils/studentStatus");
+const placementAnalyzerService = require("../services/placementAnalyzerService");
 
 const createStudentProfile = async (req, res) => {
   try {
@@ -837,6 +838,36 @@ const getSeasonConfig = async (req, res) => {
   }
 };
 
+// GET /api/student/my-readiness
+const getMyReadiness = async (req, res) => {
+  try {
+    const student = await Student.findOne({ userId: req.user._id });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student profile not found",
+      });
+    }
+
+    const individualPRA = await placementAnalyzerService.computeIndividualPRA(student._id);
+    const departmentRadar = await placementAnalyzerService.getDepartmentRadarAverage(student.branch);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...individualPRA,
+        departmentRadar,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to compute placement readiness",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createStudentProfile,
   getStudentProfile,
@@ -853,4 +884,5 @@ module.exports = {
   getOfferPdf,
   getPreparationResources,
   getSeasonConfig,
+  getMyReadiness,
 };

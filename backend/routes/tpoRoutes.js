@@ -32,6 +32,13 @@ const {
   deleteBranch,
   addPassoutYear,
   deletePassoutYear,
+  getAllDrivesForTPO,
+  getDriveApplicationsForTPO,
+  getAllSchedules,
+  getCalendarSummary,
+  getStudentReadiness,
+  getDepartmentReadiness,
+  getAllStudentsReadiness,
 } = require('../controllers/tpoController');
 
 // All routes require authentication and TPO role
@@ -43,6 +50,10 @@ router.use((req, res, next) => {
   }
   next();
 });
+
+// Master Calendar & Schedule routes
+router.get('/schedules', getAllSchedules);
+router.get('/schedules/summary', getCalendarSummary);
 
 // College configuration & Season routes
 router.get('/college-config', getCollegeConfig);
@@ -65,7 +76,14 @@ router.get('/offer-trends', getOfferAcceptanceTrends);
 router.get('/students', getStudentsList);
 router.get('/student/:rollNumber/audit', getStudentAuditDetails);
 
-// Drive Approval routes
+// Placement Readiness Analyzer (PRA) routes
+router.get('/analyzer/student/:rollNumber', getStudentReadiness);
+router.get('/analyzer/department/:branch', getDepartmentReadiness);
+router.get('/analyzer/overview', getAllStudentsReadiness);
+
+// Drive & Oversee Drives routes
+router.get('/drives', getAllDrivesForTPO);
+router.get('/drive/:driveId/applications', getDriveApplicationsForTPO);
 router.get('/drives/pending', getPendingDrives);
 router.put('/drive/:id/approve', approveDrive);
 router.put('/drive/:id/reject', rejectDrive);

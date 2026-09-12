@@ -1,0 +1,320 @@
+<div class="oversee-drives-page">
+  <!-- Header Title Bar -->
+  <div class="page-header-row">
+    <div class="header-left">
+      <div class="page-icon-badge">
+        <span class="material-symbols-outlined">travel_explore</span>
+      </div>
+      <div>
+        <h1 class="page-title">Oversee Drives</h1>
+        <p class="page-subtitle">Track, monitor, and deep-dive into all recruitment drives across campus</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-refresh" (click)="fetchDrives(false)" [disabled]="isRefreshing()" title="Refresh drives">
+        <span class="material-symbols-outlined" [class.spin]="isRefreshing()">refresh</span>
+        <span>{{ isRefreshing() ? 'Refreshing...' : 'Refresh' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary KPI Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-icon-wrap primary">
+        <span class="material-symbols-outlined">business_center</span>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Total Drives</span>
+        <span class="metric-value">{{ totalDrivesCount() }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon-wrap success">
+        <span class="material-symbols-outlined">verified</span>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Active / Open</span>
+        <span class="metric-value">{{ openDrivesCount() }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon-wrap info">
+        <span class="material-symbols-outlined">group</span>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Total Applications</span>
+        <span class="metric-value">{{ totalApplicationsCount() }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-icon-wrap warning">
+        <span class="material-symbols-outlined">celebration</span>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Total Placed</span>
+        <span class="metric-value">{{ totalPlacedCount() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="toolbar-card">
+    <div class="search-box">
+      <span class="material-symbols-outlined search-icon">search</span>
+      <input
+        type="text"
+        placeholder="Search by company name, job role..."
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+        class="search-input"
+      />
+      @if (searchTerm()) {
+        <button class="btn-clear" (click)="searchTerm.set('')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      }
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Status:</label>
+      <select [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)" class="filter-select">
+        @for (opt of statusOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="state-container">
+      <div class="spinner"></div>
+      <p class="state-text">Loading recruitment drives...</p>
+    </div>
+  } @else if (filteredDrives.length === 0) {
+    <!-- Empty State -->
+    <div class="state-container empty">
+      <span class="material-symbols-outlined empty-icon">folder_open</span>
+      <h3 class="empty-title">No Drives Found</h3>
+      <p class="empty-desc">
+        @if (searchTerm() || selectedStatus() !== 'ALL') {
+          No drives matched your active filters. Try clearing your search query or status filter.
+        } @else {
+          There are currently no job drives registered on the platform.
+        }
+      </p>
+    </div>
+  } @else {
+    <!-- Drives Table / Cards -->
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Company & Role</th>
+              <th>CTC & Criteria</th>
+              <th>Eligible Branches</th>
+              <th>Deadline</th>
+              <th>Pipeline Stats</th>
+              <th>Status</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (drive of filteredDrives; track drive._id) {
+              <tr class="table-row">
+                <!-- Company & Role -->
+                <td>
+                  <div class="company-cell">
+                    <div class="company-avatar">
+                      @if (drive.recruiter.companyLogo) {
+                        <img [src]="drive.recruiter.companyLogo" [alt]="drive.recruiter.companyName" />
+                      } @else {
+                        <span>{{ drive.recruiter.companyName ? drive.recruiter.companyName.charAt(0).toUpperCase() : 'C' }}</span>
+                      }
+                    </div>
+                    <div class="company-meta">
+                      <span class="role-title" [title]="drive.title">{{ drive.title }}</span>
+                      <span class="company-name">{{ drive.recruiter.companyName || 'Company' }}</span>
+                      @if (drive.recruiter.officialEmail) {
+                        <span class="company-sub-text">{{ drive.recruiter.officialEmail }}</span>
+                      }
+                    </div>
+                  </div>
+                </td>
+
+                <!-- CTC & Min CGPA -->
+                <td>
+                  <div class="criteria-cell">
+                    <span class="ctc-pill">{{ getCTCInLpa(drive.ctc) }}</span>
+                    <span class="sub-criteria">Min CGPA: <strong>{{ drive.minCGPA }}</strong></span>
+                    <span class="sub-criteria">Max Backlogs: <strong>{{ drive.maxBacklogs }}</strong></span>
+                  </div>
+                </td>
+
+                <!-- Branches -->
+                <td>
+                  <div class="branches-wrap">
+                    @if (drive.eligibleBranches && drive.eligibleBranches.length > 0) {
+                      @for (b of drive.eligibleBranches.slice(0, 3); track b) {
+                        <span class="branch-tag">{{ b }}</span>
+                      }
+                      @if (drive.eligibleBranches.length > 3) {
+                        <span class="branch-tag-more">+{{ drive.eligibleBranches.length - 3 }}</span>
+                      }
+                    } @else {
+                      <span class="text-muted">All Branches</span>
+                    }
+                  </div>
+                </td>
+
+                <!-- Deadline -->
+                <td>
+                  <div class="deadline-cell">
+                    <span class="deadline-date" [class.overdue]="isPastDeadline(drive.applicationDeadline)">
+                      {{ drive.applicationDeadline | date: 'dd MMM yyyy' }}
+                    </span>
+                    @if (isPastDeadline(drive.applicationDeadline)) {
+                      <span class="badge-overdue">Deadline Passed</span>
+                    }
+                  </div>
+                </td>
+
+                <!-- Pipeline Stats -->
+                <td>
+                  <div class="pipeline-cell">
+                    <span class="stat-pill apps" title="Total Applications">
+                      <span class="material-symbols-outlined">group</span>
+                      {{ drive.applicationCount || 0 }} Applied
+                    </span>
+                    @if (drive.placedCount > 0) {
+                      <span class="stat-pill placed" title="Placed Students">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        {{ drive.placedCount }} Placed
+                      </span>
+                    }
+                  </div>
+                </td>
+
+                <!-- Status -->
+                <td>
+                  <span class="status-badge" [ngClass]="drive.status ? drive.status.toLowerCase() : ''">
+                    {{ drive.status }}
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td style="text-align: right;">
+                  <div class="actions-cell">
+                    <button
+                      class="btn-xray"
+                      (click)="navigateToXray(drive._id)"
+                      title="Inspect student pipeline & X-Ray analytics"
+                    >
+                      <span class="material-symbols-outlined">radar</span>
+                      <span>Drive X-Ray</span>
+                    </button>
+
+                    <button
+                      class="btn-icon-more"
+                      (click)="openViewModal(drive, $event)"
+                      title="Quick details preview"
+                    >
+                      <span class="material-symbols-outlined">visibility</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- ==============================================
+     Quick View Drive Modal
+     ============================================== -->
+@if (isViewModalOpen() && selectedDrive()) {
+  <div class="modal-backdrop" data-lenis-prevent (click)="closeViewModal()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+    <div class="modal-card" data-lenis-prevent (click)="$event.stopPropagation()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon">
+            <span class="material-symbols-outlined">info</span>
+          </div>
+          <div>
+            <h2 class="modal-title">{{ selectedDrive()!.title }}</h2>
+            <span class="modal-subtitle">{{ selectedDrive()!.recruiter.companyName }}</span>
+          </div>
+        </div>
+        <button class="btn-close" (click)="closeViewModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body" data-lenis-prevent>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">Status</span>
+            <span class="status-badge" [ngClass]="selectedDrive()!.status.toLowerCase()">
+              {{ selectedDrive()!.status }}
+            </span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Offered CTC</span>
+            <span class="detail-val bold highlight">{{ getCTCInLpa(selectedDrive()!.ctc) }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Minimum CGPA</span>
+            <span class="detail-val bold">{{ selectedDrive()!.minCGPA }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Max Allowed Backlogs</span>
+            <span class="detail-val bold">{{ selectedDrive()!.maxBacklogs }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Application Deadline</span>
+            <span class="detail-val">{{ selectedDrive()!.applicationDeadline | date: 'mediumDate' }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Recruiter Contact</span>
+            <span class="detail-val">{{ selectedDrive()!.recruiter.officialEmail || '—' }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <span class="detail-label">Eligible Branches</span>
+          <div class="branches-wrap" style="margin-top: 6px;">
+            @for (b of selectedDrive()!.eligibleBranches; track b) {
+              <span class="branch-tag">{{ b }}</span>
+            }
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <span class="detail-label">Job Description</span>
+          <p class="description-text">{{ selectedDrive()!.description }}</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeViewModal()">Close</button>
+        <button class="btn-primary-xray" (click)="navigateToXray(selectedDrive()!._id)">
+          <span class="material-symbols-outlined">radar</span>
+          <span>Open Drive X-Ray</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}

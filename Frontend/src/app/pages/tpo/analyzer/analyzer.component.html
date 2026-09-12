@@ -1,0 +1,656 @@
+<div class="analyzer-root">
+
+  <!-- ============================================================
+       1. Executive Header Bar & Tab Switcher
+       ============================================================ -->
+  <header class="page-header-card">
+    <div class="header-left">
+      <div class="header-icon-chip">
+        <span class="material-symbols-outlined">analytics</span>
+      </div>
+      <div class="header-titles">
+        <h1 class="page-title">Placement Readiness Analyzer (PRA)</h1>
+        <p class="page-subtitle">
+          Departmental conversion analytics, skill gap benchmarks, and candidate readiness intelligence.
+        </p>
+      </div>
+    </div>
+
+    <!-- Segmented Tab Pill Control -->
+    <div class="tabs-segmented-control">
+      <button
+        class="tab-pill-btn"
+        [class.active]="activeTab() === 'dept'"
+        (click)="selectTab('dept')"
+        id="tab-btn-dept"
+      >
+        <span class="material-symbols-outlined">domain</span>
+        <span>Department Analysis</span>
+      </button>
+
+      <button
+        class="tab-pill-btn"
+        [class.active]="activeTab() === 'student'"
+        (click)="selectTab('student')"
+        id="tab-btn-student"
+      >
+        <span class="material-symbols-outlined">person_search</span>
+        <span>Student Inspection</span>
+      </button>
+    </div>
+  </header>
+
+
+  <!-- ============================================================
+       TAB 1: DEPARTMENT ANALYSIS
+       ============================================================ -->
+  @if (activeTab() === 'dept') {
+    <div class="tab-content-fade">
+
+      <!-- Branch Filter Strip -->
+      <div class="branch-filter-bar">
+        <div class="filter-label-wrap">
+          <span class="material-symbols-outlined">filter_alt</span>
+          <span class="filter-label">Filter Department:</span>
+        </div>
+        <div class="branch-pills-list">
+          @for (b of availableBranches(); track b) {
+            <button
+              class="branch-pill-btn"
+              [class.active]="selectedBranch() === b"
+              (click)="onBranchChange(b)"
+            >
+              {{ b === 'All' ? 'All Departments' : b }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Error State -->
+      @if (deptErrorMsg()) {
+        <div class="alert-banner alert-error">
+          <span class="material-symbols-outlined">error</span>
+          <span>{{ deptErrorMsg() }}</span>
+        </div>
+      }
+
+      <!-- Loading State -->
+      @if (isDeptLoading()) {
+        <div class="skeleton-grid">
+          <div class="skeleton-row-four">
+            <div class="skeleton-card" style="height: 120px;"></div>
+            <div class="skeleton-card" style="height: 120px;"></div>
+            <div class="skeleton-card" style="height: 120px;"></div>
+            <div class="skeleton-card" style="height: 120px;"></div>
+          </div>
+          <div class="skeleton-subgrid">
+            <div class="skeleton-card" style="height: 320px;"></div>
+            <div class="skeleton-card" style="height: 320px;"></div>
+          </div>
+        </div>
+      }
+
+      <!-- Main Department Analytics -->
+      @if (!isDeptLoading() && deptMetrics(); as dept) {
+        <div class="dept-content-stack">
+
+          <!-- 4 Summary KPI Cards -->
+          <section class="kpi-quad-grid">
+            <!-- Card 1: Total Students -->
+            <div class="kpi-stat-card navy">
+              <div class="kpi-stat-body">
+                <span class="kpi-label">Registered Talent Pool</span>
+                <h2 class="kpi-value">{{ dept.totalStudents }}</h2>
+                <span class="kpi-sub">{{ dept.branch === 'All' ? 'All Engineering & Tech' : dept.branch + ' Department' }}</span>
+              </div>
+              <div class="kpi-icon-badge navy">
+                <span class="material-symbols-outlined">groups</span>
+              </div>
+            </div>
+
+            <!-- Card 2: Placed Candidates -->
+            <div class="kpi-stat-card green">
+              <div class="kpi-stat-body">
+                <span class="kpi-label">Placed Candidates</span>
+                <h2 class="kpi-value text-green">{{ dept.placedCount }}</h2>
+                <span class="kpi-sub text-green">
+                  <span class="material-symbols-outlined sub-mini-icon">verified</span>
+                  Offers Secured
+                </span>
+              </div>
+              <div class="kpi-icon-badge green">
+                <span class="material-symbols-outlined">how_to_reg</span>
+              </div>
+            </div>
+
+            <!-- Card 3: Placement Percentage -->
+            <div class="kpi-stat-card teal">
+              <div class="kpi-stat-body">
+                <span class="kpi-label">Placement Rate</span>
+                <h2 class="kpi-value text-teal">{{ dept.placementPercentage }}%</h2>
+                <div class="kpi-progress-bar">
+                  <div class="kpi-progress-fill" [style.width.%]="dept.placementPercentage"></div>
+                </div>
+              </div>
+              <div class="kpi-icon-badge teal">
+                <span class="material-symbols-outlined">percent</span>
+              </div>
+            </div>
+
+            <!-- Card 4: Avg PRA Score -->
+            <div class="kpi-stat-card amber">
+              <div class="kpi-stat-body">
+                <span class="kpi-label">Avg Readiness Score</span>
+                <h2 class="kpi-value text-amber">{{ dept.avgPraScore }} <small class="text-denom">/100</small></h2>
+                <span class="kpi-sub">
+                  Batch Avg CGPA: <strong>{{ dept.avgCgpa }}</strong>
+                </span>
+              </div>
+              <div class="kpi-icon-badge amber">
+                <span class="material-symbols-outlined">speed</span>
+              </div>
+            </div>
+          </section>
+
+
+          <!-- Stage Drop-off & Top Missing Skills Charts -->
+          <section class="charts-two-col-grid">
+
+            <!-- Left: Stage Drop-off -->
+            <div class="glass-card chart-card">
+              <div class="card-header-with-badge">
+                <div>
+                  <span class="card-eyebrow">Recruitment Funnel Health</span>
+                  <h3 class="card-main-title">Stage-wise Drop-off Breakdown</h3>
+                </div>
+                <div class="stage-alert-badge" title="Stage with highest candidate elimination rate">
+                  <span class="material-symbols-outlined">warning</span>
+                  <span>Major Bottleneck: <strong>{{ dept.highestDropStage }}</strong></span>
+                </div>
+              </div>
+
+              <div class="chart-box-container">
+                <div #deptDropOffRef class="echarts-embed"></div>
+              </div>
+
+              <div class="chart-footer-caption">
+                <span class="material-symbols-outlined">info</span>
+                <span>Candidates face steep elimination during {{ dept.highestDropStage }}. Targeted preparation recommended.</span>
+              </div>
+            </div>
+
+            <!-- Right: Top 10 Missing Skills -->
+            <div class="glass-card chart-card">
+              <div class="card-header-simple">
+                <span class="card-eyebrow">Curriculum Gap Analysis</span>
+                <h3 class="card-main-title">Top 10 Flagged Missing Skills</h3>
+              </div>
+
+              <div class="chart-box-container">
+                <div #deptSkillsRef class="echarts-embed"></div>
+              </div>
+
+              <div class="chart-footer-caption">
+                <span class="material-symbols-outlined">lightbulb</span>
+                <span>Aggregated from algorithmic ATS evaluation across company job descriptions.</span>
+              </div>
+            </div>
+
+          </section>
+
+
+          <!-- Department Recommendations -->
+          <section class="glass-card recommendations-card">
+            <div class="card-header-simple">
+              <span class="card-eyebrow">TPO Actionable Interventions</span>
+              <h3 class="card-main-title">Department-Wide Training Directives</h3>
+            </div>
+
+            <div class="recommendations-grid">
+              @for (rec of dept.departmentRecommendations; track rec.title) {
+                <div class="rec-item-box" [ngClass]="'priority-' + rec.priority">
+                  <div class="rec-icon-chip" [ngClass]="'chip-' + rec.priority">
+                    <span class="material-symbols-outlined">{{ rec.icon || 'star' }}</span>
+                  </div>
+                  <div class="rec-body">
+                    <div class="rec-top-meta">
+                      <h4 class="rec-title">{{ rec.title }}</h4>
+                      <span class="rec-priority-tag">{{ rec.priority | uppercase }}</span>
+                    </div>
+                    <p class="rec-desc">{{ rec.desc }}</p>
+                  </div>
+                </div>
+              }
+            </div>
+          </section>
+
+
+          <!-- Student Leaderboard Table -->
+          <section class="glass-card table-card">
+            <div class="table-card-header">
+              <div>
+                <span class="card-eyebrow">Talent Pool Assessment</span>
+                <h3 class="card-main-title">Candidate Readiness Leaderboard</h3>
+              </div>
+
+              <!-- Sort Controls -->
+              <div class="table-sort-actions">
+                <span class="sort-title">Sort By:</span>
+                <button
+                  class="sort-pill-btn"
+                  [class.active]="sortBy() === 'pra'"
+                  (click)="onSortChange('pra')"
+                >
+                  Readiness (PRA)
+                </button>
+                <button
+                  class="sort-pill-btn"
+                  [class.active]="sortBy() === 'cgpa'"
+                  (click)="onSortChange('cgpa')"
+                >
+                  CGPA
+                </button>
+                <button
+                  class="sort-pill-btn"
+                  [class.active]="sortBy() === 'roll'"
+                  (click)="onSortChange('roll')"
+                >
+                  Roll Number
+                </button>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive-wrapper">
+              <table class="pra-table">
+                <thead>
+                  <tr>
+                    <th style="width: 70px;">Rank</th>
+                    <th>Candidate</th>
+                    <th>Roll Number</th>
+                    <th>Branch</th>
+                    <th>CGPA</th>
+                    <th>Readiness Score</th>
+                    <th>Category</th>
+                    <th>Weakest Stage</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @if (rankedStudents().length === 0) {
+                    <tr>
+                      <td colspan="9" class="td-empty">
+                        No students enrolled under {{ dept.branch }} department.
+                      </td>
+                    </tr>
+                  }
+
+                  @for (s of rankedStudents(); track s.studentId) {
+                    <tr class="pra-row" (click)="inspectStudent(s.rollNumber)">
+                      <td>
+                        <span class="rank-badge" [class.rank-gold]="s.rank === 1" [class.rank-silver]="s.rank === 2" [class.rank-bronze]="s.rank === 3">
+                          #{{ s.rank }}
+                        </span>
+                      </td>
+
+                      <td>
+                        <div class="candidate-cell">
+                          <div class="candidate-avatar">
+                            <span>{{ (s.name || 'S')[0].toUpperCase() }}</span>
+                          </div>
+                          <div class="candidate-info">
+                            <span class="candidate-name">{{ s.name }}</span>
+                            <span class="candidate-email">{{ s.email }}</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td>
+                        <span class="mono-roll">{{ s.rollNumber }}</span>
+                      </td>
+
+                      <td>
+                        <span class="branch-pill">{{ s.branch }}</span>
+                      </td>
+
+                      <td>
+                        <strong class="cgpa-val">{{ s.cgpa | number:'1.1-2' }}</strong>
+                      </td>
+
+                      <td>
+                        <div class="score-cell">
+                          <span class="pra-score-num">{{ s.praScore }}</span>
+                          <div class="pra-mini-bar-bg">
+                            <div
+                              class="pra-mini-bar-fill"
+                              [style.width.%]="s.praScore"
+                              [ngClass]="s.praScore >= 75 ? 'fill-green' : (s.praScore >= 45 ? 'fill-amber' : 'fill-red')"
+                            ></div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td>
+                        <span class="category-pill" [ngClass]="getCategoryPillClass(s.praCategory)">
+                          {{ s.praCategory }}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span class="weakest-pill">
+                          {{ s.weakestStage }}
+                        </span>
+                      </td>
+
+                      <td style="text-align: right;">
+                        <button
+                          class="btn-inspect-pill"
+                          (click)="inspectStudent(s.rollNumber); $event.stopPropagation()"
+                          title="Open detailed skill radar and suggestions"
+                        >
+                          <span class="material-symbols-outlined">visibility</span>
+                          <span>Inspect PRA</span>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+        </div>
+      }
+
+    </div>
+  }
+
+
+  <!-- ============================================================
+       TAB 2: STUDENT INSPECTION (Search & Deep Drilldown)
+       ============================================================ -->
+  @if (activeTab() === 'student') {
+    <div class="tab-content-fade">
+
+      <!-- Student Search Card -->
+      <div class="student-search-card">
+        <div class="search-input-wrapper">
+          <span class="material-symbols-outlined search-icon">search</span>
+          <input
+            type="text"
+            class="roll-search-input"
+            placeholder="Enter Student Roll Number (e.g. 21CS042, 22IT018)…"
+            [value]="searchRollNumber()"
+            (input)="searchRollNumber.set($any($event.target).value)"
+            (keyup.enter)="searchStudentReadiness()"
+            id="tpo-student-search-input"
+          />
+          @if (searchRollNumber()) {
+            <button class="clear-search-btn" (click)="searchRollNumber.set('')">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          }
+        </div>
+
+        <button
+          class="btn-search-trigger"
+          (click)="searchStudentReadiness()"
+          [disabled]="!searchRollNumber().trim() || isStudentLoading()"
+          id="btn-tpo-search-student"
+        >
+          <span class="material-symbols-outlined">{{ isStudentLoading() ? 'sync' : 'person_search' }}</span>
+          <span>{{ isStudentLoading() ? 'Searching…' : 'Inspect Candidate' }}</span>
+        </button>
+      </div>
+
+      <!-- Error State -->
+      @if (studentErrorMsg()) {
+        <div class="alert-banner alert-error">
+          <span class="material-symbols-outlined">error</span>
+          <span>{{ studentErrorMsg() }}</span>
+        </div>
+      }
+
+      <!-- Initial Guidance when no student searched yet -->
+      @if (!searchedStudentPra() && !isStudentLoading() && !studentErrorMsg()) {
+        <div class="empty-search-state">
+          <div class="empty-icon-circle">
+            <span class="material-symbols-outlined">badge</span>
+          </div>
+          <h3 class="empty-title">Search Any Candidate by Roll Number</h3>
+          <p class="empty-desc">
+            Inspect individual Placement Readiness scores, 6-factor competencies, stage bottlenecks, and AI-recommended actions.
+            You can also click any student directly from the <strong>Department Analysis</strong> leaderboard.
+          </p>
+        </div>
+      }
+
+      <!-- Inspected Student Breakdown -->
+      @if (searchedStudentPra(); as pra) {
+        <div class="inspected-student-stack">
+
+          <!-- Student Profile Identity Banner -->
+          <div class="student-identity-banner">
+            <div class="ident-avatar">
+              <span>{{ (pra.student.name || 'S')[0].toUpperCase() }}</span>
+            </div>
+            <div class="ident-details">
+              <div class="ident-name-row">
+                <h3 class="ident-name">{{ pra.student.name }}</h3>
+                <span class="ident-roll">{{ pra.student.rollNumber }}</span>
+                <span class="ident-badge" [ngClass]="getCategoryPillClass(pra.praCategory)">
+                  {{ pra.praCategory }}
+                </span>
+              </div>
+              <div class="ident-meta-row">
+                <span>{{ pra.student.branch }} Department</span>
+                <span class="dot-divider">&bull;</span>
+                <span>Class of {{ pra.student.passoutYear }}</span>
+                <span class="dot-divider">&bull;</span>
+                <span>CGPA: <strong>{{ pra.student.cgpa }}</strong></span>
+                <span class="dot-divider">&bull;</span>
+                <span>{{ pra.student.activeBacklogs }} Backlogs</span>
+                <span class="dot-divider">&bull;</span>
+                <span>{{ pra.student.hasResume ? 'Resume Verified' : 'Resume Missing' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hero Score + 6 Sub-scores -->
+          <section class="hero-score-section">
+            <div class="glass-card gauge-card">
+              <div class="card-header-simple">
+                <span class="card-eyebrow">Calculated Assessment</span>
+                <h3 class="card-main-title">Candidate PRA Score</h3>
+              </div>
+              <div class="gauge-wrapper">
+                <div #studentGaugeRef class="echarts-gauge-box"></div>
+              </div>
+              <div class="gauge-footer-meta">
+                <span class="score-tag-badge" [ngClass]="getCategoryPillClass(pra.praCategory)">
+                  {{ pra.praCategory }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Subscores -->
+            <div class="glass-card subscores-card">
+              <div class="card-header-simple">
+                <span class="card-eyebrow">Competency Decomposition</span>
+                <h3 class="card-main-title">Factor Weight Scores</h3>
+              </div>
+
+              <div class="subscores-grid">
+                <div class="subscore-tile">
+                  <div class="subscore-icon-chip navy"><span class="material-symbols-outlined">school</span></div>
+                  <div class="subscore-data">
+                    <span class="subscore-label">Academics (CGPA)</span>
+                    <span class="subscore-number">{{ pra.subScores.cgpa }}<small>/100</small></span>
+                    <div class="subscore-bar-bg"><div class="subscore-bar-fill navy" [style.width.%]="pra.subScores.cgpa"></div></div>
+                    <span class="subscore-status-tag">CGPA {{ pra.student.cgpa }}</span>
+                  </div>
+                </div>
+
+                <div class="subscore-tile">
+                  <div class="subscore-icon-chip blue"><span class="material-symbols-outlined">psychology</span></div>
+                  <div class="subscore-data">
+                    <span class="subscore-label">AI Keyword Match</span>
+                    <span class="subscore-number" [class.not-attempted]="pra.subScores.aiMatch === 0">{{ pra.subScores.aiMatch }}<small>/100</small></span>
+                    <div class="subscore-bar-bg"><div class="subscore-bar-fill blue" [style.width.%]="pra.subScores.aiMatch"></div></div>
+                    <span class="subscore-status-tag" [class.unattempted]="!pra.subScoreMeta || pra.subScoreMeta.matchCount === 0">
+                      {{ pra.subScoreMeta && pra.subScoreMeta.matchCount > 0 ? (pra.subScoreMeta.matchCount + ' Drives Evaluated') : 'No Drives Evaluated' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="subscore-tile">
+                  <div class="subscore-icon-chip teal"><span class="material-symbols-outlined">calculate</span></div>
+                  <div class="subscore-data">
+                    <span class="subscore-label">Aptitude Test</span>
+                    <span class="subscore-number" [class.not-attempted]="pra.subScores.aptitude === 0">{{ pra.subScores.aptitude }}<small>/100</small></span>
+                    <div class="subscore-bar-bg"><div class="subscore-bar-fill teal" [style.width.%]="pra.subScores.aptitude"></div></div>
+                    <span class="subscore-status-tag" [class.unattempted]="!pra.subScoreMeta || pra.subScoreMeta.aptAttempted === 0">
+                      {{ pra.subScoreMeta && pra.subScoreMeta.aptAttempted > 0 ? (pra.subScoreMeta.aptPassed + '/' + pra.subScoreMeta.aptAttempted + ' Cleared') : 'Not Attempted (0 Drives)' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="subscore-tile">
+                  <div class="subscore-icon-chip amber"><span class="material-symbols-outlined">forum</span></div>
+                  <div class="subscore-data">
+                    <span class="subscore-label">GD Conversion</span>
+                    <span class="subscore-number" [class.not-attempted]="pra.subScores.gd === 0">{{ pra.subScores.gd }}<small>/100</small></span>
+                    <div class="subscore-bar-bg"><div class="subscore-bar-fill amber" [style.width.%]="pra.subScores.gd"></div></div>
+                    <span class="subscore-status-tag" [class.unattempted]="!pra.subScoreMeta || pra.subScoreMeta.gdAttempted === 0">
+                      {{ pra.subScoreMeta && pra.subScoreMeta.gdAttempted > 0 ? (pra.subScoreMeta.gdShortlisted + '/' + pra.subScoreMeta.gdAttempted + ' Shortlisted') : 'Not Attempted (0 Drives)' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="subscore-tile">
+                  <div class="subscore-icon-chip green"><span class="material-symbols-outlined">groups</span></div>
+                  <div class="subscore-data">
+                    <span class="subscore-label">Interview Pass Rate</span>
+                    <span class="subscore-number" [class.not-attempted]="pra.subScores.interview === 0">{{ pra.subScores.interview }}<small>/100</small></span>
+                    <div class="subscore-bar-bg"><div class="subscore-bar-fill green" [style.width.%]="pra.subScores.interview"></div></div>
+                    <span class="subscore-status-tag" [class.unattempted]="!pra.subScoreMeta || pra.subScoreMeta.interviewAttempted === 0">
+                      {{ pra.subScoreMeta && pra.subScoreMeta.interviewAttempted > 0 ? (pra.subScoreMeta.interviewSelected + '/' + pra.subScoreMeta.interviewAttempted + ' Selected') : 'Not Attempted (0 Drives)' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="subscore-tile">
+                  <div class="subscore-icon-chip purple"><span class="material-symbols-outlined">description</span></div>
+                  <div class="subscore-data">
+                    <span class="subscore-label">Resume Completeness</span>
+                    <span class="subscore-number">{{ pra.subScores.resume }}<small>/100</small></span>
+                    <div class="subscore-bar-bg"><div class="subscore-bar-fill purple" [style.width.%]="pra.subScores.resume"></div></div>
+                    <span class="subscore-status-tag">{{ pra.student.hasResume ? 'Resume Verified' : 'Resume Missing' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Funnel & Radar Charts -->
+          <section class="analytics-split-grid">
+            <div class="glass-card funnel-card">
+              <div class="card-header-with-badge">
+                <div>
+                  <span class="card-eyebrow">Candidate Pipeline</span>
+                  <h3 class="card-main-title">Stage Conversion Funnel</h3>
+                </div>
+                <span class="weakest-stage-badge">Weakest Stage: <strong>{{ pra.weakestStage }}</strong></span>
+              </div>
+              <div class="chart-container">
+                <div #studentFunnelRef class="echarts-box"></div>
+              </div>
+            </div>
+
+            <div class="glass-card radar-card">
+              <div class="card-header-with-badge">
+                <div>
+                  <span class="card-eyebrow">Capability Comparison</span>
+                  <h3 class="card-main-title">Candidate vs Dept Benchmark</h3>
+                </div>
+                <span class="dept-benchmark-tag">{{ pra.student.branch }} Average</span>
+              </div>
+              <div class="chart-container">
+                <div #studentRadarRef class="echarts-box"></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Suggestions & Skill Gaps -->
+          <section class="glass-card suggestions-card">
+            <div class="card-header-simple">
+              <span class="card-eyebrow">Personalized Directives</span>
+              <h3 class="card-main-title">Counseling & Guidance Recommendations</h3>
+            </div>
+
+            <div class="suggestions-grid">
+              @for (sug of pra.personalizedSuggestions; track sug.message) {
+                <div class="suggestion-box" [ngClass]="'severity-' + sug.severity">
+                  <div class="sug-header">
+                    <div class="sug-badge" [ngClass]="'badge-' + sug.severity">
+                      <span class="material-symbols-outlined">{{ getSeverityIcon(sug.severity) }}</span>
+                      <span>{{ sug.category || (sug.severity | uppercase) }}</span>
+                    </div>
+                    <span class="sug-severity-label">{{ sug.severity | titlecase }} Priority</span>
+                  </div>
+
+                  <p class="sug-message">{{ sug.message }}</p>
+
+                  @if (sug.actions && sug.actions.length > 0) {
+                    <ul class="actions-list">
+                      @for (act of sug.actions; track act) {
+                        <li class="action-item">
+                          <span class="material-symbols-outlined check-icon">arrow_circle_right</span>
+                          <span>{{ act }}</span>
+                        </li>
+                      }
+                    </ul>
+                  }
+
+                  @if (sug.resources && sug.resources.length > 0) {
+                    <div class="sug-resources-block">
+                      <div class="resources-heading-row">
+                        <span class="material-symbols-outlined res-icon">auto_stories</span>
+                        <span class="resources-title">Curated Learning Pathways & Platform Links:</span>
+                      </div>
+                      <div class="resources-chips-list">
+                        @for (res of sug.resources; track res.url) {
+                          <a
+                            [href]="res.url"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="resource-link-card"
+                            [title]="'Open ' + res.title + ' on ' + res.platform"
+                          >
+                            <div class="res-card-top">
+                              <span class="res-platform-tag">{{ res.platform }}</span>
+                              @if (res.badge) {
+                                <span class="res-badge-chip">{{ res.badge }}</span>
+                              }
+                            </div>
+                            <div class="res-card-bottom">
+                              <span class="res-course-name">{{ res.title }}</span>
+                              <span class="material-symbols-outlined ext-icon">open_in_new</span>
+                            </div>
+                          </a>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </section>
+
+        </div>
+      }
+
+    </div>
+  }
+
+</div>

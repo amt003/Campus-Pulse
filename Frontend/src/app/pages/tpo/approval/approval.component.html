@@ -269,39 +269,47 @@
                                 <h5>MCA Registry Verification</h5>
                               </div>
                               
-                              @if (rec.verificationDetails?.mcaData) {
-                                <div class="detail-list" style="flex-grow: 1;">
-                                  <div class="detail-item">
-                                    <span>CIN:</span>
-                                    <strong style="color: var(--primary); font-family: monospace; font-size: 11px;">
-                                      {{ rec.verificationDetails?.mcaData?.cin }}
-                                    </strong>
-                                  </div>
-                                  <div class="detail-item">
-                                    <span>MCA Status:</span>
-                                    <span class="status-tag" [class.tag-success]="rec.verificationDetails?.mcaData?.status === 'Active'" [class.tag-warning]="rec.verificationDetails?.mcaData?.status !== 'Active'">
-                                      {{ rec.verificationDetails?.mcaData?.status || 'Inactive' }}
-                                    </span>
-                                  </div>
-                                  <div class="detail-item">
-                                    <span>Governance:</span>
-                                    <strong>{{ rec.verificationDetails?.directors?.length || 0 }} Directors found</strong>
-                                  </div>
-                                  
-                                  @if (rec.verificationDetails?.directors && rec.verificationDetails!.directors!.length > 0) {
-                                    <div style="border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 8px;">
-                                      <span style="font-size: 10.5px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Active Directors</span>
-                                      <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px; max-height: 80px; overflow-y: auto; padding-right: 4px;">
-                                        @for (dir of rec.verificationDetails?.directors; track dir.din) {
-                                          <div style="font-size: 11.5px; font-weight: 650; display: flex; justify-content: space-between; color: var(--text-dark);">
-                                            <span>• {{ dir.name }}</span>
-                                            <span style="font-size: 9.5px; color: var(--text-muted);">DIN: {{ dir.din }}</span>
-                                          </div>
-                                        }
-                                      </div>
+                              @if (rec.verificationDetails; as vd) {
+                                @if (vd.mcaData; as mca) {
+                                  <div class="detail-list" style="flex-grow: 1;">
+                                    <div class="detail-item">
+                                      <span>CIN:</span>
+                                      <strong style="color: var(--primary); font-family: monospace; font-size: 11px;">
+                                        {{ mca.cin }}
+                                      </strong>
                                     </div>
-                                  }
-                                </div>
+                                    <div class="detail-item">
+                                      <span>MCA Status:</span>
+                                      <span class="status-tag" [class.tag-success]="mca.status === 'Active'" [class.tag-warning]="mca.status !== 'Active'">
+                                        {{ mca.status || 'Inactive' }}
+                                      </span>
+                                    </div>
+                                    <div class="detail-item">
+                                      <span>Governance:</span>
+                                      <strong>{{ vd.directors?.length || 0 }} Directors found</strong>
+                                    </div>
+                                    
+                                    @if (vd.directors && vd.directors.length > 0) {
+                                      <div style="border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 8px;">
+                                        <span style="font-size: 10.5px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Active Directors</span>
+                                        <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px; max-height: 80px; overflow-y: auto; padding-right: 4px;">
+                                          @for (dir of vd.directors; track dir.din) {
+                                            <div style="font-size: 11.5px; font-weight: 650; display: flex; justify-content: space-between; color: var(--text-dark);">
+                                              <span>• {{ dir.name }}</span>
+                                              <span style="font-size: 9.5px; color: var(--text-muted);">DIN: {{ dir.din }}</span>
+                                            </div>
+                                          }
+                                        </div>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else {
+                                  <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; border: 1.5px dashed var(--border); border-radius: 8px; background: #FAFBFB; min-height: 120px; margin-bottom: 8px;">
+                                    <span class="material-symbols-outlined" style="font-size: 28px; color: var(--text-muted); margin-bottom: 6px;">hourglass_empty</span>
+                                    <p style="font-size: 12px; font-weight: 700; color: var(--text-dark); margin: 0 0 2px;">⏳ Not Verified</p>
+                                    <p style="font-size: 10px; color: var(--text-muted); margin: 0;">Click 'Re-verify' to scan MCA government registry.</p>
+                                  </div>
+                                }
                               } @else {
                                 <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; border: 1.5px dashed var(--border); border-radius: 8px; background: #FAFBFB; min-height: 120px; margin-bottom: 8px;">
                                   <span class="material-symbols-outlined" style="font-size: 28px; color: var(--text-muted); margin-bottom: 6px;">hourglass_empty</span>
@@ -429,13 +437,13 @@
 
   <!-- Approve Confirmation Modal -->
   @if (isApproveModalOpen()) {
-    <div class="modal-backdrop" (click)="closeApproveModal()">
-      <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop" data-lenis-prevent (click)="closeApproveModal()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+      <div class="modal-card" data-lenis-prevent (click)="$event.stopPropagation()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
         <div class="modal-header header-approve">
           <h3>Approve Recruiter</h3>
           <button class="btn-close" (click)="closeApproveModal()">&times;</button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" data-lenis-prevent>
           <p>
             Are you sure you want to approve <strong>{{ selectedRecruiter()?.companyName }}</strong>?
           </p>

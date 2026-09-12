@@ -99,22 +99,6 @@ const MCA_ENTERPRISE_REGISTRY = [
     ]
   },
   {
-    keys: ["acme", "acme corp"],
-    cin: "U72900MH2015PTC265432",
-    companyName: "ACME TECHNOLOGIES PRIVATE LIMITED",
-    status: "Active",
-    class: "Private",
-    category: "Company limited by Shares",
-    subCategory: "Non-govt company",
-    dateOfIncorporation: "2015-05-14",
-    registeredAddress: "Level 4, Dynasty Business Park, Andheri East, Mumbai, Maharashtra 400059",
-    email: "contact@acme.com",
-    directors: [
-      { name: "Vikram Mehta", din: "06543210", designation: "Director", isMock: false },
-      { name: "Ananya Roy", din: "06543211", designation: "Director", isMock: false }
-    ]
-  },
-  {
     keys: ["gigabyte", "gigabyte technologies"],
     cin: "U72200DL2018PTC334567",
     companyName: "GIGABYTE TECHNOLOGIES PRIVATE LIMITED",
@@ -332,13 +316,7 @@ class IndianBizVerifyMCP {
         }];
       }
 
-      return [
-        {
-          cin: `L${Math.floor(10000 + Math.random() * 90000)}MH2026PLC${Math.floor(100000 + Math.random() * 900000)}`,
-          companyName: companyName,
-          isMock: true,
-        },
-      ];
+      return [];
     }
   }
 
@@ -362,14 +340,7 @@ class IndianBizVerifyMCP {
         };
       }
 
-      return {
-        cin,
-        companyName: "Registered Business Entity",
-        status: "Active",
-        registeredAddress: "123, Dynamic Business Park, Mumbai, India",
-        dateOfIncorporation: new Date().toISOString().split("T")[0],
-        isMock: false,
-      };
+      return null;
     }
   }
 
@@ -383,10 +354,7 @@ class IndianBizVerifyMCP {
         return matched.directors;
       }
 
-      return [
-        { name: "Rahul Sharma", din: "09123456", designation: "Director", isMock: false },
-        { name: "Priya Patel", din: "09123457", designation: "Managing Director", isMock: false },
-      ];
+      return [];
     }
   }
 }

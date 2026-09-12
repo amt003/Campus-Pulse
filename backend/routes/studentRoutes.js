@@ -15,6 +15,7 @@ const {
   getOfferPdf,
   getPreparationResources,
   getSeasonConfig,
+  getMyReadiness,
 } = require("../controllers/studentController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
@@ -25,6 +26,9 @@ const router = express.Router();
 router.use(protect, authorizeRoles("Student"));
 router.get("/season-config", getSeasonConfig);
 router.get("/drive/attachment/download/:fileId", downloadDriveAttachment);
+
+// Placement Readiness Analyzer (PRA) Route
+router.get("/my-readiness", getMyReadiness);
 
 router.post("/profile", createStudentProfile);
 router.get("/profile", getStudentProfile);

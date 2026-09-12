@@ -6,75 +6,99 @@
   <main class="dashboard-container">
 
     <!-- ══════════════════════════════════════════
-         Page Header Card
+         1. Executive Page Header Bar
          ══════════════════════════════════════════ -->
-    <div class="page-header-card">
-      <div class="page-header-left">
-        <div class="page-header-icon-badge">
-          <span class="material-symbols-outlined">school</span>
-        </div>
-        <div>
-          <h1 class="page-header-title">Student Registry</h1>
-          <p class="page-header-sub">
-            @if (isLoading()) {
-              Loading students…
-            } @else {
-              {{ totalStudents() }} student{{ totalStudents() !== 1 ? 's' : '' }} in the database
-              @if (activeFiltersCount > 0) {
-                <span class="filter-active-badge">{{ activeFiltersCount }} filter{{ activeFiltersCount > 1 ? 's' : '' }} active</span>
+    <section class="students-header-bar">
+      <div class="header-titles">
+        <div class="title-with-badge">
+          <div class="header-icon-chip">
+            <span class="material-symbols-outlined">school</span>
+          </div>
+          <div>
+            <h1 class="page-main-title">Student Talent Registry</h1>
+            <p class="page-main-sub">
+              @if (isLoading()) {
+                Retrieving student records from registry…
+              } @else {
+                <span>{{ totalStudents() }} registered student{{ totalStudents() !== 1 ? 's' : '' }} in placement database</span>
+                @if (activeFiltersCount > 0) {
+                  <span class="filter-active-pill">
+                    <span class="material-symbols-outlined">filter_alt</span>
+                    <span>{{ activeFiltersCount }} filter{{ activeFiltersCount > 1 ? 's' : '' }} active</span>
+                  </span>
+                }
               }
-            }
-          </p>
+            </p>
+          </div>
         </div>
       </div>
-      <button class="btn-export" (click)="exportCSV()" [disabled]="students().length === 0" id="students-export-csv">
-        <span class="material-symbols-outlined">download</span>
-        Export CSV
-      </button>
-    </div>
+
+      <div class="header-right-actions">
+        <button
+          class="btn-export-students"
+          (click)="exportCSV()"
+          [disabled]="students().length === 0"
+          id="students-export-csv"
+          title="Export filtered student dataset to CSV"
+        >
+          <span class="material-symbols-outlined">file_download</span>
+          <span>Export CSV</span>
+        </button>
+      </div>
+    </section>
 
     <!-- ══════════════════════════════════════════
-         Stats Row — 4 Cards (same as dashboard)
+         2. Top KPI Stats Row (4 Cards)
          ══════════════════════════════════════════ -->
     <section class="stats-row">
-      <div class="card-stat glow-card-blue">
+      <!-- Card 1: Total Enrolled -->
+      <div class="card-stat kpi-navy">
         <div class="stat-body">
-          <span class="stat-title">Total Students</span>
+          <span class="stat-title">Total Registered</span>
           <h2 class="stat-value">{{ totalStudents() }}</h2>
-          <span class="stat-sub">In the database</span>
+          <span class="stat-sub">Enrolled in talent pool</span>
         </div>
-        <div class="badge-icon icon-blue">
+        <div class="badge-icon icon-navy">
           <span class="material-symbols-outlined">groups</span>
         </div>
       </div>
 
-      <div class="card-stat glow-card-green">
+      <!-- Card 2: No Backlogs -->
+      <div class="card-stat kpi-green">
         <div class="stat-body">
-          <span class="stat-title">No Backlogs</span>
+          <span class="stat-title">Zero Backlogs</span>
           <h2 class="stat-value text-green">{{ noBacklogsCount }}</h2>
-          <span class="stat-sub">Clean academic record</span>
+          <span class="stat-sub text-trend">
+            <span class="material-symbols-outlined trend-icon">verified</span>
+            Clean academic record
+          </span>
         </div>
         <div class="badge-icon icon-green">
           <span class="material-symbols-outlined">check_circle</span>
         </div>
       </div>
 
-      <div class="card-stat glow-card-amber">
+      <!-- Card 3: High Achievers -->
+      <div class="card-stat kpi-amber">
         <div class="stat-body">
           <span class="stat-title">High Achievers</span>
           <h2 class="stat-value text-amber">{{ highCgpaCount }}</h2>
-          <span class="stat-sub">CGPA ≥ 8.5</span>
+          <span class="stat-sub text-amber-sub">
+            <span class="material-symbols-outlined mini-star">star</span>
+            CGPA ≥ 8.5 Honor List
+          </span>
         </div>
         <div class="badge-icon icon-amber">
-          <span class="material-symbols-outlined">star</span>
+          <span class="material-symbols-outlined">military_tech</span>
         </div>
       </div>
 
-      <div class="card-stat glow-card-teal">
+      <!-- Card 4: Page Subset -->
+      <div class="card-stat kpi-teal">
         <div class="stat-body">
-          <span class="stat-title">Current Page</span>
-          <h2 class="stat-value">{{ students().length }}</h2>
-          <span class="stat-sub">of {{ totalStudents() }} total</span>
+          <span class="stat-title">Current View</span>
+          <h2 class="stat-value text-teal">{{ students().length }}</h2>
+          <span class="stat-sub">of {{ totalStudents() }} total candidates</span>
         </div>
         <div class="badge-icon icon-teal">
           <span class="material-symbols-outlined">table_rows</span>
@@ -83,310 +107,395 @@
     </section>
 
     <!-- ══════════════════════════════════════════
-         Filter / Search Panel
+         3. Search & Comprehensive Filter Panel
          ══════════════════════════════════════════ -->
-    <div class="glass-panel">
+    <div class="filter-panel-card glass-panel">
       <div class="panel-header">
         <div class="panel-title-wrap">
           <div class="title-icon-badge">
             <span class="material-symbols-outlined">filter_list</span>
           </div>
-          <span class="header-emoji">🔍</span>
-          <h3 class="panel-title">Search & Filter</h3>
+          <div>
+            <h3 class="panel-title">Talent Search & Multi-Attribute Filters</h3>
+            <span class="panel-sub-label">Filter students by branch, year, CGPA threshold, and backlog criteria</span>
+          </div>
         </div>
         @if (activeFiltersCount > 0) {
-          <button class="btn-clear-all" (click)="clearFilters()" id="students-clear-filters">
+          <button class="btn-clear-all" (click)="clearFilters()" id="students-clear-filters" title="Reset all search & filter parameters">
             <span class="material-symbols-outlined">filter_list_off</span>
-            Clear All ({{ activeFiltersCount }})
+            <span>Clear Filters ({{ activeFiltersCount }})</span>
           </button>
         }
       </div>
 
       <div class="filter-grid">
-        <!-- Search -->
+        <!-- Search Input -->
         <div class="filter-search-wrap">
           <span class="material-symbols-outlined filter-search-icon">search</span>
           <input
             id="students-search"
             type="text"
             class="filter-search"
-            placeholder="Search by name, roll number or email…"
+            placeholder="Search by student name, roll number, or email…"
             [value]="searchQuery()"
             (input)="onSearchInput($any($event.target).value)"
           />
           @if (searchQuery()) {
-            <button class="filter-clear-inline" (click)="onSearchInput('')">
+            <button class="filter-clear-inline" (click)="onSearchInput('')" title="Clear query">
               <span class="material-symbols-outlined">close</span>
             </button>
           }
         </div>
 
-        <!-- Branch -->
-        <select id="students-filter-branch" class="filter-select"
-          [ngModel]="filterBranch()" (ngModelChange)="filterBranch.set($event); applyFilters()">
-          <option value="">All Branches</option>
-          @for (b of branchOptions(); track b) {
-            <option [value]="b">{{ b }}</option>
-          }
-        </select>
+        <!-- Branch Select -->
+        <div class="filter-field-wrap">
+          <select id="students-filter-branch" class="filter-select"
+            [ngModel]="filterBranch()" (ngModelChange)="filterBranch.set($event); applyFilters()">
+            <option value="">All Branches</option>
+            @for (b of branchOptions(); track b) {
+              <option [value]="b">{{ b }}</option>
+            }
+          </select>
+        </div>
 
-        <!-- Passout Year -->
-        <select id="students-filter-year" class="filter-select"
-          [ngModel]="filterYear()" (ngModelChange)="filterYear.set($event); applyFilters()">
-          <option value="">All Passout Years</option>
-          @for (y of yearOptions(); track y) {
-            <option [value]="y">{{ y }}</option>
-          }
-        </select>
+        <!-- Passout Year Select -->
+        <div class="filter-field-wrap">
+          <select id="students-filter-year" class="filter-select"
+            [ngModel]="filterYear()" (ngModelChange)="filterYear.set($event); applyFilters()">
+            <option value="">All Passout Years</option>
+            @for (y of yearOptions(); track y) {
+              <option [value]="y">{{ y }}</option>
+            }
+          </select>
+        </div>
 
-        <!-- Min CGPA -->
-        <input id="students-filter-cgpa-min" type="number" class="filter-input"
-          placeholder="Min CGPA" min="0" max="10" step="0.1"
-          [ngModel]="filterMinCgpa()" (ngModelChange)="filterMinCgpa.set($event)"
-          (change)="applyFilters()" />
+        <!-- Min CGPA Input -->
+        <div class="filter-field-wrap">
+          <input id="students-filter-cgpa-min" type="number" class="filter-input"
+            placeholder="Min CGPA (e.g. 7.5)" min="0" max="10" step="0.1"
+            [ngModel]="filterMinCgpa()" (ngModelChange)="filterMinCgpa.set($event)"
+            (change)="applyFilters()" />
+        </div>
 
-        <!-- Max CGPA -->
-        <input id="students-filter-cgpa-max" type="number" class="filter-input"
-          placeholder="Max CGPA" min="0" max="10" step="0.1"
-          [ngModel]="filterMaxCgpa()" (ngModelChange)="filterMaxCgpa.set($event)"
-          (change)="applyFilters()" />
+        <!-- Max CGPA Input -->
+        <div class="filter-field-wrap">
+          <input id="students-filter-cgpa-max" type="number" class="filter-input"
+            placeholder="Max CGPA (e.g. 10)" min="0" max="10" step="0.1"
+            [ngModel]="filterMaxCgpa()" (ngModelChange)="filterMaxCgpa.set($event)"
+            (change)="applyFilters()" />
+        </div>
 
-        <!-- Backlogs -->
-        <select id="students-filter-backlogs" class="filter-select"
-          [ngModel]="filterBacklogs()" (ngModelChange)="filterBacklogs.set($event); applyFilters()">
-          <option value="">Any Backlogs</option>
-          <option value="0">No Backlogs (0)</option>
-          <option value="1">1 Backlog</option>
-          <option value="2">2 Backlogs</option>
-        </select>
+        <!-- Backlogs Select -->
+        <div class="filter-field-wrap">
+          <select id="students-filter-backlogs" class="filter-select"
+            [ngModel]="filterBacklogs()" (ngModelChange)="filterBacklogs.set($event); applyFilters()">
+            <option value="">Any Backlogs</option>
+            <option value="0">No Backlogs (0)</option>
+            <option value="1">1 Backlog</option>
+            <option value="2">2 Backlogs</option>
+          </select>
+        </div>
 
-        <!-- Sort -->
-        <select id="students-sort-by" class="filter-select"
-          [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event); fetchStudents(true)">
-          <option value="createdAt">Sort: Import Date</option>
-          <option value="cgpa">Sort: CGPA</option>
-          <option value="passoutYear">Sort: Passout Year</option>
-          <option value="rollNumber">Sort: Roll Number</option>
-        </select>
+        <!-- Sort By Select -->
+        <div class="filter-field-wrap">
+          <select id="students-sort-by" class="filter-select"
+            [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event); fetchStudents(true)">
+            <option value="createdAt">Sort: Import Date</option>
+            <option value="cgpa">Sort: CGPA</option>
+            <option value="passoutYear">Sort: Passout Year</option>
+            <option value="rollNumber">Sort: Roll Number</option>
+          </select>
+        </div>
 
-        <select id="students-sort-order" class="filter-select"
-          [ngModel]="sortOrder()" (ngModelChange)="sortOrder.set($event); fetchStudents(true)">
-          <option value="desc">↓ Descending</option>
-          <option value="asc">↑ Ascending</option>
-        </select>
+        <!-- Sort Order Select -->
+        <div class="filter-field-wrap">
+          <select id="students-sort-order" class="filter-select"
+            [ngModel]="sortOrder()" (ngModelChange)="sortOrder.set($event); fetchStudents(true)">
+            <option value="desc">Order: Descending &darr;</option>
+            <option value="asc">Order: Ascending &uarr;</option>
+          </select>
+        </div>
       </div>
     </div>
 
     <!-- ══════════════════════════════════════════
-         Error
+         4. Error Message State
          ══════════════════════════════════════════ -->
     @if (errorMsg()) {
-      <div class="alert-error">
+      <div class="alert-banner alert-error">
         <span class="material-symbols-outlined">error</span>
-        {{ errorMsg() }}
+        <span>{{ errorMsg() }}</span>
       </div>
     }
 
     <!-- ══════════════════════════════════════════
-         Loading Skeleton
+         5. Loading State
          ══════════════════════════════════════════ -->
     @if (isLoading()) {
-      <div class="table-wrap">
-        @for (i of [1,2,3,4,5,6,7,8]; track i) {
-          <div class="skeleton-table-row">
-            <div class="skeleton-cell" style="width: 90px;"></div>
-            <div class="skeleton-cell" style="width: 160px;"></div>
-            <div class="skeleton-cell" style="width: 60px;"></div>
-            <div class="skeleton-cell" style="width: 50px;"></div>
-            <div class="skeleton-cell" style="width: 55px;"></div>
-            <div class="skeleton-cell" style="width: 60px;"></div>
-          </div>
-        }
+      <div class="table-card glass-panel">
+        <div class="skeleton-table-wrap">
+          @for (i of [1,2,3,4,5,6,7,8]; track i) {
+            <div class="skeleton-table-row">
+              <div class="skeleton-cell" style="width: 100px;"></div>
+              <div class="skeleton-cell" style="width: 200px;"></div>
+              <div class="skeleton-cell" style="width: 70px;"></div>
+              <div class="skeleton-cell" style="width: 60px;"></div>
+              <div class="skeleton-cell" style="width: 65px;"></div>
+              <div class="skeleton-cell" style="width: 70px;"></div>
+              <div class="skeleton-cell" style="width: 80px;"></div>
+            </div>
+          }
+        </div>
       </div>
     }
 
     <!-- ══════════════════════════════════════════
-         Empty State
+         6. Empty State
          ══════════════════════════════════════════ -->
     @if (!isLoading() && students().length === 0 && !errorMsg()) {
-      <div class="empty-state-wrap">
-        <div class="empty-icon-badge">
+      <div class="table-card glass-panel empty-state-container">
+        <div class="empty-icon-circle">
           <span class="material-symbols-outlined">person_search</span>
         </div>
-        <h2 class="empty-title">No Students Found</h2>
+        <h3 class="empty-title">No Students Found</h3>
         <p class="empty-desc">
           @if (activeFiltersCount > 0) {
-            No students match your filters. Try adjusting or clearing them.
+            No student records match your selected filter criteria. Try clearing or relaxing your filters.
           } @else {
-            No students have been imported yet. Use the Import tab on the Dashboard to add students via CSV.
+            No students have been added to the registry yet. Use the Import feature on the Dashboard to upload candidate records.
           }
         </p>
         @if (activeFiltersCount > 0) {
-          <button class="btn-export" (click)="clearFilters()">
+          <button class="btn-clear-all" (click)="clearFilters()">
             <span class="material-symbols-outlined">filter_list_off</span>
-            Clear Filters
+            <span>Clear All Filters</span>
           </button>
         } @else {
-          <a routerLink="/tpo/dashboard" class="btn-export">
+          <a routerLink="/tpo/dashboard" class="btn-go-dashboard">
             <span class="material-symbols-outlined">arrow_back</span>
-            Go to Dashboard
+            <span>Return to Dashboard</span>
           </a>
         }
       </div>
     }
 
     <!-- ══════════════════════════════════════════
-         Students Table
+         7. Students Data Table
          ══════════════════════════════════════════ -->
     @if (!isLoading() && students().length > 0) {
-      <div class="table-wrap">
+      <div class="table-card glass-panel">
 
         <!-- Table header strip -->
-        <div class="table-header">
+        <div class="table-strip-header">
           <div class="panel-title-wrap">
             <div class="title-icon-badge">
               <span class="material-symbols-outlined">manage_accounts</span>
             </div>
-            <span class="header-emoji">🎓</span>
-            <h3 class="panel-title">Student List</h3>
+            <div>
+              <h3 class="panel-title">Enrolled Candidate Directory</h3>
+              <span class="panel-sub-label">Showing {{ students().length }} of {{ totalStudents() }} records &bull; Click any row to expand credentials</span>
+            </div>
           </div>
-          <span style="font-size:13px; color:var(--on-surface-var); font-weight:600;">
-            Showing {{ students().length }} of {{ totalStudents() }}
-            &nbsp;·&nbsp; Click a row to expand details
-          </span>
         </div>
 
-        <table class="students-table">
-          <thead>
-            <tr>
-              <th class="th-sortable" (click)="toggleSort('rollNumber')" id="sort-roll">
-                <div class="th-inner">
-                  Roll No.
-                  <span class="sort-icon material-symbols-outlined">
-                    {{ sortBy() === 'rollNumber' ? (sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
-                  </span>
-                </div>
-              </th>
-              <th>Student</th>
-              <th class="th-sortable" (click)="toggleSort('branch')" id="sort-branch">
-                <div class="th-inner">
-                  Branch
-                  <span class="sort-icon material-symbols-outlined">
-                    {{ sortBy() === 'branch' ? (sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
-                  </span>
-                </div>
-              </th>
-              <th class="th-sortable" (click)="toggleSort('cgpa')" id="sort-cgpa">
-                <div class="th-inner">
-                  CGPA
-                  <span class="sort-icon material-symbols-outlined">
-                    {{ sortBy() === 'cgpa' ? (sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
-                  </span>
-                </div>
-              </th>
-              <th class="th-sortable" (click)="toggleSort('passoutYear')" id="sort-year">
-                <div class="th-inner">
-                  Year
-                  <span class="sort-icon material-symbols-outlined">
-                    {{ sortBy() === 'passoutYear' ? (sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
-                  </span>
-                </div>
-              </th>
-              <th>Backlogs</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (s of students(); track s._id) {
-              <!-- Main Row -->
-              <tr class="student-row" [class.expanded]="expandedRow() === s._id" (click)="toggleRow(s._id)">
-                <td class="td-roll">{{ s.rollNumber }}</td>
-                <td>
-                  <div class="td-student">
-                    <div class="student-avatar">{{ (s.userId?.name || 'S')[0].toUpperCase() }}</div>
-                    <div class="student-info">
-                      <span class="student-name clickable-audit" (click)="openAuditPanel(s.rollNumber, $event)" title="Click to view placement audit">
-                        {{ s.userId?.name || '—' }}
-                      </span>
-                      <span class="student-email">{{ s.userId?.email || '—' }}</span>
-                    </div>
+        <div class="table-scroll">
+          <table class="students-table">
+            <thead>
+              <tr>
+                <th class="th-sortable" (click)="toggleSort('rollNumber')" id="sort-roll" title="Sort by Roll Number">
+                  <div class="th-inner">
+                    <span>Roll Number</span>
+                    <span class="sort-icon material-symbols-outlined">
+                      {{ sortBy() === 'rollNumber' ? (sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+                    </span>
                   </div>
-                </td>
-                <td><span class="branch-chip">{{ s.branch }}</span></td>
-                <td><span class="cgpa-badge {{ getCgpaClass(s.cgpa) }}">{{ s.cgpa | number:'1.1-2' }}</span></td>
-                <td class="td-year">{{ s.passoutYear }}</td>
-                <td>
-                  <span class="backlog-chip" [class.backlog-zero]="s.activeBacklogs === 0" [class.backlog-has]="s.activeBacklogs > 0">
-                    {{ s.activeBacklogs === 0 ? 'None' : s.activeBacklogs }}
-                  </span>
-                </td>
-                <td>
-                  <span class="status-tag" [class.tag-success]="s.userId?.isActive" [class.tag-inactive]="!s.userId?.isActive">
-                    {{ s.userId?.isActive ? 'Active' : 'Inactive' }}
-                  </span>
-                </td>
-                <td class="td-expand" style="display: flex; align-items: center; gap: 8px;">
-                  <button class="btn-audit-drill" (click)="openAuditPanel(s.rollNumber, $event)" title="View Placement Audit" style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 6px; border: 1px solid #0284c7; background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;">
-                    <span class="material-symbols-outlined" style="font-size: 15px;">analytics</span>
-                    <span>Audit</span>
-                  </button>
-                  <span class="expand-chevron material-symbols-outlined">expand_more</span>
-                </td>
-              </tr>
+                </th>
 
-              <!-- Expanded Detail Row -->
-              @if (expandedRow() === s._id) {
-                <tr class="detail-row">
-                  <td colspan="8">
-                    <div class="detail-panel">
-                      <div class="detail-item">
-                        <span class="detail-label">📞 Phone</span>
-                        <span class="detail-value">{{ s.userId?.phone || 'Not provided' }}</span>
+                <th>Candidate Profile</th>
+
+                <th class="th-sortable" (click)="toggleSort('branch')" id="sort-branch" title="Sort by Branch">
+                  <div class="th-inner">
+                    <span>Branch</span>
+                    <span class="sort-icon material-symbols-outlined">
+                      {{ sortBy() === 'branch' ? (sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+                    </span>
+                  </div>
+                </th>
+
+                <th class="th-sortable" (click)="toggleSort('cgpa')" id="sort-cgpa" title="Sort by CGPA">
+                  <div class="th-inner">
+                    <span>CGPA</span>
+                    <span class="sort-icon material-symbols-outlined">
+                      {{ sortBy() === 'cgpa' ? (sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+                    </span>
+                  </div>
+                </th>
+
+                <th class="th-sortable" (click)="toggleSort('passoutYear')" id="sort-year" title="Sort by Passout Year">
+                  <div class="th-inner">
+                    <span>Year</span>
+                    <span class="sort-icon material-symbols-outlined">
+                      {{ sortBy() === 'passoutYear' ? (sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more' }}
+                    </span>
+                  </div>
+                </th>
+
+                <th>Backlogs</th>
+                <th>Account Status</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (s of students(); track s._id) {
+                <!-- Main Row -->
+                <tr class="student-row" [class.expanded]="expandedRow() === s._id" (click)="toggleRow(s._id)">
+                  <td class="td-roll">
+                    <span class="roll-badge">{{ s.rollNumber }}</span>
+                  </td>
+
+                  <td>
+                    <div class="candidate-cell">
+                      <div class="candidate-avatar">
+                        <span>{{ (s.userId?.name || 'S')[0].toUpperCase() }}</span>
                       </div>
-                      <div class="detail-item">
-                        <span class="detail-label">🗓 Imported On</span>
-                        <span class="detail-value">{{ s.createdAt ? (s.createdAt | date:'dd MMM yyyy, hh:mm a') : '—' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">🔑 Default Password</span>
-                        <span class="detail-value password-hint">{{ s.rollNumber }} <span class="hint-text">(roll number)</span></span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">📄 Resume</span>
-                        <span class="detail-value">{{ s.resumePath ? 'Uploaded' : 'Not uploaded yet' }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="detail-label">✅ Profile Complete</span>
-                        <span class="detail-value">{{ s.isProfileComplete ? 'Yes' : 'No' }}</span>
+                      <div class="candidate-meta">
+                        <span class="candidate-name clickable-audit" (click)="openAuditPanel(s.rollNumber, $event)" title="Click to view full placement audit profile">
+                          {{ s.userId?.name || '—' }}
+                        </span>
+                        <span class="candidate-email">
+                          <span class="material-symbols-outlined email-icon">mail</span>
+                          <span>{{ s.userId?.email || '—' }}</span>
+                        </span>
                       </div>
                     </div>
                   </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
 
-        <!-- Pagination (inside the table-wrap, matching dashboard bottom-border style) -->
+                  <td>
+                    <span class="branch-pill">{{ s.branch }}</span>
+                  </td>
+
+                  <td>
+                    <span class="cgpa-pill {{ getCgpaClass(s.cgpa) }}">
+                      <span class="material-symbols-outlined star-icon">grade</span>
+                      <span>{{ s.cgpa | number:'1.1-2' }}</span>
+                    </span>
+                  </td>
+
+                  <td class="td-year">
+                    <span class="year-text">{{ s.passoutYear }}</span>
+                  </td>
+
+                  <td>
+                    <span class="backlog-pill" [class.backlog-zero]="s.activeBacklogs === 0" [class.backlog-has]="s.activeBacklogs > 0">
+                      {{ s.activeBacklogs === 0 ? '0 Backlogs' : s.activeBacklogs + ' Backlog' + (s.activeBacklogs > 1 ? 's' : '') }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <span class="status-tag" [class.tag-success]="s.userId?.isActive" [class.tag-inactive]="!s.userId?.isActive">
+                      <span class="material-symbols-outlined status-dot">
+                        {{ s.userId?.isActive ? 'check_circle' : 'block' }}
+                      </span>
+                      <span>{{ s.userId?.isActive ? 'Active' : 'Inactive' }}</span>
+                    </span>
+                  </td>
+
+                  <td class="td-actions">
+                    <div class="actions-wrapper">
+                      <button class="btn-audit-pill" (click)="openAuditPanel(s.rollNumber, $event)" title="Open Placement Audit Drawer">
+                        <span class="material-symbols-outlined">analytics</span>
+                        <span>Audit</span>
+                      </button>
+                      <span class="expand-chevron material-symbols-outlined">expand_more</span>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Expanded Detail Drawer Row -->
+                @if (expandedRow() === s._id) {
+                  <tr class="detail-row">
+                    <td colspan="8">
+                      <div class="expanded-card-inner">
+                        <div class="detail-grid">
+                          <div class="detail-stat-box">
+                            <span class="detail-label">
+                              <span class="material-symbols-outlined">call</span>
+                              <span>Phone Contact</span>
+                            </span>
+                            <span class="detail-value">{{ s.userId?.phone || 'Not provided' }}</span>
+                          </div>
+
+                          <div class="detail-stat-box">
+                            <span class="detail-label">
+                              <span class="material-symbols-outlined">calendar_month</span>
+                              <span>Imported Timestamp</span>
+                            </span>
+                            <span class="detail-value">{{ s.createdAt ? (s.createdAt | date:'dd MMM yyyy, hh:mm a') : '—' }}</span>
+                          </div>
+
+                          <div class="detail-stat-box">
+                            <span class="detail-label">
+                              <span class="material-symbols-outlined">key</span>
+                              <span>Default Credentials</span>
+                            </span>
+                            <span class="detail-value text-mono">{{ s.rollNumber }} <small class="hint-text">(Initial Password)</small></span>
+                          </div>
+
+                          <div class="detail-stat-box">
+                            <span class="detail-label">
+                              <span class="material-symbols-outlined">description</span>
+                              <span>Resume Document</span>
+                            </span>
+                            <span class="detail-value" [class.text-green]="s.resumePath">
+                              {{ s.resumePath ? 'Uploaded & Verified' : 'Pending Upload' }}
+                            </span>
+                          </div>
+
+                          <div class="detail-stat-box">
+                            <span class="detail-label">
+                              <span class="material-symbols-outlined">verified</span>
+                              <span>Profile Completion</span>
+                            </span>
+                            <span class="detail-value" [class.text-green]="s.isProfileComplete">
+                              {{ s.isProfileComplete ? 'Complete (100%)' : 'Incomplete' }}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Modern Pagination Bar -->
         @if (totalPages() > 1) {
-          <div class="pagination">
-            <button class="page-btn" (click)="setPage(1)" [disabled]="currentPage() === 1" title="First">
-              <span class="material-symbols-outlined">first_page</span>
-            </button>
-            <button class="page-btn" (click)="setPage(currentPage() - 1)" [disabled]="currentPage() === 1" title="Prev">
-              <span class="material-symbols-outlined">chevron_left</span>
-            </button>
-            @for (p of pageNumbers; track p) {
-              <button class="page-btn" [class.active]="p === currentPage()" (click)="setPage(p)">{{ p }}</button>
-            }
-            <button class="page-btn" (click)="setPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()" title="Next">
-              <span class="material-symbols-outlined">chevron_right</span>
-            </button>
-            <button class="page-btn" (click)="setPage(totalPages())" [disabled]="currentPage() === totalPages()" title="Last">
-              <span class="material-symbols-outlined">last_page</span>
-            </button>
-            <span class="page-info">Page {{ currentPage() }} of {{ totalPages() }}</span>
+          <div class="pagination-container">
+            <div class="pagination-info">
+              Showing page <strong>{{ currentPage() }}</strong> of <strong>{{ totalPages() }}</strong>
+            </div>
+
+            <div class="pagination-controls">
+              <button class="page-btn-icon" (click)="setPage(1)" [disabled]="currentPage() === 1" title="First Page">
+                <span class="material-symbols-outlined">first_page</span>
+              </button>
+              <button class="page-btn-icon" (click)="setPage(currentPage() - 1)" [disabled]="currentPage() === 1" title="Previous Page">
+                <span class="material-symbols-outlined">chevron_left</span>
+              </button>
+
+              @for (p of pageNumbers; track p) {
+                <button class="page-btn" [class.active]="p === currentPage()" (click)="setPage(p)">{{ p }}</button>
+              }
+
+              <button class="page-btn-icon" (click)="setPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()" title="Next Page">
+                <span class="material-symbols-outlined">chevron_right</span>
+              </button>
+              <button class="page-btn-icon" (click)="setPage(totalPages())" [disabled]="currentPage() === totalPages()" title="Last Page">
+                <span class="material-symbols-outlined">last_page</span>
+              </button>
+            </div>
           </div>
         }
 
@@ -397,6 +506,7 @@
 
 </div>
 
+<!-- Audit Panel Drawer -->
 @if (selectedRollNumberForAudit()) {
   <app-student-audit-panel
     [rollNumber]="selectedRollNumberForAudit()!"

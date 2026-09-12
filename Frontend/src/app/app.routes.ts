@@ -9,6 +9,11 @@ import { TpoStudentsComponent } from './pages/tpo/students/students.component';
 import { TpoDriveApprovalComponent } from './pages/tpo/drive-approval/drive-approval.component';
 import { TpoCollegeConfigComponent } from './pages/tpo/college-config/college-config.component';
 import { TpoSettingsComponent } from './pages/tpo/settings/settings.component';
+import { TpoOverseeDrivesComponent } from './pages/tpo/oversee-drives/oversee-drives.component';
+import { TpoDriveXrayComponent } from './pages/tpo/drive-xray/drive-xray.component';
+import { TpoCalendarComponent } from './pages/tpo/calendar/calendar.component';
+import { TpoAnalyzerComponent } from './pages/tpo/analyzer/analyzer.component';
+import { StudentReadinessComponent } from './pages/student/readiness/readiness.component';
 import { RecruiterDashboardComponent } from './pages/recruiter/dashboard/dashboard';
 import { RecruiterLayoutComponent } from './pages/recruiter/layout/layout.component';
 import { RecruiterProfileComponent } from './pages/recruiter/profile/profile';
@@ -90,6 +95,22 @@ export const routes: Routes = [
         path: 'college-config',
         component: TpoCollegeConfigComponent,
       },
+      {
+        path: 'oversee-drives',
+        component: TpoOverseeDrivesComponent,
+      },
+      {
+        path: 'drive-xray/:driveId',
+        component: TpoDriveXrayComponent,
+      },
+      {
+        path: 'calendar',
+        component: TpoCalendarComponent,
+      },
+      {
+        path: 'analyzer',
+        component: TpoAnalyzerComponent,
+      },
     ],
   },
   {
@@ -167,6 +188,10 @@ export const routes: Routes = [
       {
         path: 'profile',
         component: StudentProfileComponent,
+      },
+      {
+        path: 'readiness',
+        component: StudentReadinessComponent,
       },
     ],
   },

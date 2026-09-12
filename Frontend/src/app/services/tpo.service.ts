@@ -123,6 +123,125 @@ export interface PendingRecruiter {
   };
 }
 
+export interface DriveOverview {
+  _id: string;
+  title: string;
+  description: string;
+  ctc: number;
+  minCGPA: number;
+  eligibleBranches: string[];
+  maxBacklogs: number;
+  applicationDeadline: string;
+  hasAptitudeTest: boolean;
+  hasGD: boolean;
+  status: string;
+  tpoFeedback?: string;
+  createdAt: string;
+  updatedAt: string;
+  recruiter: {
+    _id: string;
+    companyName: string;
+    companyLogo?: string | null;
+    officialEmail?: string;
+    website?: string;
+  };
+  applicationCount: number;
+  placedCount: number;
+}
+
+export interface DriveXRayStudent {
+  _id?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  rollNumber: string;
+  cgpa: number;
+  branch: string;
+  passoutYear?: number;
+  resumePath?: string;
+  profilePicPath?: string;
+}
+
+export interface DriveXRayApplication {
+  applicationId: string;
+  appliedDate: string;
+  status: string;
+  aiMatchScore: number | null;
+  student: DriveXRayStudent;
+  aptitude: {
+    status: string;
+    score: number | null;
+    feedback: string | null;
+    markedAt: string | null;
+  };
+  gd: {
+    status: string;
+    score: number | null;
+    feedback: string | null;
+    markedAt: string | null;
+  };
+  interview: {
+    status: string;
+    result: string;
+    score: number | null;
+    feedback: string | null;
+    markedAt: string | null;
+  };
+  offer: {
+    status: string;
+    fileId?: string | null;
+    filePath?: string | null;
+    fileName?: string | null;
+    uploadedDate?: string | null;
+    acceptedAt?: string | null;
+    declinedAt?: string | null;
+    declineReason?: string | null;
+  };
+  xai: {
+    matchScore: number | null;
+    positiveSentences: string[];
+    negativeSentences: string[];
+    skillGaps: string[];
+    strongSkills: string[];
+    isOfflineFallback: boolean;
+  };
+}
+
+export interface DriveXRaySummary {
+  totalApplications: number;
+  shortlisted: number;
+  aptitudePassed: number;
+  aptitudeFailed: number;
+  gdShortlisted: number;
+  gdRejected: number;
+  interviewSelected: number;
+  interviewRejected: number;
+  placed: number;
+}
+
+export interface DriveXRayData {
+  drive: {
+    _id: string;
+    title: string;
+    description: string;
+    ctc: number;
+    minCGPA: number;
+    eligibleBranches: string[];
+    maxBacklogs: number;
+    applicationDeadline: string;
+    hasAptitudeTest: boolean;
+    hasGD: boolean;
+    status: string;
+    companyName: string;
+    companyLogo?: string | null;
+    officialEmail?: string;
+    website?: string;
+    createdAt: string;
+  };
+  summary: DriveXRaySummary;
+  applications: DriveXRayApplication[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -360,4 +479,123 @@ export class TpoService {
       { headers: this.getAuthHeaders() }
     );
   }
+
+  getAllDrives(): Observable<{ success: boolean; drives: DriveOverview[] }> {
+    return this.http.get<{ success: boolean; drives: DriveOverview[] }>(
+      `${this.apiUrl}/drives`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getDriveApplicationsForTPO(driveId: string): Observable<{ success: boolean; data: DriveXRayData }> {
+    return this.http.get<{ success: boolean; data: DriveXRayData }>(
+      `${this.apiUrl}/drive/${driveId}/applications`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getAllSchedules(startDate?: string, endDate?: string, eventType?: string, company?: string): Observable<CalendarSchedulesResponse> {
+    const queryParams = new URLSearchParams();
+    if (startDate) queryParams.set('startDate', startDate);
+    if (endDate) queryParams.set('endDate', endDate);
+    if (eventType && eventType !== 'All' && eventType !== 'ALL') queryParams.set('eventType', eventType);
+    if (company && company !== 'All' && company !== 'ALL') queryParams.set('company', company);
+
+    return this.http.get<CalendarSchedulesResponse>(
+      `${this.apiUrl}/schedules?${queryParams.toString()}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getCalendarSummary(): Observable<CalendarSummaryResponse> {
+    return this.http.get<CalendarSummaryResponse>(
+      `${this.apiUrl}/schedules/summary`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getStudentReadiness(rollNumber: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiUrl}/analyzer/student/${encodeURIComponent(rollNumber.trim())}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getDepartmentReadiness(branch: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiUrl}/analyzer/department/${encodeURIComponent(branch)}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getAllStudentsReadiness(branch?: string, sort?: string): Observable<any> {
+    const queryParams = new URLSearchParams();
+    if (branch && branch !== 'All') queryParams.set('branch', branch);
+    if (sort) queryParams.set('sort', sort);
+
+    const queryStr = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    return this.http.get<any>(
+      `${this.apiUrl}/analyzer/overview${queryStr}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+}
+
+export interface CalendarStudent {
+  _id?: string;
+  name: string;
+  rollNumber: string;
+  branch: string;
+  email: string;
+  cgpa?: number;
+}
+
+export interface CalendarSlot {
+  timeSlot: string;
+  companyName: string;
+  driveTitle: string;
+  eventType: 'Aptitude' | 'GD' | 'Interview' | string;
+  location: string;
+  meetingUrl?: string | null;
+  driveId?: string | null;
+  studentCount: number;
+  students: CalendarStudent[];
+}
+
+export interface GroupedScheduleDay {
+  date: string;
+  dayOfWeek: string;
+  slots: CalendarSlot[];
+}
+
+export interface CalendarSchedulesResponse {
+  success: boolean;
+  data: {
+    dateRange: {
+      startDate: string;
+      endDate: string;
+    };
+    totalSchedules: number;
+    totalStudentsScheduled: number;
+    groupedSchedules: GroupedScheduleDay[];
+  };
+}
+
+export interface CalendarSummaryResponse {
+  success: boolean;
+  summary: {
+    totalThisWeek: number;
+    totalThisMonth: number;
+    totalStudentsScheduled: number;
+    mostScheduledCompany: string;
+    busiestDay: string;
+    clashesDetected: {
+      date: string;
+      dayOfWeek: string;
+      companyCount: number;
+      companies: string[];
+      totalStudents: number;
+      warning: string;
+    }[];
+  };
 }

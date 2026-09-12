@@ -4,10 +4,12 @@ const Recruiter = require("../models/Recruiter");
 const JobDrive = require("../models/JobDrive");
 const Application = require("../models/Application");
 const CollegeConfig = require("../models/CollegeConfig");
+const Schedule = require("../models/Schedule");
 const verificationService = require("../services/verificationService");
 const socketService = require("../services/socketService");
 const sendEmail = require("../utils/sendEmail");
 const emailTemplates = require("../utils/emailTemplates");
+const placementAnalyzerService = require("../services/placementAnalyzerService");
 
 // 0. GET /api/tpo/students — Full students list with filters & pagination
 const getStudentsList = async (req, res) => {
@@ -703,12 +705,15 @@ const reVerifyRecruiter = async (req, res) => {
           trustScore: verification.trustScore,
           "verificationDetails.breakdown.domainAge": verification.breakdown.domainAge,
           "verificationDetails.breakdown.emailMatch": verification.breakdown.emailMatch,
+          "verificationDetails.breakdown.mca": verification.breakdown.mca,
           "verificationDetails.whoisData.domain": verification.whoisData.domain,
           "verificationDetails.whoisData.creationDate": verification.whoisData.creationDate,
           "verificationDetails.whoisData.domainAgeYears": verification.whoisData.domainAgeYears,
           "verificationDetails.whoisData.registrar": verification.whoisData.registrar,
           "verificationDetails.whoisData.registrantCountry": verification.whoisData.registrantCountry,
           "verificationDetails.whoisData.isValid": verification.whoisData.isValid,
+          "verificationDetails.mcaData": verification.mcaData,
+          "verificationDetails.directors": verification.directors,
           "verificationDetails.verifiedAt": verification.verifiedAt,
         },
       },
@@ -721,6 +726,8 @@ const reVerifyRecruiter = async (req, res) => {
       trustScore: updated.trustScore,
       breakdown: updated.verificationDetails.breakdown,
       whoisData: updated.verificationDetails.whoisData,
+      mcaData: updated.verificationDetails.mcaData,
+      directors: updated.verificationDetails.directors,
     });
   } catch (error) {
     console.error("[Re-verify] Error:", error.message);
@@ -1422,6 +1429,556 @@ const deletePassoutYear = async (req, res) => {
   }
 };
 
+// GET /api/tpo/drives — All drives with company details and application metrics
+const getAllDrivesForTPO = async (req, res) => {
+  try {
+    const drives = await JobDrive.find().sort({ createdAt: -1 });
+
+    const drivesWithDetails = await Promise.all(
+      drives.map(async (drive) => {
+        const recruiter = await Recruiter.findOne({ userId: drive.recruiterId });
+        const user = await User.findById(drive.recruiterId);
+        const applicationCount = await Application.countDocuments({ driveId: drive._id });
+        const placedCount = await Application.countDocuments({
+          driveId: drive._id,
+          $or: [{ status: "Placed" }, { "offer.status": "Accepted" }],
+        });
+
+        return {
+          _id: drive._id,
+          title: drive.title,
+          description: drive.description,
+          ctc: drive.ctc,
+          minCGPA: drive.minCGPA,
+          eligibleBranches: drive.eligibleBranches,
+          maxBacklogs: drive.maxBacklogs,
+          applicationDeadline: drive.applicationDeadline,
+          hasAptitudeTest: drive.hasAptitudeTest,
+          hasGD: drive.hasGD,
+          status: drive.status,
+          tpoFeedback: drive.tpoFeedback,
+          createdAt: drive.createdAt,
+          updatedAt: drive.updatedAt,
+          recruiter: {
+            _id: drive.recruiterId,
+            companyName: recruiter?.companyName || user?.name || "Company",
+            companyLogo: recruiter?.companyLogo || null,
+            officialEmail: recruiter?.officialEmail || user?.email || "",
+            website: recruiter?.website || "",
+          },
+          applicationCount,
+          placedCount,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      drives: drivesWithDetails,
+    });
+  } catch (error) {
+    console.error("Error in getAllDrivesForTPO:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch drives list",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/tpo/drive/:driveId/applications — Detailed drill-down for Drive X-Ray
+const getDriveApplicationsForTPO = async (req, res) => {
+  try {
+    const { driveId } = req.params;
+
+    const drive = await JobDrive.findById(driveId);
+    if (!drive) {
+      return res.status(404).json({ success: false, message: "Drive not found" });
+    }
+
+    const recruiter = await Recruiter.findOne({ userId: drive.recruiterId });
+    const user = await User.findById(drive.recruiterId);
+
+    const applications = await Application.find({ driveId })
+      .populate({
+        path: "studentId",
+        populate: {
+          path: "userId",
+          select: "name email phone isActive",
+        },
+      })
+      .sort({ aiMatchScore: -1, createdAt: -1 });
+
+    let totalApplications = applications.length;
+    let shortlisted = 0;
+    let aptitudePassed = 0;
+    let aptitudeFailed = 0;
+    let gdShortlisted = 0;
+    let gdRejected = 0;
+    let interviewSelected = 0;
+    let interviewRejected = 0;
+    let placed = 0;
+
+    const formattedApplications = applications.map((app) => {
+      const studentObj = app.studentId;
+      const userObj = studentObj?.userId;
+
+      const statusLower = (app.status || "").toLowerCase();
+      const aptStatus = app.aptitude?.status || "Not Applicable";
+      const gdStatus = app.gd?.status || "Not Applicable";
+      const intResult = app.interview?.result || "Pending";
+      const offerStatus = app.offer?.status || "Not Sent";
+
+      if (aptStatus === "Passed") aptitudePassed++;
+      if (aptStatus === "Failed") aptitudeFailed++;
+
+      if (gdStatus === "Shortlisted") gdShortlisted++;
+      if (gdStatus === "Rejected") gdRejected++;
+
+      if (intResult === "Selected") interviewSelected++;
+      if (intResult === "Rejected") interviewRejected++;
+
+      if (statusLower === "placed" || offerStatus === "Accepted") {
+        placed++;
+      }
+
+      if (
+        statusLower !== "applied" &&
+        statusLower !== "rejected" &&
+        statusLower !== "under review"
+      ) {
+        shortlisted++;
+      }
+
+      return {
+        applicationId: app._id,
+        appliedDate: app.appliedDate || app.createdAt,
+        status: app.status,
+        aiMatchScore: app.aiMatchScore,
+        student: {
+          _id: studentObj?._id,
+          name: userObj?.name || "Unknown Student",
+          email: userObj?.email || "",
+          phone: userObj?.phone || "",
+          rollNumber: studentObj?.rollNumber || "N/A",
+          cgpa: studentObj?.cgpa || 0,
+          branch: studentObj?.branch || "N/A",
+          passoutYear: studentObj?.passoutYear || null,
+          resumePath: studentObj?.resumePath || null,
+          profilePicPath: studentObj?.profilePicPath || null,
+        },
+        aptitude: {
+          status: app.aptitude?.status || "Not Applicable",
+          score: app.aptitude?.score ?? null,
+          feedback: app.aptitude?.feedback || null,
+          markedAt: app.aptitude?.markedAt || null,
+        },
+        gd: {
+          status: app.gd?.status || "Not Applicable",
+          score: app.gd?.score ?? null,
+          feedback: app.gd?.feedback || null,
+          markedAt: app.gd?.markedAt || null,
+        },
+        interview: {
+          status: app.interview?.status || "Pending",
+          result: app.interview?.result || "Pending",
+          score: app.interview?.score ?? null,
+          feedback: app.interview?.feedback || null,
+          markedAt: app.interview?.markedAt || null,
+        },
+        offer: {
+          status: app.offer?.status || "Not Sent",
+          fileId: app.offer?.fileId || null,
+          filePath: app.offer?.filePath || null,
+          fileName: app.offer?.fileName || null,
+          uploadedDate: app.offer?.uploadedDate || null,
+          acceptedAt: app.offer?.acceptedAt || null,
+          declinedAt: app.offer?.declinedAt || null,
+          declineReason: app.offer?.declineReason || null,
+        },
+        xai: {
+          matchScore: app.xai?.matchScore ?? app.aiMatchScore ?? null,
+          positiveSentences: app.xai?.positiveSentences || [],
+          negativeSentences: app.xai?.negativeSentences || [],
+          skillGaps: app.xai?.skillGaps || [],
+          strongSkills: app.xai?.strongSkills || [],
+          isOfflineFallback: app.xai?.isOfflineFallback || false,
+        },
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        drive: {
+          _id: drive._id,
+          title: drive.title,
+          description: drive.description,
+          ctc: drive.ctc,
+          minCGPA: drive.minCGPA,
+          eligibleBranches: drive.eligibleBranches || [],
+          maxBacklogs: drive.maxBacklogs,
+          applicationDeadline: drive.applicationDeadline,
+          hasAptitudeTest: drive.hasAptitudeTest,
+          hasGD: drive.hasGD,
+          status: drive.status,
+          companyName: recruiter?.companyName || user?.name || "Company",
+          companyLogo: recruiter?.companyLogo || null,
+          officialEmail: recruiter?.officialEmail || user?.email || "",
+          website: recruiter?.website || "",
+          createdAt: drive.createdAt,
+        },
+        summary: {
+          totalApplications,
+          shortlisted,
+          aptitudePassed,
+          aptitudeFailed,
+          gdShortlisted,
+          gdRejected,
+          interviewSelected,
+          interviewRejected,
+          placed,
+        },
+        applications: formattedApplications,
+      },
+    });
+  } catch (error) {
+    console.error("Error in getDriveApplicationsForTPO:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch drive applications",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/tpo/schedules
+const getAllSchedules = async (req, res) => {
+  try {
+    const { startDate, endDate, eventType, company } = req.query;
+
+    const now = new Date();
+    const start = startDate ? new Date(startDate) : new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const end = endDate ? new Date(endDate + 'T23:59:59.999Z') : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    const query = {
+      date: { $gte: start, $lte: end },
+      status: { $ne: "Cancelled" }
+    };
+
+    if (eventType && eventType !== "All" && eventType !== "ALL") {
+      query.eventType = eventType;
+    }
+
+    const rawSchedules = await Schedule.find(query)
+      .populate({
+        path: "driveId",
+        select: "title ctc location minCGPA recruiterId",
+        populate: { path: "recruiterId", select: "companyName officialEmail companyLogo" }
+      })
+      .populate({
+        path: "recruiterId",
+        select: "companyName officialEmail companyLogo"
+      })
+      .populate({
+        path: "studentId",
+        select: "rollNumber branch cgpa passoutYear userId",
+        populate: { path: "userId", select: "name email phone" }
+      })
+      .sort({ date: 1, timeSlot: 1 })
+      .lean();
+
+    const dateGroupsMap = new Map();
+    let totalStudentsScheduled = 0;
+    let totalSchedulesCount = 0;
+
+    for (const item of rawSchedules) {
+      if (!item.date) continue;
+
+      const companyName = item.driveId?.recruiterId?.companyName || item.recruiterId?.companyName || "Company";
+      const driveTitle = item.driveId?.title || "Job Drive";
+      const studentName = item.studentId?.userId?.name || "Student";
+      const studentRoll = item.studentId?.rollNumber || "N/A";
+      const studentBranch = item.studentId?.branch || "N/A";
+      const studentEmail = item.studentId?.userId?.email || "";
+      const studentCgpa = item.studentId?.cgpa;
+
+      if (company && company !== "All" && company !== "ALL") {
+        const compTerm = company.toLowerCase().trim();
+        const matchComp = companyName.toLowerCase().includes(compTerm) || driveTitle.toLowerCase().includes(compTerm);
+        if (!matchComp) continue;
+      }
+
+      totalSchedulesCount++;
+      totalStudentsScheduled++;
+
+      const dateObj = new Date(item.date);
+      const dateStr = dateObj.toISOString().split("T")[0];
+      const dayOfWeek = dateObj.toLocaleDateString("en-US", { weekday: "long" });
+
+      if (!dateGroupsMap.has(dateStr)) {
+        dateGroupsMap.set(dateStr, {
+          date: dateStr,
+          dayOfWeek,
+          slotsMap: new Map()
+        });
+      }
+
+      const dateGroup = dateGroupsMap.get(dateStr);
+      const slotKey = `${item.timeSlot}___${companyName}___${driveTitle}___${item.eventType}___${item.location || 'Online'}`;
+
+      if (!dateGroup.slotsMap.has(slotKey)) {
+        dateGroup.slotsMap.set(slotKey, {
+          timeSlot: item.timeSlot,
+          companyName,
+          driveTitle,
+          eventType: item.eventType,
+          location: item.location || "Online",
+          meetingUrl: item.meetingUrl || null,
+          driveId: item.driveId?._id || null,
+          studentCount: 0,
+          students: []
+        });
+      }
+
+      const slot = dateGroup.slotsMap.get(slotKey);
+      slot.studentCount++;
+      slot.students.push({
+        _id: item.studentId?._id,
+        name: studentName,
+        rollNumber: studentRoll,
+        branch: studentBranch,
+        email: studentEmail,
+        cgpa: studentCgpa
+      });
+    }
+
+    const groupedSchedules = Array.from(dateGroupsMap.values()).map(dg => ({
+      date: dg.date,
+      dayOfWeek: dg.dayOfWeek,
+      slots: Array.from(dg.slotsMap.values())
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        dateRange: {
+          startDate: start.toISOString().split("T")[0],
+          endDate: end.toISOString().split("T")[0]
+        },
+        totalSchedules: totalSchedulesCount,
+        totalStudentsScheduled,
+        groupedSchedules
+      }
+    });
+  } catch (error) {
+    console.error("Error in getAllSchedules:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch master schedules",
+      error: error.message
+    });
+  }
+};
+
+// GET /api/tpo/schedules/summary
+const getCalendarSummary = async (req, res) => {
+  try {
+    const now = new Date();
+    
+    // Week bounds (Mon-Sun)
+    const day = now.getDay();
+    const diffToMon = now.getDate() - day + (day === 0 ? -6 : 1);
+    const startOfWeek = new Date(now.setDate(diffToMon));
+    startOfWeek.setHours(0, 0, 0, 0);
+    const endOfWeek = new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
+
+    // Month bounds
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+    const activeSchedules = await Schedule.find({ status: { $ne: "Cancelled" } })
+      .populate({
+        path: "driveId",
+        select: "title recruiterId",
+        populate: { path: "recruiterId", select: "companyName" }
+      })
+      .populate({
+        path: "recruiterId",
+        select: "companyName"
+      })
+      .lean();
+
+    let totalThisWeek = 0;
+    let totalThisMonth = 0;
+    const companyCountMap = {};
+    const dayOfWeekCountMap = {
+      Monday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0, Saturday: 0, Sunday: 0
+    };
+    const dateClashMap = {};
+
+    for (const item of activeSchedules) {
+      if (!item.date) continue;
+      const d = new Date(item.date);
+      const companyName = item.driveId?.recruiterId?.companyName || item.recruiterId?.companyName || "Company";
+
+      if (d >= startOfWeek && d <= endOfWeek) totalThisWeek++;
+      if (d >= startOfMonth && d <= endOfMonth) totalThisMonth++;
+
+      companyCountMap[companyName] = (companyCountMap[companyName] || 0) + 1;
+
+      const dayName = d.toLocaleDateString("en-US", { weekday: "long" });
+      if (dayOfWeekCountMap[dayName] !== undefined) {
+        dayOfWeekCountMap[dayName]++;
+      }
+
+      const dateStr = d.toISOString().split("T")[0];
+      if (!dateClashMap[dateStr]) {
+        dateClashMap[dateStr] = {
+          date: dateStr,
+          dayOfWeek: dayName,
+          companies: new Set(),
+          totalStudents: 0,
+          events: []
+        };
+      }
+      dateClashMap[dateStr].companies.add(companyName);
+      dateClashMap[dateStr].totalStudents++;
+      dateClashMap[dateStr].events.push({
+        companyName,
+        eventType: item.eventType,
+        timeSlot: item.timeSlot
+      });
+    }
+
+    let mostScheduledCompany = "N/A";
+    let maxCompanyCount = 0;
+    for (const [comp, count] of Object.entries(companyCountMap)) {
+      if (count > maxCompanyCount) {
+        maxCompanyCount = count;
+        mostScheduledCompany = comp;
+      }
+    }
+
+    let busiestDay = "Monday";
+    let maxDayCount = -1;
+    for (const [dName, count] of Object.entries(dayOfWeekCountMap)) {
+      if (count > maxDayCount) {
+        maxDayCount = count;
+        busiestDay = dName;
+      }
+    }
+
+    const clashesDetected = [];
+    for (const [dateStr, info] of Object.entries(dateClashMap)) {
+      if (info.companies.size > 1 || info.totalStudents > 50) {
+        clashesDetected.push({
+          date: dateStr,
+          dayOfWeek: info.dayOfWeek,
+          companyCount: info.companies.size,
+          companies: Array.from(info.companies),
+          totalStudents: info.totalStudents,
+          warning: info.companies.size > 1 
+            ? `Clash: ${Array.from(info.companies).join(" & ")} both scheduled on ${dateStr}`
+            : `High volume overload: ${info.totalStudents} students scheduled on ${dateStr}`
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      summary: {
+        totalThisWeek,
+        totalThisMonth,
+        totalStudentsScheduled: activeSchedules.length,
+        mostScheduledCompany,
+        busiestDay,
+        clashesDetected
+      }
+    });
+  } catch (error) {
+    console.error("Error in getCalendarSummary:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch calendar summary",
+      error: error.message
+    });
+  }
+};
+
+// =========================================================================
+// PLACEMENT READINESS ANALYZER (PRA) CONTROLLERS
+// =========================================================================
+
+// GET /api/tpo/analyzer/student/:rollNumber
+const getStudentReadiness = async (req, res) => {
+  try {
+    const { rollNumber } = req.params;
+    if (!rollNumber) {
+      return res.status(400).json({ success: false, message: "Roll number is required" });
+    }
+
+    const student = await Student.findOne({ rollNumber: rollNumber.trim() });
+    if (!student) {
+      return res.status(404).json({ success: false, message: `Student with roll number ${rollNumber} not found` });
+    }
+
+    const individualPRA = await placementAnalyzerService.computeIndividualPRA(student._id);
+    const departmentRadar = await placementAnalyzerService.getDepartmentRadarAverage(student.branch);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...individualPRA,
+        departmentRadar,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to compute student readiness",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/tpo/analyzer/department/:branch
+const getDepartmentReadiness = async (req, res) => {
+  try {
+    const { branch } = req.params;
+    const data = await placementAnalyzerService.computeDepartmentMetrics(branch);
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to compute department readiness",
+      error: error.message,
+    });
+  }
+};
+
+// GET /api/tpo/analyzer/overview
+const getAllStudentsReadiness = async (req, res) => {
+  try {
+    const { branch, sort } = req.query;
+    const data = await placementAnalyzerService.computeAllStudentsPRA(branch, sort);
+    return res.status(200).json({
+      success: true,
+      count: data.length,
+      data,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch student readiness overview",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getStudentsList,
   getDashboardAnalytics,
@@ -1453,5 +2010,12 @@ module.exports = {
   deleteBranch,
   addPassoutYear,
   deletePassoutYear,
+  getAllDrivesForTPO,
+  getDriveApplicationsForTPO,
+  getAllSchedules,
+  getCalendarSummary,
+  getStudentReadiness,
+  getDepartmentReadiness,
+  getAllStudentsReadiness,
 };
 

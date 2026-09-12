@@ -125,8 +125,8 @@
 
   <!-- Rejection Modal -->
   @if (isModalOpen() && selectedDrive()) {
-    <div class="modal-backdrop" (click)="closeModal()">
-      <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop" data-lenis-prevent (click)="closeModal()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+      <div class="modal-card" data-lenis-prevent (click)="$event.stopPropagation()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
         <div class="modal-header modal-header-reject">
           <h3>
             <span class="material-symbols-outlined">gavel</span>
@@ -135,7 +135,7 @@
           <button class="close-btn" (click)="closeModal()">&times;</button>
         </div>
 
-        <div class="modal-body">
+        <div class="modal-body" data-lenis-prevent>
           <div class="target-drive-summary">
             <strong>Drive:</strong> {{ selectedDrive()?.title }}<br />
             <strong>Company:</strong> {{ selectedDrive()?.recruiterId?.companyName }}
@@ -188,8 +188,8 @@
 
   <!-- Full Structured Drive Overview Modal -->
   @if (isViewDetailsModalOpen() && viewingDrive()) {
-    <div class="modal-backdrop" (click)="closeViewDetailsModal()">
-      <div class="modal-card modal-card-large" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop" data-lenis-prevent (click)="closeViewDetailsModal()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+      <div class="modal-card modal-card-large" data-lenis-prevent (click)="$event.stopPropagation()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
         
         <!-- Header -->
         <div class="modal-header modal-header-info">

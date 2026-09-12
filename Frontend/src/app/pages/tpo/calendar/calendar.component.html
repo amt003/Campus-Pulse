@@ -1,0 +1,412 @@
+<div class="calendar-page-root">
+
+  <!-- =============================================
+       1. Top Header
+       ============================================= -->
+  <div class="page-header-row">
+    <div class="header-left">
+      <div class="page-icon-badge">
+        <span class="material-symbols-outlined">calendar_month</span>
+      </div>
+      <div>
+        <h1 class="page-title">📅 Master Calendar – All Schedules</h1>
+        <p class="page-subtitle">View all Aptitude, GD, and Interview schedules across all companies to detect clashes and balance student load.</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-refresh" (click)="fetchData(false)" [disabled]="isRefreshing()" title="Refresh schedules">
+        <span class="material-symbols-outlined" [class.spin]="isRefreshing()">refresh</span>
+        <span>{{ isRefreshing() ? 'Refreshing...' : 'Refresh' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- =============================================
+       2. Clash Detection Alert Banner (Phase 9)
+       ============================================= -->
+  @if (summary()?.clashesDetected && summary()!.clashesDetected.length > 0) {
+    <div class="clash-alert-banner">
+      <div class="clash-icon-wrap">
+        <span class="material-symbols-outlined">warning</span>
+      </div>
+      <div class="clash-body">
+        <h4 class="clash-title">Infrastructure & Schedule Overlaps Detected ({{ summary()!.clashesDetected.length }})</h4>
+        <div class="clash-items-list">
+          @for (clash of summary()!.clashesDetected; track clash.date) {
+            <div class="clash-pill">
+              <span class="clash-date">📅 {{ clash.date | date:'EEE, dd MMM' }}:</span>
+              <span class="clash-detail">
+                @if (clash.companyCount > 1) {
+                  <strong>{{ clash.companies.join(' & ') }}</strong> have concurrent schedules ({{ clash.totalStudents }} students)
+                } @else {
+                  High student volume on {{ clash.companies.join(', ') }} ({{ clash.totalStudents }} students)
+                }
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- =============================================
+       3. 4 Top KPI Summary Cards
+       ============================================= -->
+  <div class="kpi-grid">
+    <!-- Card 1: This Week -->
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap primary">
+        <span class="material-symbols-outlined">date_range</span>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">This Week</span>
+        <span class="kpi-value">{{ summary()?.totalThisWeek || 0 }}</span>
+        <span class="kpi-hint">Scheduled events</span>
+      </div>
+    </div>
+
+    <!-- Card 2: This Month -->
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap success">
+        <span class="material-symbols-outlined">event_available</span>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">This Month</span>
+        <span class="kpi-value">{{ summary()?.totalThisMonth || 0 }}</span>
+        <span class="kpi-hint">Calendar month total</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Total Scheduled Students -->
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap info">
+        <span class="material-symbols-outlined">groups</span>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Total Scheduled</span>
+        <span class="kpi-value">{{ totalStudentsScheduled() }}</span>
+        <span class="kpi-hint">Student appearances</span>
+      </div>
+    </div>
+
+    <!-- Card 4: Busiest Day -->
+    <div class="kpi-card">
+      <div class="kpi-icon-wrap warning">
+        <span class="material-symbols-outlined">bolt</span>
+      </div>
+      <div class="kpi-info">
+        <span class="kpi-label">Busiest Day</span>
+        <span class="kpi-value busiest-text">{{ summary()?.busiestDay || 'Monday' }}</span>
+        <span class="kpi-hint">Peak schedule day</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       4. Filter Bar & Search Toolbar
+       ============================================= -->
+  <div class="filter-toolbar-card">
+    <div class="filter-top-row">
+      <!-- Date Range Inputs -->
+      <div class="date-range-group">
+        <div class="date-input-field">
+          <label>From Date:</label>
+          <input
+            type="date"
+            [ngModel]="startDate()"
+            (ngModelChange)="startDate.set($event); onDateInputChange()"
+            class="input-date"
+          />
+        </div>
+
+        <span class="date-sep">to</span>
+
+        <div class="date-input-field">
+          <label>To Date:</label>
+          <input
+            type="date"
+            [ngModel]="endDate()"
+            (ngModelChange)="endDate.set($event); onDateInputChange()"
+            class="input-date"
+          />
+        </div>
+      </div>
+
+      <!-- Quick Preset Buttons -->
+      <div class="preset-chips">
+        <button type="button" class="btn-preset" [class.active]="activePreset() === '7d'" (click)="setPreset('7d')">Next 7 Days</button>
+        <button type="button" class="btn-preset" [class.active]="activePreset() === '30d'" (click)="setPreset('30d')">Next 30 Days</button>
+        <button type="button" class="btn-preset" [class.active]="activePreset() === 'thisMonth'" (click)="setPreset('thisMonth')">This Month</button>
+        <button type="button" class="btn-preset" [class.active]="activePreset() === 'all'" (click)="setPreset('all')">All Ahead</button>
+      </div>
+    </div>
+
+    <div class="filter-bottom-row">
+      <!-- Event Type Filter -->
+      <div class="select-group">
+        <label>Round Type:</label>
+        <select
+          [ngModel]="selectedEventType()"
+          (ngModelChange)="selectedEventType.set($event); onFilterChange()"
+          class="filter-select"
+        >
+          @for (opt of eventTypeOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Company Filter -->
+      <div class="select-group">
+        <label>Company:</label>
+        <select
+          [ngModel]="selectedCompany()"
+          (ngModelChange)="selectedCompany.set($event); onFilterChange()"
+          class="filter-select"
+        >
+          <option value="All">All Companies</option>
+          @for (c of availableCompanies(); track c) {
+            <option [value]="c">{{ c }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Search Input -->
+      <div class="search-input-wrap">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
+          type="text"
+          placeholder="Search by company, role, venue..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          class="search-input"
+        />
+        @if (searchQuery()) {
+          <button class="btn-clear-search" (click)="searchQuery.set('')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        }
+      </div>
+
+      <!-- Reset button -->
+      <button class="btn-reset" (click)="resetFilters()" title="Reset all filters">
+        <span class="material-symbols-outlined">restart_alt</span>
+        <span>Reset</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- =============================================
+       5. Main Timeline Content
+       ============================================= -->
+  @if (isLoading()) {
+    <div class="state-container">
+      <div class="spinner-large"></div>
+      <p class="state-text">Assembling consolidated Master Calendar timeline...</p>
+    </div>
+  } @else if (filteredGroupedSchedules().length === 0) {
+    <div class="state-container empty">
+      <span class="material-symbols-outlined empty-icon">event_busy</span>
+      <h3 class="empty-title">No Events Scheduled</h3>
+      <p class="empty-desc">
+        There are no Aptitude, GD, or Interview rounds scheduled for the selected date range and filters.
+      </p>
+      <button class="btn-reset-empty" (click)="resetFilters()">Reset Active Filters</button>
+    </div>
+  } @else {
+    <div class="timeline-container">
+      @for (day of filteredGroupedSchedules(); track day.date) {
+        <div class="timeline-day-block">
+          <!-- Date Header Banner -->
+          <div class="day-header-bar">
+            <div class="day-header-left">
+              <span class="material-symbols-outlined day-icon">today</span>
+              <h3 class="day-title">{{ day.dayOfWeek }}, {{ day.date | date:'dd MMMM yyyy' }}</h3>
+            </div>
+            <div class="day-header-right">
+              <span class="day-slots-count">{{ day.slots.length }} Scheduled Session(s)</span>
+            </div>
+          </div>
+
+          <!-- Slots List under this Date -->
+          <div class="day-slots-grid">
+            @for (slot of day.slots; track slot.timeSlot + slot.companyName + slot.eventType) {
+              <div class="slot-card">
+                <!-- Card Header: Time & Round Badge -->
+                <div class="slot-card-header">
+                  <div class="slot-time-pill">
+                    <span class="material-symbols-outlined">schedule</span>
+                    <span>{{ slot.timeSlot }}</span>
+                  </div>
+
+                  <span class="round-badge" [ngClass]="getRoundBadgeClass(slot.eventType)">
+                    {{ getRoundTypeLabel(slot.eventType) }}
+                  </span>
+                </div>
+
+                <!-- Card Body: Company & Drive Role -->
+                <div class="slot-card-body">
+                  <h4 class="company-heading">{{ slot.companyName }}</h4>
+                  <span class="drive-title">{{ slot.driveTitle }}</span>
+
+                  <div class="slot-details-row">
+                    <!-- Location / Venue -->
+                    <div class="detail-item location">
+                      <span class="material-symbols-outlined">location_on</span>
+                      <span>{{ slot.location || 'Online' }}</span>
+                      @if (slot.meetingUrl) {
+                        <a [href]="slot.meetingUrl" target="_blank" class="meeting-link" title="Open Meeting Link">
+                          <span class="material-symbols-outlined">link</span>
+                        </a>
+                      }
+                    </div>
+
+                    <!-- Student Volume -->
+                    <div class="detail-item count">
+                      <span class="material-symbols-outlined">groups</span>
+                      <span><strong>{{ slot.studentCount }}</strong> Students</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card Footer: View Student List Action -->
+                <div class="slot-card-footer">
+                  <button
+                    class="btn-view-students"
+                    (click)="openStudentModal(slot, day.date)"
+                    title="View all scheduled student details"
+                  >
+                    <span class="material-symbols-outlined">format_list_bulleted</span>
+                    <span>View Student List ({{ slot.studentCount }})</span>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- =============================================
+         6. Bottom Toolbar: CSV Export
+         ============================================= -->
+    <div class="bottom-export-bar">
+      <div class="export-hint">
+        <span class="material-symbols-outlined">info</span>
+        <span>Showing <strong>{{ totalSchedules() }}</strong> total slots with <strong>{{ totalStudentsScheduled() }}</strong> student assignments.</span>
+      </div>
+
+      <button class="btn-export-csv" (click)="exportCSV()" title="Export current filtered calendar to CSV">
+        <span class="material-symbols-outlined">download</span>
+        <span>📥 Export as CSV</span>
+      </button>
+    </div>
+  }
+
+</div>
+
+<!-- =============================================
+     7. Student Roster Modal
+     ============================================= -->
+@if (isStudentModalOpen() && selectedSlot()) {
+  <div class="modal-backdrop" data-lenis-prevent (click)="closeStudentModal()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+    <div class="modal-card modal-card-large" data-lenis-prevent (click)="$event.stopPropagation()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-icon-badge">
+            <span class="material-symbols-outlined">group</span>
+          </div>
+          <div>
+            <h3 class="modal-title">{{ selectedSlot()!.companyName }} — {{ selectedSlot()!.driveTitle }}</h3>
+            <div class="modal-subtitle-row">
+              <span class="round-badge" [ngClass]="getRoundBadgeClass(selectedSlot()!.eventType)">
+                {{ getRoundTypeLabel(selectedSlot()!.eventType) }}
+              </span>
+              <span class="meta-dot">•</span>
+              <span class="modal-sub-text">🕐 {{ selectedSlot()!.timeSlot }}</span>
+              <span class="meta-dot">•</span>
+              <span class="modal-sub-text">📍 {{ selectedSlot()!.location || 'Online' }}</span>
+              <span class="meta-dot">•</span>
+              <span class="modal-sub-text">📅 {{ selectedSlotDate() | date:'mediumDate' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-close" (click)="closeStudentModal()">&times;</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body modal-body-scrollable" data-lenis-prevent>
+        
+        <!-- Search & Filter Bar inside modal -->
+        <div class="modal-search-row">
+          <div class="search-wrap">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input
+              type="text"
+              placeholder="Search student name, roll number, branch..."
+              [ngModel]="studentModalSearch()"
+              (ngModelChange)="studentModalSearch.set($event)"
+              class="modal-search-input"
+            />
+          </div>
+          <span class="modal-count-tag">{{ filteredModalStudents().length }} of {{ selectedSlot()!.studentCount }} Students</span>
+        </div>
+
+        <!-- Student Roster Table -->
+        @if (filteredModalStudents().length === 0) {
+          <div class="modal-empty-state">
+            <span class="material-symbols-outlined">search_off</span>
+            <p>No students match your query.</p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="students-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>Student Name</th>
+                  <th>Roll Number</th>
+                  <th>Branch</th>
+                  <th>CGPA</th>
+                  <th>Official Email</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (s of filteredModalStudents(); track s.rollNumber || s.name; let idx = $index) {
+                  <tr>
+                    <td class="idx-cell">{{ idx + 1 }}</td>
+                    <td class="name-cell">
+                      <strong>{{ s.name }}</strong>
+                    </td>
+                    <td>
+                      <span class="roll-badge">{{ s.rollNumber }}</span>
+                    </td>
+                    <td>
+                      <span class="branch-pill">{{ s.branch }}</span>
+                    </td>
+                    <td>
+                      <span class="cgpa-pill">{{ s.cgpa ? (s.cgpa | number:'1.1-2') : '—' }}</span>
+                    </td>
+                    <td class="email-cell">{{ s.email || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <span class="footer-count">Total Scheduled: <strong>{{ selectedSlot()!.studentCount }}</strong></span>
+        <button class="btn-modal-close" (click)="closeStudentModal()">Done</button>
+      </div>
+
+    </div>
+  </div>
+}

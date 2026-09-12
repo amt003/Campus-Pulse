@@ -1,0 +1,409 @@
+<div class="readiness-root">
+
+  <!-- ============================================================
+       1. Executive Header Bar
+       ============================================================ -->
+  <header class="page-header-card">
+    <div class="header-left">
+      <div class="header-icon-chip">
+        <span class="material-symbols-outlined">insights</span>
+      </div>
+      <div class="header-titles">
+        <h1 class="page-title">My Placement Readiness Analyzer (PRA)</h1>
+        <p class="page-subtitle">
+          Multi-factor algorithmic readiness evaluation, interview stage funnel, and personalized intervention roadmap.
+        </p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      @if (data()) {
+        <div class="status-chip" [ngClass]="getCategoryPillClass(data()!.praCategory)">
+          <span class="pulse-dot"></span>
+          <span>{{ data()!.praCategory }}</span>
+        </div>
+      }
+
+      <button
+        class="btn-refresh-pra"
+        (click)="fetchReadinessData()"
+        [disabled]="isRefreshing()"
+        title="Recalculate your latest readiness score"
+        id="btn-recompute-pra"
+      >
+        <span class="material-symbols-outlined" [class.spin-active]="isRefreshing()">refresh</span>
+        <span>{{ isRefreshing() ? 'Analyzing…' : 'Recalculate' }}</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       2. Error Alert
+       ============================================================ -->
+  @if (errorMsg()) {
+    <div class="alert-banner alert-error">
+      <span class="material-symbols-outlined">error</span>
+      <span>{{ errorMsg() }}</span>
+    </div>
+  }
+
+  <!-- ============================================================
+       3. Loading Skeleton State
+       ============================================================ -->
+  @if (isLoading()) {
+    <div class="skeleton-grid">
+      <div class="skeleton-card hero-skeleton"></div>
+      <div class="skeleton-subgrid">
+        <div class="skeleton-card sub-skeleton"></div>
+        <div class="skeleton-card sub-skeleton"></div>
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================
+       4. Main Content (Loaded)
+       ============================================================ -->
+  @if (!isLoading() && data(); as pra) {
+    <div class="readiness-content-stack">
+
+      <!-- ── SECTION 1: HERO PRA SCORE & SUB-SCORES ─────────────── -->
+      <section class="hero-score-section">
+        
+        <!-- Left: Gauge Chart Card -->
+        <div class="glass-card gauge-card">
+          <div class="card-header-simple">
+            <span class="card-eyebrow">Overall Readiness Index</span>
+            <h3 class="card-main-title">Placement Readiness Score</h3>
+          </div>
+
+          <!-- Gauge Container -->
+          <div class="gauge-wrapper">
+            <div #gaugeChartRef class="echarts-gauge-box"></div>
+          </div>
+
+          <!-- Score Summary Strip -->
+          <div class="gauge-footer-meta">
+            <div class="score-pill-row">
+              <span class="score-tag-badge" [ngClass]="getCategoryPillClass(pra.praCategory)">
+                {{ pra.praCategory }}
+              </span>
+              <span class="meta-eval-date">Evaluated across {{ pra.applicationsCount }} Drive Application{{ pra.applicationsCount !== 1 ? 's' : '' }}</span>
+            </div>
+
+            @if (pra.student.activeBacklogs > 0) {
+              <div class="backlog-warning-tag">
+                <span class="material-symbols-outlined">warning</span>
+                <span>{{ pra.student.activeBacklogs }} Active Backlog{{ pra.student.activeBacklogs > 1 ? 's' : '' }} penalty applied (-{{ pra.student.activeBacklogs * 5 }} pts)</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Right: 6 Sub-Scores Grid -->
+        <div class="glass-card subscores-card">
+          <div class="card-header-simple">
+            <span class="card-eyebrow">Weighted Evaluation Matrix</span>
+            <h3 class="card-main-title">Key Factor Competencies</h3>
+          </div>
+
+          <div class="subscores-grid">
+            <!-- 1. CGPA -->
+            <div class="subscore-tile">
+              <div class="subscore-icon-chip navy">
+                <span class="material-symbols-outlined">school</span>
+              </div>
+              <div class="subscore-data">
+                <div class="subscore-top">
+                  <span class="subscore-label">Academics (CGPA)</span>
+                  <span class="subscore-weight">20% weight</span>
+                </div>
+                <div class="subscore-val-row">
+                  <span class="subscore-number">{{ pra.subScores.cgpa }}</span>
+                  <span class="subscore-suffix">/100</span>
+                </div>
+                <div class="subscore-bar-bg">
+                  <div class="subscore-bar-fill navy" [style.width.%]="pra.subScores.cgpa"></div>
+                </div>
+                <span class="subscore-hint">CGPA {{ pra.student.cgpa }}</span>
+              </div>
+            </div>
+
+            <!-- 2. AI Match Score -->
+            <div class="subscore-tile">
+              <div class="subscore-icon-chip blue">
+                <span class="material-symbols-outlined">psychology</span>
+              </div>
+              <div class="subscore-data">
+                <div class="subscore-top">
+                  <span class="subscore-label">AI Keyword Match</span>
+                  <span class="subscore-weight">25% weight</span>
+                </div>
+                <div class="subscore-val-row">
+                  <span class="subscore-number" [class.not-attempted]="pra.subScores.aiMatch === 0">{{ pra.subScores.aiMatch }}</span>
+                  <span class="subscore-suffix">/100</span>
+                </div>
+                <div class="subscore-bar-bg">
+                  <div class="subscore-bar-fill blue" [style.width.%]="pra.subScores.aiMatch"></div>
+                </div>
+                <span class="subscore-hint" [class.unattempted]="!pra.subScoreMeta || pra.subScoreMeta.matchCount === 0">
+                  {{ pra.subScoreMeta && pra.subScoreMeta.matchCount > 0 ? (pra.subScoreMeta.matchCount + ' Drives Evaluated') : 'No Drives Evaluated' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- 3. Aptitude Pass Rate -->
+            <div class="subscore-tile">
+              <div class="subscore-icon-chip teal">
+                <span class="material-symbols-outlined">calculate</span>
+              </div>
+              <div class="subscore-data">
+                <div class="subscore-top">
+                  <span class="subscore-label">Aptitude Clearance</span>
+                  <span class="subscore-weight">20% weight</span>
+                </div>
+                <div class="subscore-val-row">
+                  <span class="subscore-number" [class.not-attempted]="pra.subScores.aptitude === 0">{{ pra.subScores.aptitude }}</span>
+                  <span class="subscore-suffix">/100</span>
+                </div>
+                <div class="subscore-bar-bg">
+                  <div class="subscore-bar-fill teal" [style.width.%]="pra.subScores.aptitude"></div>
+                </div>
+                <span class="subscore-hint" [class.unattempted]="!pra.subScoreMeta || pra.subScoreMeta.aptAttempted === 0">
+                  {{ pra.subScoreMeta && pra.subScoreMeta.aptAttempted > 0 ? (pra.subScoreMeta.aptPassed + '/' + pra.subScoreMeta.aptAttempted + ' Cleared') : 'Not Attempted (0 Drives)' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- 4. GD Conversion -->
+            <div class="subscore-tile">
+              <div class="subscore-icon-chip amber">
+                <span class="material-symbols-outlined">forum</span>
+              </div>
+              <div class="subscore-data">
+                <div class="subscore-top">
+                  <span class="subscore-label">GD Conversion</span>
+                  <span class="subscore-weight">15% weight</span>
+                </div>
+                <div class="subscore-val-row">
+                  <span class="subscore-number" [class.not-attempted]="pra.subScores.gd === 0">{{ pra.subScores.gd }}</span>
+                  <span class="subscore-suffix">/100</span>
+                </div>
+                <div class="subscore-bar-bg">
+                  <div class="subscore-bar-fill amber" [style.width.%]="pra.subScores.gd"></div>
+                </div>
+                <span class="subscore-hint" [class.unattempted]="!pra.subScoreMeta || pra.subScoreMeta.gdAttempted === 0">
+                  {{ pra.subScoreMeta && pra.subScoreMeta.gdAttempted > 0 ? (pra.subScoreMeta.gdShortlisted + '/' + pra.subScoreMeta.gdAttempted + ' Shortlisted') : 'Not Attempted (0 Drives)' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- 5. Interview Success -->
+            <div class="subscore-tile">
+              <div class="subscore-icon-chip green">
+                <span class="material-symbols-outlined">groups</span>
+              </div>
+              <div class="subscore-data">
+                <div class="subscore-top">
+                  <span class="subscore-label">Interview Pass Rate</span>
+                  <span class="subscore-weight">10% weight</span>
+                </div>
+                <div class="subscore-val-row">
+                  <span class="subscore-number" [class.not-attempted]="pra.subScores.interview === 0">{{ pra.subScores.interview }}</span>
+                  <span class="subscore-suffix">/100</span>
+                </div>
+                <div class="subscore-bar-bg">
+                  <div class="subscore-bar-fill green" [style.width.%]="pra.subScores.interview"></div>
+                </div>
+                <span class="subscore-hint" [class.unattempted]="!pra.subScoreMeta || pra.subScoreMeta.interviewAttempted === 0">
+                  {{ pra.subScoreMeta && pra.subScoreMeta.interviewAttempted > 0 ? (pra.subScoreMeta.interviewSelected + '/' + pra.subScoreMeta.interviewAttempted + ' Selected') : 'Not Attempted (0 Drives)' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- 6. Resume Completeness -->
+            <div class="subscore-tile">
+              <div class="subscore-icon-chip purple">
+                <span class="material-symbols-outlined">description</span>
+              </div>
+              <div class="subscore-data">
+                <div class="subscore-top">
+                  <span class="subscore-label">Resume Completeness</span>
+                  <span class="subscore-weight">10% weight</span>
+                </div>
+                <div class="subscore-val-row">
+                  <span class="subscore-number">{{ pra.subScores.resume }}</span>
+                  <span class="subscore-suffix">/100</span>
+                </div>
+                <div class="subscore-bar-bg">
+                  <div class="subscore-bar-fill purple" [style.width.%]="pra.subScores.resume"></div>
+                </div>
+                <span class="subscore-hint">{{ pra.student.hasResume ? 'Resume Verified' : 'Resume Missing' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- ── SECTION 2 & 3: STAGE FUNNEL & RADAR COMPARISON ─────── -->
+      <section class="analytics-split-grid">
+
+        <!-- Left: Stage Conversion Funnel -->
+        <div class="glass-card funnel-card">
+          <div class="card-header-with-badge">
+            <div>
+              <span class="card-eyebrow">Recruitment Pipeline Progression</span>
+              <h3 class="card-main-title">Stage Conversion Funnel</h3>
+            </div>
+            <div class="weakest-stage-badge" title="Identified bottleneck in your recruitment progression">
+              <span class="material-symbols-outlined">flag</span>
+              <span>Bottleneck: <strong>{{ pra.weakestStage }}</strong></span>
+            </div>
+          </div>
+
+          <!-- ECharts Funnel / Bar Container -->
+          <div class="chart-container">
+            <div #funnelChartRef class="echarts-box"></div>
+          </div>
+
+          <div class="funnel-insight-note">
+            <span class="material-symbols-outlined note-icon">tips_and_updates</span>
+            <span>
+              Out of <strong>{{ pra.stageFunnel.applied }}</strong> drive applications submitted, you cleared <strong>{{ pra.stageFunnel.aptitudeCleared }}</strong> aptitude tests and converted <strong>{{ pra.stageFunnel.placed }}</strong> final placement offer{{ pra.stageFunnel.placed !== 1 ? 's' : '' }}.
+            </span>
+          </div>
+        </div>
+
+        <!-- Right: 6-Axis Skill Radar -->
+        <div class="glass-card radar-card">
+          <div class="card-header-with-badge">
+            <div>
+              <span class="card-eyebrow">Benchmark Comparison</span>
+              <h3 class="card-main-title">Skill Competency Radar</h3>
+            </div>
+            <span class="dept-benchmark-tag">
+              <span class="material-symbols-outlined">compare_arrows</span>
+              <span>vs. {{ pra.student.branch }} Dept Avg</span>
+            </span>
+          </div>
+
+          <!-- ECharts Radar Container -->
+          <div class="chart-container">
+            <div #radarChartRef class="echarts-box"></div>
+          </div>
+
+          <div class="radar-legend-strip">
+            <div class="legend-chip you">
+              <span class="legend-swatch you"></span>
+              <span>Your Capability Score</span>
+            </div>
+            <div class="legend-chip dept">
+              <span class="legend-swatch dept"></span>
+              <span>{{ pra.student.branch }} Department Average</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- ── SECTION 4: RECURRING SKILL GAPS & RECOMMENDATIONS ──── -->
+      <section class="suggestions-section">
+
+        <!-- Skill Gaps Callout Bar -->
+        @if (pra.recurringSkillGaps.length > 0) {
+          <div class="skill-gaps-bar">
+            <div class="gaps-title-side">
+              <span class="material-symbols-outlined gap-icon">tune</span>
+              <div>
+                <h4 class="gaps-heading">Top Recurring Skill Gaps</h4>
+                <p class="gaps-sub">Flagged across drive job descriptions where your resume lacked target keywords</p>
+              </div>
+            </div>
+            <div class="gaps-tag-list">
+              @for (gap of pra.recurringSkillGaps; track gap) {
+                <span class="skill-gap-chip">
+                  <span class="material-symbols-outlined">cancel</span>
+                  <span>{{ gap }}</span>
+                </span>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Personalized Suggestion Cards Grid -->
+        <div class="glass-card suggestions-card">
+          <div class="card-header-simple">
+            <span class="card-eyebrow">AI Action Roadmap</span>
+            <h3 class="card-main-title">Personalized Improvement Directives</h3>
+          </div>
+
+          <div class="suggestions-grid">
+            @for (sug of pra.personalizedSuggestions; track sug.message) {
+              <div class="suggestion-box" [ngClass]="'severity-' + sug.severity">
+                <div class="sug-header">
+                  <div class="sug-badge" [ngClass]="'badge-' + sug.severity">
+                    <span class="material-symbols-outlined">{{ getSeverityIcon(sug.severity) }}</span>
+                    <span>{{ sug.category || (sug.severity | uppercase) }}</span>
+                  </div>
+                  <span class="sug-severity-label">{{ sug.severity | titlecase }} Priority</span>
+                </div>
+
+                <p class="sug-message">{{ sug.message }}</p>
+
+                @if (sug.actions && sug.actions.length > 0) {
+                  <div class="sug-actions-block">
+                    <span class="actions-title">Recommended Next Steps:</span>
+                    <ul class="actions-list">
+                      @for (act of sug.actions; track act) {
+                        <li class="action-item">
+                          <span class="material-symbols-outlined check-icon">arrow_circle_right</span>
+                          <span>{{ act }}</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
+
+                @if (sug.resources && sug.resources.length > 0) {
+                  <div class="sug-resources-block">
+                    <div class="resources-heading-row">
+                      <span class="material-symbols-outlined res-icon">auto_stories</span>
+                      <span class="resources-title">Curated Learning Pathways & Platform Links:</span>
+                    </div>
+                    <div class="resources-chips-list">
+                      @for (res of sug.resources; track res.url) {
+                        <a
+                          [href]="res.url"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="resource-link-card"
+                          [title]="'Open ' + res.title + ' on ' + res.platform"
+                        >
+                          <div class="res-card-top">
+                            <span class="res-platform-tag">{{ res.platform }}</span>
+                            @if (res.badge) {
+                              <span class="res-badge-chip">{{ res.badge }}</span>
+                            }
+                          </div>
+                          <div class="res-card-bottom">
+                            <span class="res-course-name">{{ res.title }}</span>
+                            <span class="material-symbols-outlined ext-icon">open_in_new</span>
+                          </div>
+                        </a>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  }
+
+</div>

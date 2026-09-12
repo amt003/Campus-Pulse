@@ -1,14 +1,15 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, OnDestroy, SimpleChanges, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TpoService } from '../../../services/tpo.service';
+import { SmoothScrollService } from '../../../services/smooth-scroll.service';
 
 @Component({
   selector: 'app-student-audit-panel',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="panel-backdrop" (click)="onClose()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
-      <div class="panel-drawer" (click)="$event.stopPropagation()" (wheel)="$event.stopPropagation()">
+    <div class="panel-backdrop" data-lenis-prevent (click)="onClose()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+      <div class="panel-drawer" data-lenis-prevent (click)="$event.stopPropagation()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
 
         <!-- Panel Header -->
         <div class="panel-header">
@@ -25,7 +26,7 @@ import { TpoService } from '../../../services/tpo.service';
         </div>
 
         <!-- Panel Body -->
-        <div class="panel-body" (wheel)="$event.stopPropagation()">
+        <div class="panel-body" data-lenis-prevent (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
 
           <!-- Loading State -->
           <div class="state-loading" *ngIf="isLoading()">
@@ -744,13 +745,14 @@ export class StudentAuditPanelComponent implements OnInit, OnChanges, OnDestroy 
   @Output() close = new EventEmitter<void>();
 
   private readonly tpoService = inject(TpoService);
+  private readonly smoothScrollService = inject(SmoothScrollService);
 
   protected isLoading = signal<boolean>(true);
   protected errorMsg = signal<string | null>(null);
   protected auditData = signal<{ student: any; overallStatus: string; applications: any[] } | null>(null);
 
   ngOnInit(): void {
-    document.body.style.overflow = 'hidden';
+    this.smoothScrollService.freezeBackgroundScroll();
     if (this.rollNumber) {
       this.loadAuditDetails();
     }
@@ -763,7 +765,7 @@ export class StudentAuditPanelComponent implements OnInit, OnChanges, OnDestroy 
   }
 
   ngOnDestroy(): void {
-    document.body.style.overflow = '';
+    this.smoothScrollService.unfreezeBackgroundScroll();
   }
 
   protected loadAuditDetails(): void {

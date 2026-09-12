@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TpoService } from '../../../services/tpo.service';
 import { ToastService } from '../../../services/toast.service';
+import { SmoothScrollService } from '../../../services/smooth-scroll.service';
 
 export interface PendingDrive {
   _id: string;
@@ -37,9 +38,10 @@ export interface PendingDrive {
   templateUrl: './drive-approval.component.html',
   styleUrl: './drive-approval.component.css'
 })
-export class TpoDriveApprovalComponent implements OnInit {
+export class TpoDriveApprovalComponent implements OnInit, OnDestroy {
   private readonly tpoService = inject(TpoService);
   private readonly toastService = inject(ToastService);
+  private readonly smoothScrollService = inject(SmoothScrollService);
 
   protected pendingDrives = signal<PendingDrive[]>([]);
   protected isLoading = signal<boolean>(true);
@@ -62,15 +64,23 @@ export class TpoDriveApprovalComponent implements OnInit {
     this.fetchPendingDrives();
   }
 
+  ngOnDestroy(): void {
+    this.smoothScrollService.unfreezeBackgroundScroll(true);
+  }
+
   protected openViewDetailsModal(drive: PendingDrive, event?: MouseEvent): void {
     if (event) event.stopPropagation();
     this.viewingDrive.set(drive);
     this.isViewDetailsModalOpen.set(true);
+    this.smoothScrollService.freezeBackgroundScroll();
   }
 
   protected closeViewDetailsModal(): void {
-    this.isViewDetailsModalOpen.set(false);
-    this.viewingDrive.set(null);
+    if (this.isViewDetailsModalOpen()) {
+      this.isViewDetailsModalOpen.set(false);
+      this.viewingDrive.set(null);
+      this.smoothScrollService.unfreezeBackgroundScroll();
+    }
   }
 
   protected fetchPendingDrives(isInitial = true): void {
@@ -132,13 +142,17 @@ export class TpoDriveApprovalComponent implements OnInit {
     this.feedbackReason.set('');
     this.modalError.set(null);
     this.isModalOpen.set(true);
+    this.smoothScrollService.freezeBackgroundScroll();
   }
 
   protected closeModal(): void {
-    this.isModalOpen.set(false);
-    this.selectedDrive.set(null);
-    this.feedbackReason.set('');
-    this.modalError.set(null);
+    if (this.isModalOpen()) {
+      this.isModalOpen.set(false);
+      this.selectedDrive.set(null);
+      this.feedbackReason.set('');
+      this.modalError.set(null);
+      this.smoothScrollService.unfreezeBackgroundScroll();
+    }
   }
 
   protected submitModalAction(): void {

@@ -1,8 +1,9 @@
-import { Component, Input, Output, EventEmitter, OnInit, inject, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RecruiterService } from '../../../services/recruiter.service';
 import { ToastService } from '../../../services/toast.service';
+import { SmoothScrollService } from '../../../services/smooth-scroll.service';
 
 export interface AttachmentItem {
   _id?: string;
@@ -20,9 +21,10 @@ export interface AttachmentItem {
   templateUrl: './manage-resources-modal.component.html',
   styleUrl: './manage-resources-modal.component.css'
 })
-export class ManageResourcesModalComponent implements OnInit {
+export class ManageResourcesModalComponent implements OnInit, OnDestroy {
   private readonly recruiterService = inject(RecruiterService);
   private readonly toastService = inject(ToastService);
+  private readonly smoothScrollService = inject(SmoothScrollService);
 
   @Input({ required: true }) driveId!: string;
   @Input({ required: true }) driveTitle!: string;
@@ -39,7 +41,12 @@ export class ManageResourcesModalComponent implements OnInit {
   protected dragOver = signal<boolean>(false);
 
   ngOnInit(): void {
+    this.smoothScrollService.freezeBackgroundScroll();
     this.fetchAttachments();
+  }
+
+  ngOnDestroy(): void {
+    this.smoothScrollService.unfreezeBackgroundScroll();
   }
 
   protected fetchAttachments(): void {

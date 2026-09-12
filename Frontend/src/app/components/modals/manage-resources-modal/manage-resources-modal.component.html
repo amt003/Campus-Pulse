@@ -1,5 +1,5 @@
-<div class="modal-backdrop" (click)="onClose.emit()">
-  <div class="modal-card" (click)="$event.stopPropagation()">
+<div class="modal-backdrop" data-lenis-prevent (click)="onClose.emit()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+  <div class="modal-card" data-lenis-prevent (click)="$event.stopPropagation()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
     <!-- Modal Header -->
     <div class="modal-header">
       <div style="display: flex; align-items: center; gap: 10px;">
@@ -13,7 +13,7 @@
     </div>
 
     <!-- Modal Content -->
-    <div class="modal-body">
+    <div class="modal-body" data-lenis-prevent>
 
       <!-- Upload Section -->
       <div class="upload-section">

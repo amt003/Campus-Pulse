@@ -12,6 +12,7 @@ export class SmoothScrollService {
 
   private lenis: Lenis | null = null;
   private isInitialized = false;
+  private activeModalCount = 0;
 
   public init(): void {
     if (this.isInitialized) return;
@@ -40,11 +41,39 @@ export class SmoothScrollService {
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe(() => {
+        this.unfreezeBackgroundScroll(true);
         setTimeout(() => {
           this.scrollTo(0, { duration: 0.8 });
           this.resize();
         }, 50);
       });
+  }
+
+  public freezeBackgroundScroll(): void {
+    this.activeModalCount++;
+    if (this.activeModalCount > 0) {
+      this.lenis?.stop();
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      document.body.classList.add('lenis-stopped');
+      document.documentElement.classList.add('lenis-stopped');
+    }
+  }
+
+  public unfreezeBackgroundScroll(force = false): void {
+    if (force) {
+      this.activeModalCount = 0;
+    } else {
+      this.activeModalCount = Math.max(0, this.activeModalCount - 1);
+    }
+
+    if (this.activeModalCount === 0) {
+      this.lenis?.start();
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.body.classList.remove('lenis-stopped');
+      document.documentElement.classList.remove('lenis-stopped');
+    }
   }
 
   public scrollTo(

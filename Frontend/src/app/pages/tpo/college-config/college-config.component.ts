@@ -149,8 +149,25 @@ import { TpoService } from '../../../services/tpo.service';
     </div>
   `,
   styles: [`
+    :host {
+      --primary:         #003b5a;
+      --secondary:       #006497;
+      --accent:          #0080c0;
+      --background:      #f7f9ff;
+      --surface:         #ffffff;
+      --surface-low:     #edf4ff;
+      --on-surface:      #091d2e;
+      --on-surface-var:  #41474e;
+      --outline:         #c1c7cf;
+      --outline-variant: rgba(193, 199, 207, 0.45);
+      --error:           #d32f2f;
+      --success:         #2e7d32;
+      display: block;
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    }
+
     .config-root {
-      background: #f7f9ff;
+      background: var(--background);
       min-height: calc(100vh - 70px);
       padding-bottom: 60px;
     }
@@ -166,12 +183,14 @@ import { TpoService } from '../../../services/tpo.service';
 
     /* Header Card */
     .header-card {
-      background: white;
-      border-radius: 16px;
+      background: var(--surface);
+      border-radius: 18px;
       padding: 24px 28px;
-      border: 1px solid rgba(193, 199, 207, 0.4);
-      box-shadow: 0 4px 16px rgba(0, 59, 90, 0.03);
-      border-top: 4px solid #006497;
+      border: 1px solid rgba(0, 59, 90, 0.08);
+      box-shadow: 0 4px 20px rgba(0, 59, 90, 0.04);
+      display: flex;
+      align-items: center;
+      gap: 18px;
     }
 
     .header-left {
@@ -181,32 +200,33 @@ import { TpoService } from '../../../services/tpo.service';
     }
 
     .header-icon-badge {
-      width: 52px;
-      height: 52px;
+      width: 50px;
+      height: 50px;
       border-radius: 14px;
-      background: #edf4ff;
-      color: #006497;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(0, 59, 90, 0.22);
     }
 
     .header-icon-badge .material-symbols-outlined { font-size: 28px; }
 
     .header-title {
       margin: 0 0 4px 0;
-      font-size: 24px;
-      font-weight: 850;
-      color: #003b5a;
-      letter-spacing: -0.5px;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--primary);
+      letter-spacing: -0.03em;
     }
 
     .header-subtitle {
       margin: 0;
       font-size: 13.5px;
-      color: #41474e;
-      font-weight: 500;
+      color: var(--on-surface-var);
+      font-weight: 550;
       line-height: 1.5;
     }
 
@@ -223,15 +243,15 @@ import { TpoService } from '../../../services/tpo.service';
     }
 
     .banner-success {
-      background: #eafaf1;
-      border: 1.5px solid #a9dfbf;
-      color: #1e8449;
+      background: rgba(46, 125, 50, 0.1);
+      border: 1px solid rgba(46, 125, 50, 0.25);
+      color: var(--success);
     }
 
     .banner-error {
-      background: #fdedec;
-      border: 1.5px solid #f5b7b1;
-      color: #922b21;
+      background: rgba(211, 47, 47, 0.1);
+      border: 1px solid rgba(211, 47, 47, 0.25);
+      color: var(--error);
     }
 
     .btn-close-toast {
@@ -255,11 +275,11 @@ import { TpoService } from '../../../services/tpo.service';
     }
 
     .section-card {
-      background: white;
-      border: 1px solid rgba(193, 199, 207, 0.4);
-      border-radius: 16px;
+      background: var(--surface);
+      border-radius: 18px;
       padding: 24px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(0, 59, 90, 0.08);
+      box-shadow: 0 4px 20px rgba(0, 59, 90, 0.03);
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -281,19 +301,20 @@ import { TpoService } from '../../../services/tpo.service';
       font-size: 24px;
     }
 
-    .icon-blue { color: #0284c7; }
-    .icon-teal { color: #0d9488; }
+    .icon-blue { color: var(--accent); }
+    .icon-teal { color: var(--primary); }
 
     .card-title {
       margin: 0;
       font-size: 17px;
-      font-weight: 800;
-      color: #0f172a;
+      font-weight: 850;
+      color: var(--primary);
+      letter-spacing: -0.01em;
     }
 
     .card-subtitle {
       font-size: 12px;
-      color: #64748b;
+      color: var(--on-surface-var);
       font-weight: 600;
     }
 
@@ -305,17 +326,19 @@ import { TpoService } from '../../../services/tpo.service';
 
     .input-add {
       flex: 1;
-      border: 1.5px solid #cbd5e1;
+      border: 1.5px solid var(--outline);
       border-radius: 10px;
       padding: 10px 14px;
       font-size: 13.5px;
       font-family: inherit;
       outline: none;
       transition: border-color 0.2s;
+      background: var(--surface);
+      color: var(--on-surface);
     }
 
     .input-add:focus {
-      border-color: #006497;
+      border-color: var(--secondary);
     }
 
     .btn-add {
@@ -325,8 +348,8 @@ import { TpoService } from '../../../services/tpo.service';
       padding: 10px 18px;
       border-radius: 10px;
       border: none;
-      background: #006497;
-      color: white;
+      background: var(--primary);
+      color: #ffffff;
       font-size: 13px;
       font-weight: 750;
       cursor: pointer;
@@ -335,7 +358,7 @@ import { TpoService } from '../../../services/tpo.service';
     }
 
     .btn-add:hover:not(:disabled) {
-      background: #003b5a;
+      background: var(--secondary);
     }
 
     .btn-add:disabled {
@@ -351,40 +374,40 @@ import { TpoService } from '../../../services/tpo.service';
       min-height: 120px;
       align-content: flex-start;
       padding: 16px;
-      background: #f8fafc;
+      background: var(--surface-low);
       border-radius: 12px;
-      border: 1px solid #f1f5f9;
+      border: 1px solid rgba(0, 59, 90, 0.05);
     }
 
     .item-chip {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: white;
-      border: 1.5px solid #cbd5e1;
+      background: var(--surface);
+      border: 1px solid var(--outline-variant);
       padding: 7px 12px;
       border-radius: 8px;
       font-size: 13px;
       font-weight: 750;
-      color: #1e293b;
+      color: var(--on-surface);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
       transition: all 0.2s;
     }
 
     .chip-year {
-      border-color: #99f6e4;
-      background: #f0fdfa;
-      color: #0f766e;
+      border-color: rgba(0, 128, 192, 0.3);
+      background: rgba(0, 128, 192, 0.05);
+      color: var(--accent);
     }
 
     .item-chip:hover {
-      border-color: #94a3b8;
+      border-color: var(--secondary);
     }
 
     .btn-delete-chip {
-      background: rgba(239, 68, 68, 0.1);
+      background: rgba(211, 47, 47, 0.1);
       border: none;
-      color: #ef4444;
+      color: var(--error);
       font-size: 16px;
       line-height: 1;
       width: 22px;
@@ -398,25 +421,25 @@ import { TpoService } from '../../../services/tpo.service';
     }
 
     .btn-delete-chip:hover {
-      background: #ef4444;
+      background: var(--error);
       color: white;
     }
 
     .empty-list-note {
       font-size: 13px;
-      color: #94a3b8;
+      color: var(--on-surface-var);
       font-style: italic;
     }
 
     /* Save Footer */
     .save-footer {
-      background: white;
-      border: 1px solid rgba(193, 199, 207, 0.4);
-      border-radius: 16px;
+      background: var(--surface);
+      border: 1px solid rgba(0, 59, 90, 0.08);
+      border-radius: 18px;
       padding: 20px 28px;
       display: flex;
       justify-content: flex-end;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+      box-shadow: 0 4px 16px rgba(0, 59, 90, 0.03);
     }
 
     .btn-save-all {
@@ -426,31 +449,31 @@ import { TpoService } from '../../../services/tpo.service';
       padding: 12px 28px;
       border-radius: 12px;
       border: none;
-      background: linear-gradient(135deg, #006497, #003b5a);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
       color: white;
       font-size: 14px;
       font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(0, 100, 151, 0.25);
+      box-shadow: 0 4px 14px rgba(0, 59, 90, 0.25);
       transition: all 0.2s;
     }
 
     .btn-save-all:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 6px 18px rgba(0, 100, 151, 0.35);
+      box-shadow: 0 6px 18px rgba(0, 59, 90, 0.35);
     }
 
     .loading-box {
       padding: 80px;
       text-align: center;
-      color: #64748b;
+      color: var(--on-surface-var);
     }
 
     .spinner {
       width: 40px;
       height: 40px;
-      border: 3.5px solid #e2e8f0;
-      border-top-color: #006497;
+      border: 3.5px solid var(--surface-low);
+      border-top-color: var(--primary);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin: 0 auto 16px auto;

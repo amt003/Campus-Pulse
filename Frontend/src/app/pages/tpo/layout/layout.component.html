@@ -1,17 +1,19 @@
 <div class="layout-root">
 
   <!-- =============================================
-       1. Top Navbar Header
+       1. Modern Top Navbar Header (Executive Glass)
        ============================================= -->
   <header class="navbar-header">
-    <div class="navbar-brand">
+    <div class="navbar-brand" routerLink="/tpo/dashboard" style="cursor: pointer;">
       <div class="brand-logo-icon">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
       </div>
-      <span class="brand-bold">CampusPulse</span>
-      <span class="brand-sub">Alphabet Campus</span>
+      <div class="brand-text-block">
+        <span class="brand-bold">CampusPulse</span>
+        <span class="brand-sub">TPO Command Center</span>
+      </div>
     </div>
 
     <nav class="navbar-tabs">
@@ -25,6 +27,7 @@
         <span class="material-symbols-outlined nav-tab-icon">dashboard</span>
         <span>Dashboard</span>
       </a>
+
       <a
         routerLink="/tpo/students"
         routerLinkActive="active"
@@ -34,17 +37,27 @@
         <span class="material-symbols-outlined nav-tab-icon">school</span>
         <span>Students</span>
       </a>
+
       <a
-        routerLink="/tpo/dashboard"
-        [queryParams]="{ import: 'true' }"
+        routerLink="/tpo/analyzer"
         routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: false }"
         class="nav-tab"
-        id="layout-nav-import"
+        id="layout-nav-analyzer"
       >
-        <span class="material-symbols-outlined nav-tab-icon">upload_file</span>
-        <span>Import</span>
+        <span class="material-symbols-outlined nav-tab-icon">analytics</span>
+        <span>Placement Analyzer</span>
       </a>
+
+      <a
+        routerLink="/tpo/oversee-drives"
+        routerLinkActive="active"
+        class="nav-tab"
+        id="layout-nav-oversee-drives"
+      >
+        <span class="material-symbols-outlined nav-tab-icon">travel_explore</span>
+        <span>Oversee Drives</span>
+      </a>
+
       <a
         routerLink="/tpo/approval"
         routerLinkActive="active"
@@ -57,36 +70,21 @@
           <span class="tab-badge-pulse">{{ pendingCount() }}</span>
         }
       </a>
-      <a
-        routerLink="/tpo/drive-approvals"
-        routerLinkActive="active"
-        class="nav-tab"
-        id="layout-nav-drive-approvals"
-      >
-        <span class="material-symbols-outlined nav-tab-icon">assignment_turned_in</span>
-        <span>Pending Drives</span>
-        @if (pendingDriveCount() > 0) {
-          <span class="tab-badge-pulse">{{ pendingDriveCount() }}</span>
-        }
-      </a>
-      <a
-        routerLink="/tpo/college-config"
-        routerLinkActive="active"
-        class="nav-tab"
-        id="layout-nav-college-config"
-      >
-        <span class="material-symbols-outlined nav-tab-icon">tune</span>
-        <span>College Config</span>
-      </a>
+
     </nav>
 
     <div class="navbar-right">
-      <span class="welcome-text">
-        Welcome, {{ currentUser()?.name || 'TPO Officer' }}!
-        <span class="emoji-flag">📊</span>
-      </span>
+      <div class="user-profile-badge" title="TPO Officer Account">
+        <div class="user-avatar-circle">
+          <span>{{ (currentUser()?.name ? currentUser()!.name.charAt(0) : 'T').toUpperCase() }}</span>
+        </div>
+        <div class="user-info-text">
+          <span class="user-name">{{ currentUser()?.name || 'TPO Officer' }}</span>
+          <span class="user-role-tag">TPO Admin</span>
+        </div>
+      </div>
 
-      <button class="btn-logout-pill" (click)="logout()" title="Logout" id="layout-logout-btn">
+      <button class="btn-logout-pill" (click)="logout()" title="Logout of CampusPulse" id="layout-logout-btn">
         <span class="material-symbols-outlined">logout</span>
         <span>Logout</span>
       </button>
@@ -106,12 +104,18 @@
   <footer class="tpo-footer">
     <div class="footer-container">
       <div class="footer-left">
+        <div class="footer-logo-dot"></div>
         <span class="footer-brand">CampusPulse</span>
-        <span class="footer-divider">|</span>
-        <span class="footer-text">Training & Placement Office Command Center</span>
+        <span class="footer-divider">/</span>
+        <span class="footer-text">Training & Placement Office Enterprise Suite</span>
       </div>
       <div class="footer-right">
-        <span class="footer-text">© 2026 Alphabet Campus. All rights reserved.</span>
+        <span class="system-status-indicator">
+          <span class="status-live-dot"></span>
+          <span>System Operational</span>
+        </span>
+        <span class="footer-divider">/</span>
+        <span class="footer-text">© 2026 Alphabet Campus</span>
       </div>
     </div>
   </footer>

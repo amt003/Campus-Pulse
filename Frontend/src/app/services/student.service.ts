@@ -197,4 +197,10 @@ export class StudentService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  getMyReadiness(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/my-readiness`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
 }

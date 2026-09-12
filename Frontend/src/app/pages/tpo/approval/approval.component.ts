@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { TpoService, PendingRecruiter } from '../../../services/tpo.service';
+import { SmoothScrollService } from '../../../services/smooth-scroll.service';
 
 @Component({
   selector: 'app-tpo-approval',
@@ -11,8 +12,9 @@ import { TpoService, PendingRecruiter } from '../../../services/tpo.service';
   templateUrl: './approval.component.html',
   styleUrl: './approval.component.css',
 })
-export class TpoApprovalComponent implements OnInit {
+export class TpoApprovalComponent implements OnInit, OnDestroy {
   private readonly tpoService = inject(TpoService);
+  private readonly smoothScrollService = inject(SmoothScrollService);
 
   protected isLoading = signal<boolean>(true);
   protected isRefreshing = signal<boolean>(false);
@@ -40,6 +42,10 @@ export class TpoApprovalComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAllRecruiters();
+  }
+
+  ngOnDestroy(): void {
+    this.smoothScrollService.unfreezeBackgroundScroll(true);
   }
 
   protected loadAllRecruiters(isInitial = true): void {
@@ -85,11 +91,15 @@ export class TpoApprovalComponent implements OnInit {
   protected openApproveModal(rec: PendingRecruiter): void {
     this.selectedRecruiter.set(rec);
     this.isApproveModalOpen.set(true);
+    this.smoothScrollService.freezeBackgroundScroll();
   }
 
   protected closeApproveModal(): void {
-    this.isApproveModalOpen.set(false);
-    this.selectedRecruiter.set(null);
+    if (this.isApproveModalOpen()) {
+      this.isApproveModalOpen.set(false);
+      this.selectedRecruiter.set(null);
+      this.smoothScrollService.unfreezeBackgroundScroll();
+    }
   }
 
   protected confirmApprove(): void {

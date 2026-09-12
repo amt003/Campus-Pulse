@@ -95,15 +95,74 @@ router-outlet + * {
 
 /* Hide scrollbar globally for Chrome, Safari and Opera */
 ::-webkit-scrollbar {
-  width: 0px;
-  height: 0px;
-  background: transparent;
-  display: none;
+  width: 0px !important;
+  height: 0px !important;
+  background: transparent !important;
+  display: none !important;
 }
 
 /* Hide scrollbar globally for IE, Edge and Firefox */
 * {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
+/* ─── Universal Scrollable & Invisible Scrollbar Modal Rules ─────────────────── */
+body.lenis-stopped,
+html.lenis-stopped {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+.modal-backdrop,
+.backdrop,
+.panel-backdrop {
+  overscroll-behavior: contain !important;
+  touch-action: none;
+}
+
+.modal-card,
+.modal-dialog,
+.modal-container,
+.panel-drawer,
+.modal-content,
+.modal-card-large {
+  max-height: 85vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.modal-header,
+.modal-footer,
+.panel-header,
+.panel-footer {
+  flex-shrink: 0 !important;
+}
+
+.modal-body,
+.panel-body,
+.modal-body-scrollable,
+.modal-scroll-area {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.modal-body::-webkit-scrollbar,
+.panel-body::-webkit-scrollbar,
+.modal-body-scrollable::-webkit-scrollbar,
+.modal-scroll-area::-webkit-scrollbar,
+.modal-card::-webkit-scrollbar,
+.modal-content::-webkit-scrollbar,
+.modal-card *::-webkit-scrollbar,
+.modal-backdrop *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
 }
 

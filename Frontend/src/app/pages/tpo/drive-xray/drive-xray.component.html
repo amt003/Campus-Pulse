@@ -1,0 +1,615 @@
+<div class="xray-page-root">
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-full-wrap">
+      <div class="spinner-large"></div>
+      <p class="loading-label">Analyzing drive applications & X-Ray pipeline...</p>
+    </div>
+  } @else if (!xrayData()) {
+    <div class="empty-state-wrap">
+      <span class="material-symbols-outlined empty-state-icon">error_outline</span>
+      <h2>Drive Not Found</h2>
+      <p>The requested recruitment drive could not be located or has been archived.</p>
+      <button class="btn-back-main" (click)="goBack()">
+        <span class="material-symbols-outlined">arrow_back</span>
+        <span>Back to Oversee Drives</span>
+      </button>
+    </div>
+  } @else {
+    <!-- Top Nav Back Bar & Actions -->
+    <div class="top-nav-bar">
+      <button class="btn-back-link" (click)="goBack()">
+        <span class="material-symbols-outlined">arrow_back</span>
+        <span>Back to Oversee Drives</span>
+      </button>
+
+      <div class="top-nav-actions">
+        <button class="btn-action-outline" (click)="exportCSV()" title="Export current filtered table to CSV">
+          <span class="material-symbols-outlined">download</span>
+          <span>Export as CSV</span>
+        </button>
+        <button class="btn-action-outline" (click)="fetchDriveData(false)" [disabled]="isRefreshing()">
+          <span class="material-symbols-outlined" [class.spin]="isRefreshing()">refresh</span>
+          <span>{{ isRefreshing() ? 'Refreshing...' : 'Refresh' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Drive Hero Card -->
+    <div class="drive-hero-card">
+      <div class="hero-left">
+        <div class="company-logo-badge">
+          @if (xrayData()!.drive.companyLogo) {
+            <img [src]="xrayData()!.drive.companyLogo!" [alt]="xrayData()!.drive.companyName" />
+          } @else {
+            <span>{{ xrayData()!.drive.companyName.charAt(0).toUpperCase() }}</span>
+          }
+        </div>
+        <div class="hero-info">
+          <div class="hero-badge-row">
+            <span class="status-badge" [ngClass]="xrayData()!.drive.status.toLowerCase()">
+              {{ xrayData()!.drive.status }}
+            </span>
+            <span class="ctc-badge">{{ getCTCInLpa(xrayData()!.drive.ctc) }}</span>
+          </div>
+          <h1 class="drive-main-title">{{ xrayData()!.drive.title }}</h1>
+          <div class="company-sub-line">
+            <span class="company-text">{{ xrayData()!.drive.companyName }}</span>
+            <span class="dot-separator">•</span>
+            <span class="date-text">Deadline: {{ xrayData()!.drive.applicationDeadline | date: 'dd MMM yyyy' }}</span>
+            <span class="dot-separator">•</span>
+            <span class="criteria-text">Min CGPA: {{ xrayData()!.drive.minCGPA }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-branches">
+        <span class="branch-label">Eligible Branches:</span>
+        <div class="branches-chips">
+          @for (b of xrayData()!.drive.eligibleBranches; track b) {
+            <span class="branch-chip">{{ b }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Stage KPI Cards -->
+    <div class="kpi-grid">
+      <!-- Total Applications -->
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap primary">
+          <span class="material-symbols-outlined">group</span>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Total Applications</span>
+          <span class="kpi-val">{{ xrayData()!.summary.totalApplications }}</span>
+          <span class="kpi-hint">100% applied</span>
+        </div>
+      </div>
+
+      <!-- Shortlisted -->
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap info">
+          <span class="material-symbols-outlined">filter_list</span>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Shortlisted</span>
+          <span class="kpi-val">{{ xrayData()!.summary.shortlisted }}</span>
+          <span class="kpi-hint">Passed initial filter</span>
+        </div>
+      </div>
+
+      <!-- Aptitude -->
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap accent">
+          <span class="material-symbols-outlined">psychology</span>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Aptitude Test</span>
+          <div class="kpi-split">
+            <span class="kpi-sub green">Passed: <strong>{{ xrayData()!.summary.aptitudePassed }}</strong></span>
+            <span class="kpi-sub red">Failed: <strong>{{ xrayData()!.summary.aptitudeFailed }}</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- GD -->
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap warning">
+          <span class="material-symbols-outlined">forum</span>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Group Discussion</span>
+          <div class="kpi-split">
+            <span class="kpi-sub green">Shortlisted: <strong>{{ xrayData()!.summary.gdShortlisted }}</strong></span>
+            <span class="kpi-sub red">Rejected: <strong>{{ xrayData()!.summary.gdRejected }}</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interview -->
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap interview">
+          <span class="material-symbols-outlined">record_voice_over</span>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Interviews</span>
+          <div class="kpi-split">
+            <span class="kpi-sub green">Selected: <strong>{{ xrayData()!.summary.interviewSelected }}</strong></span>
+            <span class="kpi-sub red">Rejected: <strong>{{ xrayData()!.summary.interviewRejected }}</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Placed / Offers -->
+      <div class="kpi-card success-card">
+        <div class="kpi-icon-wrap success">
+          <span class="material-symbols-outlined">celebration</span>
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-label">Placed / Offers</span>
+          <span class="kpi-val highlight">{{ xrayData()!.summary.placed }}</span>
+          <span class="kpi-hint">Final converted offers</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters & Search Toolbar -->
+    <div class="table-toolbar">
+      <div class="search-wrap">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
+          type="text"
+          placeholder="Search by student name, roll number, email..."
+          [ngModel]="searchTerm()"
+          (ngModelChange)="searchTerm.set($event)"
+          class="search-input"
+        />
+        @if (searchTerm()) {
+          <button class="btn-clear" (click)="searchTerm.set('')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        }
+      </div>
+
+      <div class="filter-controls">
+        <div class="filter-item">
+          <label>Status:</label>
+          <select [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)">
+            @for (opt of statusFilterOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label>Branch:</label>
+          <select [ngModel]="selectedBranch()" (ngModelChange)="selectedBranch.set($event)">
+            <option value="ALL">All Branches</option>
+            @for (b of availableBranches(); track b) {
+              <option [value]="b">{{ b }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Applications Table -->
+    <div class="table-container">
+      @if (filteredApplications().length === 0) {
+        <div class="no-results-box">
+          <span class="material-symbols-outlined">search_off</span>
+          <h3>No Student Applications Found</h3>
+          <p>Try adjusting your search criteria or resetting the status and branch filters.</p>
+        </div>
+      } @else {
+        <div class="table-scroll-wrapper">
+          <table class="xray-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">#</th>
+                <th>Student</th>
+                <th>Roll Number</th>
+                <th>CGPA</th>
+                <th>Branch</th>
+                <th>AI Match</th>
+                <th>Stage Status</th>
+                <th>Stage Pipeline Progress</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (app of filteredApplications(); track app.applicationId; let idx = $index) {
+                <tr class="student-row">
+                  <!-- Index -->
+                  <td class="index-cell">{{ idx + 1 }}</td>
+
+                  <!-- Student Info -->
+                  <td>
+                    <div class="student-profile-cell">
+                      <div class="student-avatar">
+                        @if (app.student.profilePicPath) {
+                          <img [src]="'http://localhost:5000' + app.student.profilePicPath" [alt]="app.student.name" />
+                        } @else {
+                          <span>{{ app.student.name.charAt(0).toUpperCase() }}</span>
+                        }
+                      </div>
+                      <div class="student-meta">
+                        <span class="student-name">{{ app.student.name }}</span>
+                        <span class="student-email">{{ app.student.email }}</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Roll Number -->
+                  <td>
+                    <span class="roll-badge">{{ app.student.rollNumber }}</span>
+                  </td>
+
+                  <!-- CGPA -->
+                  <td>
+                    <span class="cgpa-pill">{{ app.student.cgpa }}</span>
+                  </td>
+
+                  <!-- Branch -->
+                  <td>
+                    <span class="branch-pill">{{ app.student.branch }}</span>
+                  </td>
+
+                  <!-- AI Match Score -->
+                  <td>
+                    <div class="ai-score-cell">
+                      @if (app.aiMatchScore !== null && app.aiMatchScore !== undefined) {
+                        <span class="score-badge" [ngClass]="getScoreColorClass(app.aiMatchScore)">
+                          {{ app.aiMatchScore | number: '1.0-0' }}%
+                        </span>
+                      } @else {
+                        <span class="score-badge score-na">N/A</span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- Overall Status -->
+                  <td>
+                    <span class="app-status-badge" [ngClass]="app.status ? app.status.toLowerCase().replace(' ', '-') : ''">
+                      {{ app.status }}
+                    </span>
+                  </td>
+
+                  <!-- Stage Pipeline Quick Pills -->
+                  <td>
+                    <div class="stage-pipeline-pills" (click)="openStageModal(app)" title="Click to view stage breakdown">
+                      <!-- Aptitude -->
+                      <span
+                        class="stage-pill"
+                        [class.passed]="app.aptitude.status === 'Passed'"
+                        [class.failed]="app.aptitude.status === 'Failed'"
+                        [class.scheduled]="app.aptitude.status === 'Scheduled'"
+                        [class.na]="app.aptitude.status === 'Not Applicable'"
+                        title="Aptitude: {{ app.aptitude.status }}"
+                      >
+                        APT
+                      </span>
+
+                      <span class="pipeline-connector">→</span>
+
+                      <!-- GD -->
+                      <span
+                        class="stage-pill"
+                        [class.passed]="app.gd.status === 'Shortlisted'"
+                        [class.failed]="app.gd.status === 'Rejected'"
+                        [class.scheduled]="app.gd.status === 'Scheduled'"
+                        [class.na]="app.gd.status === 'Not Applicable'"
+                        title="GD: {{ app.gd.status }}"
+                      >
+                        GD
+                      </span>
+
+                      <span class="pipeline-connector">→</span>
+
+                      <!-- Interview -->
+                      <span
+                        class="stage-pill"
+                        [class.passed]="app.interview.result === 'Selected'"
+                        [class.failed]="app.interview.result === 'Rejected'"
+                        [class.scheduled]="app.interview.status === 'Scheduled'"
+                        [class.pending]="app.interview.status === 'Pending'"
+                        title="Interview: {{ app.interview.result || app.interview.status }}"
+                      >
+                        INT
+                      </span>
+
+                      <span class="pipeline-connector">→</span>
+
+                      <!-- Offer -->
+                      <span
+                        class="stage-pill"
+                        [class.passed]="app.offer.status === 'Accepted'"
+                        [class.failed]="app.offer.status === 'Declined'"
+                        [class.scheduled]="app.offer.status === 'Sent'"
+                        [class.na]="app.offer.status === 'Not Sent'"
+                        title="Offer: {{ app.offer.status }}"
+                      >
+                        OFR
+                      </span>
+                    </div>
+                  </td>
+
+                  <!-- Actions -->
+                  <td style="text-align: right;">
+                    <div class="action-buttons-wrap">
+                      <button
+                        class="btn-icon-action stage"
+                        (click)="openStageModal(app)"
+                        title="Inspect Stage Breakdown"
+                      >
+                        <span class="material-symbols-outlined">assignment</span>
+                        <span>Stages</span>
+                      </button>
+
+                      @if (app.xai && (app.xai.matchScore || app.xai.strongSkills.length || app.xai.positiveSentences.length)) {
+                        <button
+                          class="btn-icon-action xai"
+                          (click)="openXaiModal(app, $event)"
+                          title="View Explainable AI Insights"
+                        >
+                          <span class="material-symbols-outlined">psychology</span>
+                          <span>XAI</span>
+                        </button>
+                      }
+
+                      @if (app.student.resumePath) {
+                        <a
+                          [href]="'http://localhost:5000' + app.student.resumePath"
+                          target="_blank"
+                          class="btn-icon-action resume"
+                          title="View Resume PDF"
+                        >
+                          <span class="material-symbols-outlined">description</span>
+                        </a>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- ==============================================
+     1. Stage-wise Breakdown Modal
+     ============================================== -->
+@if (isStageModalOpen() && inspectApp()) {
+  <div class="modal-backdrop" data-lenis-prevent (click)="closeStageModal()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+    <div class="modal-card stage-modal" data-lenis-prevent (click)="$event.stopPropagation()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="header-student-meta">
+          <div class="modal-avatar">
+            <span>{{ inspectApp()!.student.name.charAt(0).toUpperCase() }}</span>
+          </div>
+          <div>
+            <h2 class="modal-title">{{ inspectApp()!.student.name }}</h2>
+            <div class="sub-tags">
+              <span class="tag-text">Roll: {{ inspectApp()!.student.rollNumber }}</span>
+              <span class="tag-text">Branch: {{ inspectApp()!.student.branch }}</span>
+              <span class="tag-text">CGPA: {{ inspectApp()!.student.cgpa }}</span>
+            </div>
+          </div>
+        </div>
+        <button class="btn-close" (click)="closeStageModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body" data-lenis-prevent>
+        <h3 class="section-heading">Stage-wise Evaluation Timeline</h3>
+
+        <div class="stages-timeline">
+          <!-- Stage 1: Aptitude -->
+          <div class="timeline-step" [ngClass]="inspectApp()!.aptitude.status ? inspectApp()!.aptitude.status.toLowerCase() : ''">
+            <div class="step-indicator">
+              <span class="material-symbols-outlined">
+                {{ inspectApp()!.aptitude.status === 'Passed' ? 'check_circle' : inspectApp()!.aptitude.status === 'Failed' ? 'cancel' : 'pending' }}
+              </span>
+            </div>
+            <div class="step-card">
+              <div class="step-card-header">
+                <span class="step-name">1. Aptitude Assessment</span>
+                <span class="step-status-chip" [ngClass]="inspectApp()!.aptitude.status ? inspectApp()!.aptitude.status.toLowerCase() : ''">
+                  {{ inspectApp()!.aptitude.status }}
+                </span>
+              </div>
+              @if (inspectApp()!.aptitude.score !== null) {
+                <div class="step-score">Score: <strong>{{ inspectApp()!.aptitude.score }}/100</strong></div>
+              }
+              @if (inspectApp()!.aptitude.feedback) {
+                <p class="step-feedback">"{{ inspectApp()!.aptitude.feedback }}"</p>
+              }
+            </div>
+          </div>
+
+          <!-- Stage 2: GD -->
+          <div class="timeline-step" [ngClass]="inspectApp()!.gd.status ? inspectApp()!.gd.status.toLowerCase() : ''">
+            <div class="step-indicator">
+              <span class="material-symbols-outlined">
+                {{ inspectApp()!.gd.status === 'Shortlisted' ? 'check_circle' : inspectApp()!.gd.status === 'Rejected' ? 'cancel' : 'pending' }}
+              </span>
+            </div>
+            <div class="step-card">
+              <div class="step-card-header">
+                <span class="step-name">2. Group Discussion (GD)</span>
+                <span class="step-status-chip" [ngClass]="inspectApp()!.gd.status ? inspectApp()!.gd.status.toLowerCase() : ''">
+                  {{ inspectApp()!.gd.status }}
+                </span>
+              </div>
+              @if (inspectApp()!.gd.score !== null) {
+                <div class="step-score">Score: <strong>{{ inspectApp()!.gd.score }}/100</strong></div>
+              }
+              @if (inspectApp()!.gd.feedback) {
+                <p class="step-feedback">"{{ inspectApp()!.gd.feedback }}"</p>
+              }
+            </div>
+          </div>
+
+          <!-- Stage 3: Interview -->
+          <div class="timeline-step" [ngClass]="inspectApp()!.interview.result ? inspectApp()!.interview.result.toLowerCase() : ''">
+            <div class="step-indicator">
+              <span class="material-symbols-outlined">
+                {{ inspectApp()!.interview.result === 'Selected' ? 'check_circle' : inspectApp()!.interview.result === 'Rejected' ? 'cancel' : 'pending' }}
+              </span>
+            </div>
+            <div class="step-card">
+              <div class="step-card-header">
+                <span class="step-name">3. Personal Interview</span>
+                <span class="step-status-chip" [ngClass]="inspectApp()!.interview.result ? inspectApp()!.interview.result.toLowerCase() : ''">
+                  {{ inspectApp()!.interview.result || inspectApp()!.interview.status }}
+                </span>
+              </div>
+              @if (inspectApp()!.interview.score !== null) {
+                <div class="step-score">Interview Score: <strong>{{ inspectApp()!.interview.score }}/100</strong></div>
+              }
+              @if (inspectApp()!.interview.feedback) {
+                <p class="step-feedback">"{{ inspectApp()!.interview.feedback }}"</p>
+              }
+            </div>
+          </div>
+
+          <!-- Stage 4: Offer Letter -->
+          <div class="timeline-step" [ngClass]="inspectApp()!.offer.status ? inspectApp()!.offer.status.toLowerCase() : ''">
+            <div class="step-indicator">
+              <span class="material-symbols-outlined">
+                {{ inspectApp()!.offer.status === 'Accepted' ? 'check_circle' : inspectApp()!.offer.status === 'Declined' ? 'cancel' : 'card_giftcard' }}
+              </span>
+            </div>
+            <div class="step-card">
+              <div class="step-card-header">
+                <span class="step-name">4. Job Offer Stage</span>
+                <span class="step-status-chip" [ngClass]="inspectApp()!.offer.status ? inspectApp()!.offer.status.toLowerCase() : ''">
+                  {{ inspectApp()!.offer.status }}
+                </span>
+              </div>
+              @if (inspectApp()!.offer.acceptedAt) {
+                <div class="step-date">Accepted Date: {{ inspectApp()!.offer.acceptedAt | date: 'mediumDate' }}</div>
+              }
+              @if (inspectApp()!.offer.declinedAt) {
+                <div class="step-date text-danger">Declined Date: {{ inspectApp()!.offer.declinedAt | date: 'mediumDate' }}</div>
+                @if (inspectApp()!.offer.declineReason) {
+                  <p class="step-feedback">Reason: "{{ inspectApp()!.offer.declineReason }}"</p>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        @if (inspectApp()!.xai && inspectApp()!.xai.matchScore) {
+          <button class="btn-open-xai" (click)="openXaiModal(inspectApp()!); closeStageModal();">
+            <span class="material-symbols-outlined">psychology</span>
+            <span>Inspect AI Match Report</span>
+          </button>
+        }
+        <button class="btn-cancel" (click)="closeStageModal()">Close</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ==============================================
+     2. XAI Explainable AI Match Modal
+     ============================================== -->
+@if (isXaiModalOpen() && xaiApp()) {
+  <div class="modal-backdrop" data-lenis-prevent (click)="closeXaiModal()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+    <div class="modal-card xai-modal" data-lenis-prevent (click)="$event.stopPropagation()" (wheel)="$event.stopPropagation()" (touchmove)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="xai-header-title">
+          <div class="xai-icon-badge">
+            <span class="material-symbols-outlined">psychology</span>
+          </div>
+          <div>
+            <h2 class="modal-title">AI Match Insights</h2>
+            <span class="modal-subtitle">{{ xaiApp()!.student.name }} — {{ xrayData()!.drive.title }}</span>
+          </div>
+        </div>
+        <button class="btn-close" (click)="closeXaiModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body" data-lenis-prevent>
+        <!-- Score Bar Card -->
+        <div class="xai-score-card">
+          <div class="score-circle-wrap">
+            <span class="score-number">{{ xaiApp()!.xai.matchScore | number: '1.0-0' }}%</span>
+            <span class="score-caption">Fit Score</span>
+          </div>
+          <div class="score-summary">
+            <h4>Profile Alignment Analysis</h4>
+            <p>
+              @if (xaiApp()!.xai.matchScore! >= 80) {
+                Strong match for this job profile with solid overlap across skills and qualifications.
+              } @else if (xaiApp()!.xai.matchScore! >= 60) {
+                Moderate match. Candidate meets core baseline requirements with a few potential skill gaps.
+              } @else {
+                Lower alignment with stated job prerequisites and technical requirements.
+              }
+            </p>
+          </div>
+        </div>
+
+        <!-- Strong Skills & Strengths -->
+        @if (xaiApp()!.xai.strongSkills && xaiApp()!.xai.strongSkills.length > 0) {
+          <div class="xai-section">
+            <h4 class="xai-section-title">
+              <span class="material-symbols-outlined text-green">verified</span>
+              Matching Skills & Strengths
+            </h4>
+            <div class="skill-chips-row">
+              @for (skill of xaiApp()!.xai.strongSkills; track skill) {
+                <span class="skill-chip positive">{{ skill }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Skill Gaps -->
+        @if (xaiApp()!.xai.skillGaps && xaiApp()!.xai.skillGaps.length > 0) {
+          <div class="xai-section">
+            <h4 class="xai-section-title">
+              <span class="material-symbols-outlined text-amber">warning</span>
+              Identified Skill Gaps
+            </h4>
+            <div class="skill-chips-row">
+              @for (gap of xaiApp()!.xai.skillGaps; track gap) {
+                <span class="skill-chip gap">{{ gap }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Positive Explanations -->
+        @if (xaiApp()!.xai.positiveSentences && xaiApp()!.xai.positiveSentences.length > 0) {
+          <div class="xai-section">
+            <h4 class="xai-section-title">
+              <span class="material-symbols-outlined text-blue">format_quote</span>
+              Key Match Highlights
+            </h4>
+            <ul class="highlights-list">
+              @for (sentence of xaiApp()!.xai.positiveSentences; track sentence) {
+                <li>{{ sentence }}</li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeXaiModal()">Done</button>
+      </div>
+    </div>
+  </div>
+}
