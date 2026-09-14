@@ -1,0 +1,15 @@
+@if (showBanner()) {
+  <div class="install-banner" role="alert" aria-live="polite">
+    <div class="install-banner-content">
+      <div class="install-icon">📱</div>
+      <div class="install-text">
+        <strong>Install CampusPulse</strong>
+        <span>Get quick access from your home screen. Works offline!</span>
+      </div>
+      <div class="install-actions">
+        <button class="btn-install" (click)="installApp()">Install</button>
+        <button class="btn-dismiss" (click)="dismissBanner()" aria-label="Dismiss banner">✕</button>
+      </div>
+    </div>
+  </div>
+}

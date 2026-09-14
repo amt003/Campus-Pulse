@@ -31,6 +31,8 @@ export interface Drive {
   maxBacklogs: number;
   applicationDeadline: string;
   status: string;
+  closeReason?: string;
+  closedAt?: string;
   hasAptitudeTest?: boolean;
   hasGD?: boolean;
   companyName?: string;

@@ -1,10 +1,39 @@
 const cron = require("node-cron");
 const Schedule = require("../models/Schedule");
+const JobDrive = require("../models/JobDrive");
 const sendEmail = require("./sendEmail");
 const emailTemplates = require("./emailTemplates");
 
+const expirePassedDrives = async () => {
+  try {
+    const now = new Date();
+    const result = await JobDrive.updateMany(
+      {
+        status: "Open",
+        applicationDeadline: { $lt: now },
+      },
+      {
+        $set: { status: "Expired" },
+      }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`[Cron] Automatically expired ${result.modifiedCount} drive(s) with past deadlines.`);
+    }
+  } catch (err) {
+    console.error("[Cron Error] Failed to expire past drives:", err.message);
+  }
+};
+
 const initCronScheduler = () => {
-  // Run every hour to check for upcoming interviews scheduled for tomorrow
+  // 1. Run drive expiration check immediately on startup
+  expirePassedDrives();
+
+  // 2. Schedule drive expiration check every 15 minutes
+  cron.schedule("*/15 * * * *", () => {
+    expirePassedDrives();
+  });
+
+  // 3. Run every hour to check for upcoming interviews scheduled for tomorrow
   cron.schedule("0 * * * *", async () => {
     try {
       console.log("[Cron] Running reminder cron job to check for tomorrow's placement round schedules...");

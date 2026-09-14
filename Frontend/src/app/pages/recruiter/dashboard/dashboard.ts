@@ -17,7 +17,7 @@ export interface DriveItem {
   _id: string;
   title: string;
   description?: string;
-  status: 'Draft' | 'Pending' | 'Open' | 'Closed' | 'Rejected' | 'OnHold';
+  status: 'Draft' | 'Pending' | 'Open' | 'Closed' | 'Rejected' | 'OnHold' | 'Expired';
   tpoFeedback?: string;
   resubmittedCount?: number;
   applicationsCount: number;

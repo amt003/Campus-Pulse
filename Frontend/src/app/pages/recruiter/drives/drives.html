@@ -75,6 +75,8 @@
               <span class="status-pill" style="background: #ffedd5; color: #c2410c; border-color: #fed7aa;">⏸️ On Hold</span>
             } @else if (drive.status === 'Rejected') {
               <span class="status-pill" style="background: #fee2e2; color: #dc2626; border-color: #fca5a5;">❌ Rejected</span>
+            } @else if (drive.status === 'Expired') {
+              <span class="status-pill" style="background: #f1f5f9; color: #64748b; border-color: #cbd5e1;">⏰ Expired</span>
             } @else {
               <span class="status-pill closed">🔒 Closed</span>
             }
@@ -115,7 +117,7 @@
             </button>
 
             @if (!isDriveClosed(drive)) {
-              <button class="btn-card-action btn-close-drive" (click)="closeDrive(drive._id, $event)" title="Close Application Window">
+              <button class="btn-card-action btn-close-drive" (click)="openCloseDriveModal(drive, $event)" title="Close Application Window">
                 <span class="material-symbols-outlined">lock</span>
               </button>
             }
@@ -132,5 +134,61 @@
       [driveTitle]="selectedDriveForResources().title"
       (onClose)="closeResourcesModal()"
     />
+  }
+
+  <!-- Close Drive Reason Modal -->
+  @if (isCloseModalOpen() && selectedDriveToClose()) {
+    <div class="modal-backdrop-custom" (click)="cancelCloseDriveModal()">
+      <div class="modal-card-custom" (click)="$event.stopPropagation()">
+        <div class="modal-card-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center;">
+              <span class="material-symbols-outlined" style="font-size: 20px;">lock</span>
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #1e293b;">Close Recruitment Drive</h3>
+              <p style="margin: 0; font-size: 12px; color: #64748b;">Stopping application intake for this position.</p>
+            </div>
+          </div>
+          <button class="btn-close-modal" (click)="cancelCloseDriveModal()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div class="modal-card-body">
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
+            <span style="font-size: 11px; font-weight: 750; text-transform: uppercase; color: #64748b; display: block; margin-bottom: 2px;">Drive Role</span>
+            <strong style="font-size: 14px; color: #0f172a;">{{ selectedDriveToClose().title }}</strong>
+          </div>
+
+          <label style="display: block; font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 6px;">
+            Reason for Closing Drive (Optional)
+          </label>
+          <textarea
+            [(ngModel)]="closeReason"
+            placeholder="e.g., Hiring quota reached, Internal screening completed, Application deadline reached..."
+            rows="3"
+            style="width: 100%; box-sizing: border-box; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 10px 12px; font-family: inherit; font-size: 13px; color: #1e293b; outline: none; resize: vertical;"
+          ></textarea>
+          <span style="display: block; font-size: 11px; color: #64748b; margin-top: 4px;">
+            This reason will be recorded and displayed for candidate transparency.
+          </span>
+        </div>
+
+        <div class="modal-card-footer">
+          <button class="btn-modal-secondary" (click)="cancelCloseDriveModal()" [disabled]="isClosing()">
+            Cancel
+          </button>
+          <button class="btn-modal-danger" (click)="confirmCloseDrive()" [disabled]="isClosing()">
+            @if (isClosing()) {
+              <span>Closing Drive…</span>
+            } @else {
+              <span class="material-symbols-outlined" style="font-size: 16px;">lock</span>
+              <span>Confirm & Close Drive</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
   }
 </div>

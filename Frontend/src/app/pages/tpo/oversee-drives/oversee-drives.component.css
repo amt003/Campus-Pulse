@@ -548,6 +548,12 @@
   border: 1px solid #fecaca;
 }
 
+.status-badge.expired {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+}
+
 /* Actions Cell */
 .actions-cell {
   display: flex;

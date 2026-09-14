@@ -78,8 +78,8 @@ export class RecruiterService {
     });
   }
 
-  closeDrive(driveId: string): Observable<any> {
-    return this.http.put(`${this.apiUrl}/drive/${driveId}/close`, {}, {
+  closeDrive(driveId: string, reason?: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/drive/${driveId}/close`, { reason }, {
       headers: this.getAuthHeaders(),
     });
   }

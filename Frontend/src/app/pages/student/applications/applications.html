@@ -52,19 +52,33 @@
                     <h3 class="app-card-title">{{ app.driveId?.title || 'Job Drive' }}</h3>
                     <p class="app-card-subtitle">{{ app.driveId?.companyName || 'Campus Recruitment Program' }}</p>
                   </div>
-                  @if (isAppPlaced(app)) {
-                    <span class="status-pill" style="font-size: 11px; padding: 5px 12px; border-radius: 20px; background: #27AE60; color: white; font-weight: 800;">
-                      Placed 🎉 (Offer Accepted)
-                    </span>
-                  } @else if (isPlaced()) {
-                    <span class="status-pill" style="font-size: 11px; padding: 5px 12px; border-radius: 20px; background: #7F8C8D; color: white; font-weight: 700;">
-                      🔒 Frozen (Policy Locked)
-                    </span>
-                  } @else {
-                    <span class="status-pill pill-open" style="font-size: 11px; padding: 4px 10px; border-radius: 20px;">
-                      {{ app.status }}
-                    </span>
-                  }
+                  <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+                    <!-- Drive Status Pill -->
+                    @if (app.driveId?.status === 'Open') {
+                      <span class="drive-status-tag open">✅ Drive Open</span>
+                    } @else if (app.driveId?.status === 'Expired') {
+                      <span class="drive-status-tag expired">⏰ Drive Expired</span>
+                    } @else if (app.driveId?.status === 'Closed') {
+                      <span class="drive-status-tag closed">🔒 Drive Closed</span>
+                    } @else if (app.driveId?.status === 'OnHold') {
+                      <span class="drive-status-tag onhold">⏸️ Drive On Hold</span>
+                    }
+
+                    <!-- Application Status Pill -->
+                    @if (isAppPlaced(app)) {
+                      <span class="status-pill" style="font-size: 11px; padding: 4px 10px; border-radius: 20px; background: #27AE60; color: white; font-weight: 800;">
+                        Placed 🎉 (Offer Accepted)
+                      </span>
+                    } @else if (isPlaced()) {
+                      <span class="status-pill" style="font-size: 11px; padding: 4px 10px; border-radius: 20px; background: #7F8C8D; color: white; font-weight: 700;">
+                        🔒 Frozen (Policy Locked)
+                      </span>
+                    } @else {
+                      <span class="status-pill pill-open" style="font-size: 11px; padding: 3px 10px; border-radius: 20px;">
+                        {{ app.status }}
+                      </span>
+                    }
+                  </div>
                 </div>
 
                 <div class="app-card-body">
@@ -120,23 +134,55 @@
               </p>
             </div>
           </div>
-          @if (isAppPlaced(selectedApp())) {
-            <span class="status-badge-green" style="background: #27AE60; color: white; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px;">
-              <span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
-              <span>Placed 🎉 (Offer Accepted)</span>
-            </span>
-          } @else if (isPlaced()) {
-            <span class="status-badge-gray" style="background: #7F8C8D; color: white; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px;">
-              <span class="material-symbols-outlined" style="font-size: 16px;">lock</span>
-              <span>Frozen (Policy Locked)</span>
-            </span>
-          } @else {
-            <span class="status-badge-orange">
-              <span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800; vertical-align: middle;">pending_actions</span>
-              <span>{{ selectedApp()!.status }}</span>
-            </span>
-          }
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <!-- Drive Status Tag in Detail Header -->
+            @if (selectedApp()!.driveId?.status === 'Open') {
+              <span class="drive-status-tag open" style="font-size: 12px; padding: 5px 12px;">✅ Drive Open</span>
+            } @else if (selectedApp()!.driveId?.status === 'Expired') {
+              <span class="drive-status-tag expired" style="font-size: 12px; padding: 5px 12px;">⏰ Drive Expired</span>
+            } @else if (selectedApp()!.driveId?.status === 'Closed') {
+              <span class="drive-status-tag closed" style="font-size: 12px; padding: 5px 12px;">🔒 Drive Closed</span>
+            } @else if (selectedApp()!.driveId?.status === 'OnHold') {
+              <span class="drive-status-tag onhold" style="font-size: 12px; padding: 5px 12px;">⏸️ Drive On Hold</span>
+            }
+
+            @if (isAppPlaced(selectedApp())) {
+              <span class="status-badge-green" style="background: #27AE60; color: white; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
+                <span>Placed 🎉 (Offer Accepted)</span>
+              </span>
+            } @else if (isPlaced()) {
+              <span class="status-badge-gray" style="background: #7F8C8D; color: white; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">lock</span>
+                <span>Frozen (Policy Locked)</span>
+              </span>
+            } @else {
+              <span class="status-badge-orange">
+                <span class="material-symbols-outlined" style="font-size: 14px; font-weight: 800; vertical-align: middle;">pending_actions</span>
+                <span>{{ selectedApp()!.status }}</span>
+              </span>
+            }
+          </div>
         </div>
+
+        @if (selectedApp()!.driveId?.status === 'Expired') {
+          <div style="background: #F1F5F9; border: 1.5px solid #CBD5E1; color: #475569; padding: 14px 18px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; font-size: 13px;">
+            <span class="material-symbols-outlined" style="font-size: 22px; color: #64748B;">schedule</span>
+            <span><strong>Application Window Expired:</strong> The application deadline for this drive ({{ selectedApp()!.driveId?.applicationDeadline | date:'mediumDate' }}) has closed. Your existing application remains under active recruiter evaluation.</span>
+          </div>
+        } @else if (selectedApp()!.driveId?.status === 'Closed') {
+          <div style="background: #FEF2F2; border: 1.5px solid #FECACA; color: #991B1B; padding: 14px 18px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 12px; font-size: 13px;">
+            <span class="material-symbols-outlined" style="font-size: 22px; color: #DC2626; flex-shrink: 0; margin-top: 1px;">lock</span>
+            <div>
+              <strong>Drive Closed by Recruiter:</strong> Application intake for this recruitment drive has been closed.
+              @if (selectedApp()!.driveId?.closeReason) {
+                <div style="margin-top: 4px; font-size: 12.5px; opacity: 0.95; font-style: italic;">
+                  Reason: "{{ selectedApp()!.driveId?.closeReason }}"
+                </div>
+              }
+            </div>
+          </div>
+        }
 
         @if (isPlaced() && !isAppPlaced(selectedApp())) {
           <div style="background: #FFF3CD; border: 1.5px solid #FFEEBA; color: #856404; padding: 14px 18px; border-radius: 10px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 13.5px;">

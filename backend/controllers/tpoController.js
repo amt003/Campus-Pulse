@@ -1432,6 +1432,12 @@ const deletePassoutYear = async (req, res) => {
 // GET /api/tpo/drives — All drives with company details and application metrics
 const getAllDrivesForTPO = async (req, res) => {
   try {
+    // Auto-expire open drives whose deadline has passed
+    await JobDrive.updateMany(
+      { status: "Open", applicationDeadline: { $lt: new Date() } },
+      { $set: { status: "Expired" } }
+    );
+
     const drives = await JobDrive.find().sort({ createdAt: -1 });
 
     const drivesWithDetails = await Promise.all(

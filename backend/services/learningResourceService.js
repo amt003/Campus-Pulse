@@ -4,141 +4,107 @@
  */
 
 const SKILL_RESOURCES = {
-  docker: [
+  csharp: [
     {
-      title: "Docker for Beginners (Hands-on Project)",
+      title: "Foundational C# Certification with Microsoft",
       platform: "freeCodeCamp",
-      url: "https://www.youtube.com/watch?v=fqMOX6JJhGo",
-      type: "Free Course",
+      url: "https://www.freecodecamp.org/learn/foundational-c-sharp-with-microsoft/",
+      type: "Official Certification",
       badge: "Free"
     },
     {
-      title: "Docker Official Get Started Interactive Guide",
-      platform: "Docker Docs",
-      url: "https://docs.docker.com/get-started/",
+      title: "A Tour of C#: Interactive Official Language Guide",
+      platform: "Microsoft Learn",
+      url: "https://learn.microsoft.com/en-us/dotnet/csharp/tour-of-csharp/",
       type: "Official Docs",
       badge: "Official"
-    }
-  ],
-  aws: [
-    {
-      title: "AWS Cloud Practitioner Essentials",
-      platform: "AWS Skill Builder",
-      url: "https://explore.skillbuilder.aws/learn/course/external/view/elearning/134/aws-cloud-practitioner-essentials",
-      type: "Certification Prep",
-      badge: "Official Free"
     },
     {
-      title: "AWS Certified Solutions Architect Full Course",
-      platform: "freeCodeCamp",
-      url: "https://www.youtube.com/watch?v=SOTamWNgDKc",
-      type: "Video Course",
-      badge: "Free"
-    }
-  ],
-  cloud: [
-    {
-      title: "Google Cloud Fundamentals: Core Infrastructure",
-      platform: "Coursera",
-      url: "https://www.coursera.org/learn/gcp-fundamentals",
-      type: "Specialization (Audit)",
-      badge: "Free Audit"
-    },
-    {
-      title: "AWS Cloud Practitioner Essentials",
-      platform: "AWS Skill Builder",
-      url: "https://explore.skillbuilder.aws/learn/course/external/view/elearning/134/aws-cloud-practitioner-essentials",
-      type: "Certification Prep",
+      title: "C# & .NET Interactive Tutorials for Beginners",
+      platform: "Microsoft .NET",
+      url: "https://dotnet.microsoft.com/en-us/learn/csharp",
+      type: "Interactive Tutorial",
       badge: "Official Free"
     }
   ],
-  kubernetes: [
+  dotnet: [
     {
-      title: "Kubernetes Basics Interactive Tutorials",
-      platform: "Kubernetes.io",
-      url: "https://kubernetes.io/docs/tutorials/kubernetes-basics/",
-      type: "Interactive Lab",
+      title: "ASP.NET Core Web API Fundamentals",
+      platform: "Microsoft Learn",
+      url: "https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-web-api",
+      type: "Official Tutorial",
       badge: "Official"
     },
     {
-      title: "Kubernetes Crash Course for Full Stack Developers",
+      title: "Full Stack .NET & C# Course",
       platform: "freeCodeCamp",
-      url: "https://www.youtube.com/watch?v=X48VuDVv0do",
+      url: "https://www.youtube.com/watch?v=GhQdlIFylQ8",
       type: "Video Course",
       badge: "Free"
     }
   ],
-  systemdesign: [
+  cpp: [
     {
-      title: "System Design Primer & Architecture Blueprints",
-      platform: "GitHub (Donne Martin)",
-      url: "https://github.com/donnemartin/system-design-primer",
-      type: "Study Guide",
+      title: "Learn C++: Comprehensive Programming & Modern Standards",
+      platform: "LearnCpp.com",
+      url: "https://www.learncpp.com/",
+      type: "Interactive Course",
       badge: "Top Rated"
     },
     {
-      title: "ByteByteGo: System Design Interview Essentials",
-      platform: "ByteByteGo",
-      url: "https://bytebytego.com/",
-      type: "Visual Guide",
-      badge: "Recommended"
+      title: "C++ Programming Language & STL Guide",
+      platform: "GeeksforGeeks",
+      url: "https://www.geeksforgeeks.org/c-plus-plus/",
+      type: "Topic Track",
+      badge: "Free"
     }
   ],
-  redis: [
+  c: [
     {
-      title: "RU101: Introduction to Redis Data Structures",
-      platform: "Redis University",
-      url: "https://university.redis.com/courses/ru101/",
-      type: "Official Course",
-      badge: "Official Free"
-    },
-    {
-      title: "Redis Crash Course for High-Performance Caching",
+      title: "C Programming for Beginners: Pointers & Memory Mastery",
       platform: "freeCodeCamp",
-      url: "https://www.youtube.com/watch?v=jgpVdJB2sKQ",
+      url: "https://www.youtube.com/watch?v=KJgsSFOSQv0",
       type: "Video Course",
       badge: "Free"
-    }
-  ],
-  react: [
-    {
-      title: "React Official Interactive Tutorial & Docs",
-      platform: "React.dev",
-      url: "https://react.dev/learn",
-      type: "Interactive Docs",
-      badge: "Official"
     },
     {
-      title: "Full Stack Open (React, Redux, Node, GraphQL)",
-      platform: "University of Helsinki",
-      url: "https://fullstackopen.com/en/",
-      type: "Accredited Course",
-      badge: "Certificate"
-    }
-  ],
-  node: [
-    {
-      title: "Node.js & Express RESTful API Development",
-      platform: "MDN Web Docs",
-      url: "https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs",
-      type: "Interactive Guide",
-      badge: "Official"
-    },
-    {
-      title: "Node.js Backend Architecture & Microservices",
-      platform: "freeCodeCamp",
-      url: "https://www.youtube.com/watch?v=Oe421EPjeBE",
-      type: "Free Course",
+      title: "C Programming Language Comprehensive Tutorial",
+      platform: "GeeksforGeeks",
+      url: "https://www.geeksforgeeks.org/c-programming-language/",
+      type: "Reference Guide",
       badge: "Free"
     }
   ],
-  angular: [
+  javascript: [
     {
-      title: "Angular Official Essentials & Tour of Heroes",
-      platform: "Angular.dev",
-      url: "https://angular.dev/tutorials/learn-angular",
-      type: "Interactive Tutorial",
+      title: "The Modern JavaScript Tutorial (from Basic to Advanced)",
+      platform: "JavaScript.info",
+      url: "https://javascript.info/",
+      type: "Interactive Book",
+      badge: "Top Rated"
+    },
+    {
+      title: "JavaScript Algorithms and Data Structures Certification",
+      platform: "freeCodeCamp",
+      url: "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures/",
+      type: "Accredited Track",
+      badge: "Free"
+    }
+  ],
+  typescript: [
+    {
+      title: "TypeScript for JavaScript Programmers Handbook",
+      platform: "TypeScriptLang.org",
+      url: "https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html",
+      type: "Official Guide",
       badge: "Official"
+    },
+    {
+      title: "Total TypeScript Essentials & Interactive Lab",
+      platform: "TotalTypeScript",
+      url: "https://www.totaltypescript.com/tutorials",
+      type: "Interactive Lab",
+      badge: "Recommended"
     }
   ],
   python: [
@@ -185,6 +151,143 @@ const SKILL_RESOURCES = {
       title: "Spring Boot Microservices Full Masterclass",
       platform: "freeCodeCamp",
       url: "https://www.youtube.com/watch?v=mSZTn4lMptg",
+      type: "Video Course",
+      badge: "Free"
+    }
+  ],
+  react: [
+    {
+      title: "React Official Interactive Tutorial & Docs",
+      platform: "React.dev",
+      url: "https://react.dev/learn",
+      type: "Interactive Docs",
+      badge: "Official"
+    },
+    {
+      title: "Full Stack Open (React, Redux, Node, GraphQL)",
+      platform: "University of Helsinki",
+      url: "https://fullstackopen.com/en/",
+      type: "Accredited Course",
+      badge: "Certificate"
+    }
+  ],
+  angular: [
+    {
+      title: "Angular Official Essentials & Tour of Heroes",
+      platform: "Angular.dev",
+      url: "https://angular.dev/tutorials/learn-angular",
+      type: "Interactive Tutorial",
+      badge: "Official"
+    }
+  ],
+  node: [
+    {
+      title: "Node.js & Express RESTful API Development",
+      platform: "MDN Web Docs",
+      url: "https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs",
+      type: "Interactive Guide",
+      badge: "Official"
+    },
+    {
+      title: "Node.js Backend Architecture & Microservices",
+      platform: "freeCodeCamp",
+      url: "https://www.youtube.com/watch?v=Oe421EPjeBE",
+      type: "Free Course",
+      badge: "Free"
+    }
+  ],
+  docker: [
+    {
+      title: "Docker for Beginners (Hands-on Project)",
+      platform: "freeCodeCamp",
+      url: "https://www.youtube.com/watch?v=fqMOX6JJhGo",
+      type: "Free Course",
+      badge: "Free"
+    },
+    {
+      title: "Docker Official Get Started Interactive Guide",
+      platform: "Docker Docs",
+      url: "https://docs.docker.com/get-started/",
+      type: "Official Docs",
+      badge: "Official"
+    }
+  ],
+  kubernetes: [
+    {
+      title: "Kubernetes Basics Interactive Tutorials",
+      platform: "Kubernetes.io",
+      url: "https://kubernetes.io/docs/tutorials/kubernetes-basics/",
+      type: "Interactive Lab",
+      badge: "Official"
+    },
+    {
+      title: "Kubernetes Crash Course for Full Stack Developers",
+      platform: "freeCodeCamp",
+      url: "https://www.youtube.com/watch?v=X48VuDVv0do",
+      type: "Video Course",
+      badge: "Free"
+    }
+  ],
+  aws: [
+    {
+      title: "AWS Cloud Practitioner Essentials",
+      platform: "AWS Skill Builder",
+      url: "https://explore.skillbuilder.aws/learn/course/external/view/elearning/134/aws-cloud-practitioner-essentials",
+      type: "Certification Prep",
+      badge: "Official Free"
+    },
+    {
+      title: "AWS Certified Solutions Architect Full Course",
+      platform: "freeCodeCamp",
+      url: "https://www.youtube.com/watch?v=SOTamWNgDKc",
+      type: "Video Course",
+      badge: "Free"
+    }
+  ],
+  cloud: [
+    {
+      title: "Google Cloud Fundamentals: Core Infrastructure",
+      platform: "Coursera",
+      url: "https://www.coursera.org/learn/gcp-fundamentals",
+      type: "Specialization (Audit)",
+      badge: "Free Audit"
+    },
+    {
+      title: "AWS Cloud Practitioner Essentials",
+      platform: "AWS Skill Builder",
+      url: "https://explore.skillbuilder.aws/learn/course/external/view/elearning/134/aws-cloud-practitioner-essentials",
+      type: "Certification Prep",
+      badge: "Official Free"
+    }
+  ],
+  systemdesign: [
+    {
+      title: "System Design Primer & Architecture Blueprints",
+      platform: "GitHub (Donne Martin)",
+      url: "https://github.com/donnemartin/system-design-primer",
+      type: "Study Guide",
+      badge: "Top Rated"
+    },
+    {
+      title: "ByteByteGo: System Design Interview Essentials",
+      platform: "ByteByteGo",
+      url: "https://bytebytego.com/",
+      type: "Visual Guide",
+      badge: "Recommended"
+    }
+  ],
+  redis: [
+    {
+      title: "RU101: Introduction to Redis Data Structures",
+      platform: "Redis University",
+      url: "https://university.redis.com/courses/ru101/",
+      type: "Official Course",
+      badge: "Official Free"
+    },
+    {
+      title: "Redis Crash Course for High-Performance Caching",
+      platform: "freeCodeCamp",
+      url: "https://www.youtube.com/watch?v=jgpVdJB2sKQ",
       type: "Video Course",
       badge: "Free"
     }
@@ -385,23 +488,78 @@ const STAGE_RESOURCES = {
 };
 
 /**
+ * Normalizes a raw skill name into a standardized key for dictionary lookup.
+ * Handles language symbols like '#', '++', and variations like 'Node.js', '.NET'.
+ * @param {string} rawSkill
+ * @returns {string} normalized key
+ */
+function normalizeSkillKey(rawSkill) {
+  if (!rawSkill) return "";
+  const s = rawSkill.trim().toLowerCase();
+
+  // Explicit mappings for special symbols and short names
+  if (s === "c#" || s === "c sharp" || s === "csharp" || s === "c-sharp") return "csharp";
+  if (s === "c++" || s === "cpp" || s === "c plus plus") return "cpp";
+  if (s === "c") return "c";
+  if (s === ".net" || s === "dotnet" || s === "asp.net" || s === "asp.net core" || s === "net core") return "dotnet";
+  if (s === "js" || s === "javascript") return "javascript";
+  if (s === "ts" || s === "typescript") return "typescript";
+  if (s === "go" || s === "golang") return "golang";
+  if (s === "py" || s === "python") return "python";
+  if (s === "k8s" || s === "kubernetes") return "kubernetes";
+  if (s === "postgres" || s === "postgresql") return "sql";
+  if (s === "mysql" || s === "sqlite") return "sql";
+  if (s === "mongo" || s === "mongodb") return "mongodb";
+
+  return s.replace(/[^a-z0-9]/g, "");
+}
+
+/**
  * Lookup matching learning resources for a given category or skill keyword
  * @param {string} category - Suggestion category ('Aptitude', 'Communication', 'Technical Interview', 'Resume & ATS', 'Skill Gap', 'Placement Activity', 'Academics', etc.)
- * @param {string} [skillName] - Name of specific skill (e.g., 'Docker', 'AWS Cloud', 'Kubernetes')
+ * @param {string} [skillName] - Name of specific skill (e.g., 'C#', 'Docker', 'AWS Cloud', 'Kubernetes')
  * @returns {Array<{ title: string, platform: string, url: string, type: string, badge?: string }>}
  */
 function getResourcesForSuggestion(category, skillName = "") {
   // 1. If a specific skill name is provided (e.g. Skill Gap)
   if (skillName) {
-    const cleaned = skillName.toLowerCase().replace(/[^a-z0-9]/g, "");
-    for (const [key, resources] of Object.entries(SKILL_RESOURCES)) {
-      if (cleaned.includes(key) || key.includes(cleaned)) {
-        return resources;
+    const norm = normalizeSkillKey(skillName);
+
+    // Exact dictionary match
+    if (SKILL_RESOURCES[norm]) {
+      return SKILL_RESOURCES[norm];
+    }
+
+    // Secondary substring match ONLY for multi-character tokens (length >= 3) to prevent single-letter collision
+    if (norm.length >= 3) {
+      for (const [key, resources] of Object.entries(SKILL_RESOURCES)) {
+        if (key.length >= 3 && (norm.includes(key) || key.includes(norm))) {
+          return resources;
+        }
       }
     }
+
+    // Dynamic fallback for custom/unmapped technologies with relevant search and documentation
+    const encodedSkill = encodeURIComponent(skillName.trim());
+    return [
+      {
+        title: `${skillName.trim()} Documentation & Official Guide`,
+        platform: "Official Docs / DevDocs",
+        url: `https://devdocs.io/#q=${encodedSkill}`,
+        type: "Official Reference",
+        badge: "Official"
+      },
+      {
+        title: `${skillName.trim()} Interview Questions & Practice Sheet`,
+        platform: "GeeksforGeeks",
+        url: `https://www.geeksforgeeks.org/search/?q=${encodedSkill}`,
+        type: "Study Guide",
+        badge: "Free"
+      }
+    ];
   }
 
-  // 2. Map standard category strings
+  // 2. Map standard stage / category strings
   const catLower = (category || "").toLowerCase();
 
   if (catLower.includes("aptitude") || catLower.includes("quant")) {
@@ -423,7 +581,7 @@ function getResourcesForSuggestion(category, skillName = "") {
     return STAGE_RESOURCES.placement_activity;
   }
 
-  // Default fallback to DSA / interview general
+  // Default fallback
   return STAGE_RESOURCES.interview;
 }
 

@@ -51,7 +51,7 @@ const jobDriveSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Draft", "Pending", "Open", "Closed", "Rejected", "OnHold"],
+      enum: ["Draft", "Pending", "Open", "Closed", "Rejected", "OnHold", "Expired"],
       default: "Pending",
     },
     attachments: [
@@ -73,6 +73,14 @@ const jobDriveSchema = new mongoose.Schema(
     resubmittedCount: {
       type: Number,
       default: 0
+    },
+    closeReason: {
+      type: String,
+      default: null,
+    },
+    closedAt: {
+      type: Date,
+      default: null,
     }
   },
   {

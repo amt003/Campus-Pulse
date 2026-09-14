@@ -316,6 +316,18 @@ const createJobDrive = async (req, res) => {
 
 const getRecruiterDrives = async (req, res) => {
   try {
+    // Auto-expire open drives whose deadline has passed
+    await JobDrive.updateMany(
+      {
+        recruiterId: req.user._id,
+        status: "Open",
+        applicationDeadline: { $lt: new Date() },
+      },
+      {
+        $set: { status: "Expired" },
+      }
+    );
+
     const drives = await JobDrive.find({ recruiterId: req.user._id }).sort({
       createdAt: -1,
     });
@@ -439,6 +451,49 @@ const updateJobDrive = async (req, res) => {
   }
 };
 
+const closeJobDrive = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const drive = await JobDrive.findOne({
+      _id: id,
+      recruiterId: req.user._id,
+    });
+
+    if (!drive) {
+      return res.status(404).json({
+        success: false,
+        message: "Job drive not found or unauthorized",
+      });
+    }
+
+    if (drive.status === "Closed") {
+      return res.status(400).json({
+        success: false,
+        message: "This drive is already closed",
+      });
+    }
+
+    drive.status = "Closed";
+    drive.closeReason = reason && reason.trim() ? reason.trim() : "Application window closed by recruiter";
+    drive.closedAt = new Date();
+    await drive.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Drive closed successfully",
+      drive,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to close drive",
+      error: error.message,
+    });
+  }
+};
+
 const resubmitDriveForApproval = async (req, res) => {
   try {
     const { driveId } = req.params;
@@ -477,37 +532,6 @@ const resubmitDriveForApproval = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to resubmit job drive",
-      error: error.message,
-    });
-  }
-};
-
-const closeJobDrive = async (req, res) => {
-  try {
-    const drive = await JobDrive.findOne({
-      _id: req.params.id,
-      recruiterId: req.user._id,
-    });
-
-    if (!drive) {
-      return res.status(404).json({
-        success: false,
-        message: "Job drive not found",
-      });
-    }
-
-    drive.status = "Closed";
-    await drive.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Job drive closed successfully",
-      drive,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to close job drive",
       error: error.message,
     });
   }

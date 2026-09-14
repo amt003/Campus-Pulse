@@ -27,6 +27,12 @@ export class RecruiterDrivesComponent implements OnInit {
   protected isResourcesModalOpen = signal<boolean>(false);
   protected selectedDriveForResources = signal<any | null>(null);
 
+  // Close Drive Modal state
+  protected isCloseModalOpen = signal<boolean>(false);
+  protected selectedDriveToClose = signal<any | null>(null);
+  protected closeReason = signal<string>('');
+  protected isClosing = signal<boolean>(false);
+
   ngOnInit(): void {
     this.fetchDrives();
   }
@@ -57,7 +63,7 @@ export class RecruiterDrivesComponent implements OnInit {
         drive.companyName?.toLowerCase().includes(term) ||
         drive.description?.toLowerCase().includes(term);
 
-      const isClosed = drive.status === 'Closed' || new Date(drive.applicationDeadline) < new Date();
+      const isClosed = drive.status === 'Closed' || drive.status === 'Expired' || new Date(drive.applicationDeadline) < new Date();
       let matchesStatus = true;
       if (status === 'active') matchesStatus = !isClosed;
       if (status === 'closed') matchesStatus = isClosed;
@@ -67,7 +73,7 @@ export class RecruiterDrivesComponent implements OnInit {
   });
 
   protected isDriveClosed(drive: any): boolean {
-    return drive.status === 'Closed' || new Date(drive.applicationDeadline) < new Date();
+    return drive.status === 'Closed' || drive.status === 'Expired' || new Date(drive.applicationDeadline) < new Date();
   }
 
   protected getCTCInLpa(ctcInRupees: number): string {
@@ -87,14 +93,37 @@ export class RecruiterDrivesComponent implements OnInit {
     this.selectedDriveForResources.set(null);
   }
 
-  protected closeDrive(driveId: string, event: MouseEvent): void {
+  protected openCloseDriveModal(drive: any, event: MouseEvent): void {
     event.stopPropagation();
-    this.recruiterService.closeDrive(driveId).subscribe({
+    this.selectedDriveToClose.set(drive);
+    this.closeReason.set('');
+    this.isCloseModalOpen.set(true);
+  }
+
+  protected cancelCloseDriveModal(): void {
+    this.isCloseModalOpen.set(false);
+    this.selectedDriveToClose.set(null);
+    this.closeReason.set('');
+  }
+
+  protected confirmCloseDrive(): void {
+    const drive = this.selectedDriveToClose();
+    if (!drive) return;
+
+    this.isClosing.set(true);
+    const reason = this.closeReason().trim();
+
+    this.recruiterService.closeDrive(drive._id, reason).subscribe({
       next: () => {
+        this.isClosing.set(false);
+        this.isCloseModalOpen.set(false);
+        this.selectedDriveToClose.set(null);
+        this.closeReason.set('');
         this.toastService.success('Drive closed', 'Application window is now closed for this drive');
         this.fetchDrives();
       },
       error: (err) => {
+        this.isClosing.set(false);
         this.toastService.error('Failed to close drive', err.error?.message || 'Try again later');
       }
     });

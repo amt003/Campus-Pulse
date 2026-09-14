@@ -5,6 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { StudentService, StudentProfile, Drive, Application } from '../../../services/student.service';
 import { ToastService } from '../../../services/toast.service';
 import { SmoothScrollService } from '../../../services/smooth-scroll.service';
+import { NetworkService } from '../../../services/network.service';
 import { RouterModule } from '@angular/router';
 
 @Component({
@@ -18,6 +19,7 @@ export class StudentDashboardComponent implements OnInit {
   private readonly studentService = inject(StudentService);
   private readonly toastService = inject(ToastService);
   private readonly smoothScroll = inject(SmoothScrollService);
+  protected readonly networkService = inject(NetworkService);
 
   // States
   protected isLoading = signal<boolean>(true);

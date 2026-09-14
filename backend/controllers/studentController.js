@@ -201,6 +201,12 @@ const getEligibleDrives = async (req, res) => {
     }
 
     const currentDate = new Date();
+    // Auto-expire open drives whose deadline has passed
+    await JobDrive.updateMany(
+      { status: "Open", applicationDeadline: { $lt: currentDate } },
+      { $set: { status: "Expired" } }
+    );
+
     const drives = await JobDrive.find({
       status: "Open",
       applicationDeadline: { $gte: currentDate },
@@ -275,15 +281,13 @@ const applyToDrive = async (req, res) => {
       });
     }
 
-    if (drive.status !== "Open") {
+    if (drive.status !== "Open" || new Date(drive.applicationDeadline) < new Date()) {
+      if (new Date(drive.applicationDeadline) < new Date() && drive.status === "Open") {
+        drive.status = "Expired";
+        await drive.save();
+      }
       return res.status(400).json({
-        message: "This drive is not open for applications",
-      });
-    }
-
-    if (new Date(drive.applicationDeadline) < new Date()) {
-      return res.status(400).json({
-        message: "Application deadline has passed",
+        message: "This drive is not open for applications or the deadline has expired",
       });
     }
 
@@ -355,6 +359,12 @@ const getStudentApplications = async (req, res) => {
     if (!profile) {
       return res.status(404).json({ message: "Student profile not found" });
     }
+
+    // Auto-expire open drives whose deadline has passed
+    await JobDrive.updateMany(
+      { status: "Open", applicationDeadline: { $lt: new Date() } },
+      { $set: { status: "Expired" } }
+    );
 
     const placementStatus = await getStudentPlacementStatus(profile._id);
 
