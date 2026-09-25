@@ -1,5 +1,6 @@
 const QuestionBank = require("../models/QuestionBank");
 const Recruiter = require("../models/Recruiter");
+const { generateQuestions } = require("../services/questionGeneratorService");
 
 // Helper to get authenticated recruiter profile
 const getAuthenticatedRecruiter = async (userId) => {
@@ -308,9 +309,193 @@ const deleteQuestion = async (req, res) => {
   }
 };
 
+// @desc    Generate AI draft questions using Gemini 1.5 Flash
+// @route   POST /api/recruiter/question/generate
+// @access  Private (Recruiter)
+const generateDraftQuestions = async (req, res) => {
+  try {
+    const recruiter = await getAuthenticatedRecruiter(req.user._id);
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    const { count = 5, category = "Quantitative", difficulty = "Easy", apiKey } = req.body;
+
+    const questions = await generateQuestions({
+      count,
+      category,
+      difficulty,
+      recruiterId: recruiter._id,
+      apiKey,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: `Generated ${questions.length} draft questions successfully`,
+      count: questions.length,
+      questions,
+      data: questions,
+    });
+  } catch (error) {
+    console.error("[QuestionBankController] generateDraftQuestions error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to generate AI questions",
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Get all draft questions for the recruiter
+// @route   GET /api/recruiter/question/drafts
+// @access  Private (Recruiter)
+const getDraftQuestions = async (req, res) => {
+  try {
+    const recruiter = await getAuthenticatedRecruiter(req.user._id);
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    const query = {
+      recruiterId: recruiter._id,
+      status: "draft",
+    };
+
+    if (req.query.category) {
+      query.category = req.query.category.trim();
+    }
+    if (req.query.difficulty) {
+      query.difficulty = req.query.difficulty.trim();
+    }
+
+    const questions = await QuestionBank.find(query).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: questions.length,
+      questions,
+      data: questions,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch draft questions",
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Approve a draft question
+// @route   PUT /api/recruiter/question/:id/approve
+// @access  Private (Recruiter)
+const approveDraftQuestion = async (req, res) => {
+  try {
+    const recruiter = await getAuthenticatedRecruiter(req.user._id);
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    const question = await QuestionBank.findById(req.params.id);
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: "Question not found",
+      });
+    }
+
+    if (
+      !question.recruiterId ||
+      question.recruiterId.toString() !== recruiter._id.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to approve this question",
+      });
+    }
+
+    question.status = "approved";
+    await question.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Draft question approved successfully",
+      question,
+      data: question,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to approve draft question",
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Reject a draft question
+// @route   PUT /api/recruiter/question/:id/reject
+// @access  Private (Recruiter)
+const rejectDraftQuestion = async (req, res) => {
+  try {
+    const recruiter = await getAuthenticatedRecruiter(req.user._id);
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    const question = await QuestionBank.findById(req.params.id);
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: "Question not found",
+      });
+    }
+
+    if (
+      !question.recruiterId ||
+      question.recruiterId.toString() !== recruiter._id.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to reject this question",
+      });
+    }
+
+    question.status = "rejected";
+    await question.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Draft question rejected successfully",
+      question,
+      data: question,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to reject draft question",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   addQuestion,
   getQuestions,
   updateQuestion,
   deleteQuestion,
+  generateDraftQuestions,
+  getDraftQuestions,
+  approveDraftQuestion,
+  rejectDraftQuestion,
 };
