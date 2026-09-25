@@ -34,6 +34,12 @@ const {
   resubmitDriveForApproval,
   getSeasonConfig,
 } = require("../controllers/recruiterController");
+const {
+  addQuestion,
+  getQuestions,
+  updateQuestion,
+  deleteQuestion,
+} = require("../controllers/questionBankController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const { uploadImage, uploadOffer } = require("../middleware/uploadMiddleware");
 const multer = require("multer");
@@ -82,6 +88,12 @@ router.get("/drive/:driveId/attachments", getDriveAttachments);
 router.post("/drive/:driveId/attachment", memoryUpload.single("file"), uploadDriveAttachment);
 router.delete("/drive/:driveId/attachment/:fileId", deleteDriveAttachment);
 router.get("/drive/attachment/download/:fileId", downloadDriveAttachment);
+
+// Question Bank Routes (Phase 2)
+router.post("/question", addQuestion);
+router.get("/questions", getQuestions);
+router.put("/question/:id", updateQuestion);
+router.delete("/question/:id", deleteQuestion);
 
 module.exports = router;
 
