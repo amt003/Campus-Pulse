@@ -330,7 +330,15 @@
 
                       <td>
                         <div class="score-cell">
-                          <span class="pra-score-num">{{ s.praScore }}</span>
+                          <div class="score-num-row">
+                            <span class="pra-score-num">{{ s.praScore }}</span>
+                            @if (s.isEstimated) {
+                              <span class="estimated-warning-chip" [title]="'Score estimated due to calculation exception: ' + (s.calculationError || 'Data anomaly')">
+                                <span class="material-symbols-outlined icon-mini">warning</span>
+                                <span>Estimated</span>
+                              </span>
+                            }
+                          </div>
                           <div class="pra-mini-bar-bg">
                             <div
                               class="pra-mini-bar-fill"

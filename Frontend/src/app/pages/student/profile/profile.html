@@ -1,4 +1,17 @@
-<div class="profile-page-container" style="display: flex; justify-content: center; width: 100%;">
+<div class="profile-page-container" style="display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; margin: 0 auto;">
+  
+  <div class="page-header" style="width: 100%; margin-bottom: 20px;">
+    <div class="header-title-row">
+      <div class="title-icon-box">
+        <span class="material-symbols-outlined">person</span>
+      </div>
+      <div>
+        <h2>My Student Profile</h2>
+        <p class="subtitle">Manage your personal details, academic credentials, verified resume, and placement skills.</p>
+      </div>
+    </div>
+  </div>
+
   @if (isLoading()) {
     <div class="loading-state">
       <div class="spinner"></div>

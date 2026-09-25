@@ -1,10 +1,14 @@
 <div class="offers-page-container">
   <!-- Page Header -->
   <div class="page-header">
-    <div>
-      <h1 class="page-title">Offer Letters Tracker</h1>
-      <p class="page-subtitle">Centralized tracker for all issued job offer letters, acceptance statuses, and candidate
-        responses.</p>
+    <div class="header-title-row">
+      <div class="title-icon-box">
+        <span class="material-symbols-outlined">card_membership</span>
+      </div>
+      <div>
+        <h1 class="page-title">Offer Letters Tracker</h1>
+        <p class="page-subtitle">Centralized tracker for all issued job offer letters, acceptance statuses, and candidate responses.</p>
+      </div>
     </div>
   </div>
 
@@ -65,7 +69,7 @@
       </button>
       <button class="filter-tab" [class.active]="selectedStatus() === 'accepted'"
         (click)="selectedStatus.set('accepted')">
-        Accepted 🎉
+        Accepted
       </button>
       <button class="filter-tab" [class.active]="selectedStatus() === 'pending'"
         (click)="selectedStatus.set('pending')">
@@ -73,7 +77,7 @@
       </button>
       <button class="filter-tab" [class.active]="selectedStatus() === 'declined'"
         (click)="selectedStatus.set('declined')">
-        Declined ❌
+        Declined
       </button>
     </div>
   </div>
@@ -124,11 +128,11 @@
             <td>{{ (app.offer?.uploadedDate || app.updatedAt) | date:'mediumDate' }}</td>
             <td>
               @if (status === 'Accepted' || status === 'Placed' || status === 'Offer Accepted') {
-              <span class="status-pill status-accepted">Accepted 🎉</span>
+              <span class="status-pill status-accepted">Accepted</span>
               } @else if (status === 'Declined' || status === 'Offer Declined') {
               <span class="status-pill status-declined" (click)="openDeclineReasonModal(app)"
                 title="Click to view reason">
-                Declined ❌
+                Declined
               </span>
               } @else {
               <span class="status-pill status-pending">Pending Response</span>

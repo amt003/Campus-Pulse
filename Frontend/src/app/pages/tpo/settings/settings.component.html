@@ -5,9 +5,11 @@
        ============================================= -->
   <header class="settings-header">
     <div class="header-left">
-      
+      <div class="title-icon-box">
+        <span class="material-symbols-outlined">tune</span>
+      </div>
       <div class="title-wrap">
-        <h1 class="page-title"> Placement Season Configuration</h1>
+        <h1 class="page-title">Placement Season Configuration</h1>
         <p class="page-subtitle">Configure the active placement season window to safeguard recruitment timelines</p>
       </div>
     </div>
@@ -44,7 +46,7 @@
             <span class="material-symbols-outlined">warning</span>
           </div>
           <div class="banner-text-col">
-            <h4 class="banner-title">⚠️ Placement Season Dates Not Set!</h4>
+            <h4 class="banner-title">Placement Season Dates Not Set!</h4>
             <p class="banner-desc">
               Please specify both <strong>Season Start Date</strong> and <strong>Season End Date</strong>. Without an active season window, recruiters cannot schedule events or post new job drives.
             </p>
@@ -85,9 +87,9 @@
           <!-- Quick Presets -->
           <div class="presets-group">
             <span class="presets-label">Quick Presets:</span>
-            <button type="button" class="btn-preset" (click)="setPreset('fall')">🍁 Fall (Aug - Dec)</button>
-            <button type="button" class="btn-preset" (click)="setPreset('spring')">🌸 Spring (Jan - May)</button>
-            <button type="button" class="btn-preset" (click)="setPreset('fullYear')">🎓 Full Academic Year</button>
+            <button type="button" class="btn-preset" (click)="setPreset('fall')">Fall (Aug - Dec)</button>
+            <button type="button" class="btn-preset" (click)="setPreset('spring')">Spring (Jan - May)</button>
+            <button type="button" class="btn-preset" (click)="setPreset('fullYear')">Full Academic Year</button>
           </div>
         </div>
 
@@ -218,7 +220,7 @@
                   <span>Saving Configuration...</span>
                 } @else {
                   <span class="material-symbols-outlined">save</span>
-                  <span>💾 Save Configuration</span>
+                  <span>Save Configuration</span>
                 }
               </button>
             </div>

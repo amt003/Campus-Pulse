@@ -888,6 +888,292 @@
 }
 
 /* ============================================================
+   6.5. Section 1.5: Interactive What-If Simulator (Tier 1)
+   ============================================================ */
+.what-if-section {
+  width: 100%;
+}
+
+.what-if-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px 28px;
+  border: 1.5px solid rgba(0, 100, 151, 0.12);
+  box-shadow: 0 6px 24px rgba(0, 59, 90, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.what-if-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #003b5a, #006497, #2e7d32);
+}
+
+.what-if-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 59, 90, 0.06);
+}
+
+.what-if-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.what-if-icon-chip {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(0, 100, 151, 0.08);
+  color: #006497;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.what-if-icon-chip .material-symbols-outlined {
+  font-size: 24px;
+}
+
+.what-if-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #006497;
+  margin-bottom: 2px;
+}
+
+.what-if-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #003b5a;
+  margin: 0;
+}
+
+.what-if-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 4px 0 0;
+  font-weight: 500;
+}
+
+.what-if-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sim-status-inactive {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  background: #f8fafc;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px dashed #cbd5e1;
+}
+
+.sim-badge.active {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ecfdf5;
+  border: 1.5px solid #10b981;
+  padding: 6px 14px;
+  border-radius: 24px;
+  animation: pulseSimGlow 2s infinite ease-in-out;
+}
+
+@keyframes pulseSimGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.2); }
+  50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.15); }
+}
+
+.sim-delta-tag {
+  background: #10b981;
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+}
+
+.sim-score-tag {
+  font-size: 13px;
+  font-weight: 800;
+  color: #065f46;
+}
+
+.btn-reset-sim {
+  background: transparent;
+  border: none;
+  color: #059669;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-reset-sim:hover {
+  background: rgba(16, 185, 129, 0.15);
+  color: #047857;
+}
+
+.what-if-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.what-if-action-tile {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.what-if-action-tile:hover {
+  border-color: #006497;
+  background: #f0f9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 100, 151, 0.08);
+}
+
+.what-if-action-tile.tile-selected {
+  border-color: #10b981;
+  background: #f0fdf4;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.12);
+}
+
+.action-tile-checkbox {
+  color: #94a3b8;
+  margin-top: 1px;
+  transition: color 0.2s ease;
+}
+
+.what-if-action-tile.tile-selected .action-tile-checkbox {
+  color: #10b981;
+}
+
+.check-mark {
+  font-size: 22px;
+}
+
+.action-tile-content {
+  flex-grow: 1;
+}
+
+.action-tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.action-tile-category {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.5px;
+}
+
+.action-tile-delta {
+  font-size: 11px;
+  font-weight: 900;
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.what-if-action-tile.tile-selected .action-tile-delta {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.action-tile-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #003b5a;
+  margin: 0 0 4px;
+}
+
+.action-tile-desc {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+
+.action-tile-progress-preview {
+  font-size: 11.5px;
+  color: #006497;
+  background: rgba(0, 100, 151, 0.06);
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.what-if-projection-summary {
+  margin-top: 18px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #ecfdf5, #f0fdf4);
+  border: 1.5px solid #a7f3d0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.summary-icon {
+  font-size: 26px;
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.summary-text {
+  font-size: 13.5px;
+  color: #065f46;
+  font-weight: 550;
+  line-height: 1.5;
+}
+
+.summary-band-chip {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  display: inline-block;
+  margin-left: 4px;
+}
+
+/* ============================================================
    7. Responsive Breakpoints
    ============================================================ */
 @media (max-width: 1200px) {

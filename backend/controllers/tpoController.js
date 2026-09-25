@@ -380,7 +380,7 @@ const approveRecruiter = async (req, res) => {
     if (recruiter.userId) {
       await User.findByIdAndUpdate(recruiter.userId, { isActive: true });
       await socketService.sendRealTimeNotification(recruiter.userId, {
-        title: "Account Approved ⭐",
+        title: "Account Approved",
         message: `Congratulations! The TPO has approved your recruiter account for ${recruiter.companyName}. You can now start posting job drives.`,
         type: "success",
       });
@@ -471,7 +471,7 @@ const putRecruiterOnHold = async (req, res) => {
     if (recruiter.userId) {
       await User.findByIdAndUpdate(recruiter.userId, { isActive: true });
       await socketService.sendRealTimeNotification(recruiter.userId, {
-        title: "Account On Hold ⚠️",
+        title: "Account On Hold",
         message: `TPO Review Required: "${feedback.trim()}"`,
         type: "warning",
       });
@@ -833,7 +833,7 @@ const approveDrive = async (req, res) => {
 
     if (drive.recruiterId && drive.recruiterId._id) {
       await socketService.sendRealTimeNotification(drive.recruiterId._id, {
-        title: "Job Drive Approved 🎉",
+        title: "Job Drive Approved",
         message: `Your job drive "${drive.title}" has been approved by the TPO and is now live for students to apply!`,
         type: "success",
       });
@@ -883,7 +883,7 @@ const rejectDrive = async (req, res) => {
 
     if (drive.recruiterId && drive.recruiterId._id) {
       await socketService.sendRealTimeNotification(drive.recruiterId._id, {
-        title: "Job Drive Rejected ❌",
+        title: "Job Drive Rejected",
         message: `Your job drive "${drive.title}" was rejected by TPO: ${reason.trim()}`,
         type: "error",
       });
@@ -1606,7 +1606,7 @@ const getDriveApplicationsForTPO = async (req, res) => {
           matchScore: app.xai?.matchScore ?? app.aiMatchScore ?? null,
           positiveSentences: app.xai?.positiveSentences || [],
           negativeSentences: app.xai?.negativeSentences || [],
-          skillGaps: app.xai?.skillGaps || [],
+          skillGaps: placementAnalyzerService.extractCleanSkills(app.xai?.skillGaps || []),
           strongSkills: app.xai?.strongSkills || [],
           isOfflineFallback: app.xai?.isOfflineFallback || false,
         },

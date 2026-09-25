@@ -56,13 +56,12 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 const { initializeCollegeConfig } = require("./utils/initCollegeConfig");
 
-// --- Connect to Database ---
+// --- Connect to Database & Initialize Background Services ---
 connectDB().then(() => {
   initializeCollegeConfig();
+  // Initialize Background Cron Jobs after DB connection is ready
+  initCronScheduler();
 });
-
-// --- Initialize Background Cron Jobs ---
-initCronScheduler();
 
 // --- Routes ---
 app.use("/api/auth", authRoutes);

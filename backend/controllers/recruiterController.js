@@ -9,6 +9,7 @@ const socketService = require("../services/socketService");
 const sendEmail = require("../utils/sendEmail");
 const emailTemplates = require("../utils/emailTemplates");
 const { isStudentPlaced, getStudentPlacementStatus } = require("../utils/studentStatus");
+const { extractCleanSkills } = require("../services/placementAnalyzerService");
 
 const ALL_STATUSES = [
   "Applied",
@@ -157,7 +158,10 @@ const getDriveApplications = async (req, res) => {
               isPlaced,
               placementCompany,
             } : null,
-            xai: app.xai,
+            xai: app.xai ? {
+              ...app.xai,
+              skillGaps: extractCleanSkills(app.xai.skillGaps || []),
+            } : null,
             aptitude: app.aptitude,
             gd: app.gd,
             interview: app.interview,
@@ -302,7 +306,7 @@ const createJobDrive = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "✅ Drive submitted for TPO approval. You will be notified once it's live.",
+      message: "Drive submitted for TPO approval. You will be notified once it's live.",
       drive: jobDrive,
     });
   } catch (error) {
@@ -924,7 +928,7 @@ const scheduleEvent = async (req, res) => {
 
       if (app.studentId && app.studentId.userId) {
         await socketService.sendRealTimeNotification(app.studentId.userId._id, {
-          title: `New Schedule: ${eventType} Round 📅`,
+          title: `New Schedule: ${eventType} Round`,
           message: `You have been scheduled for the ${eventType} round of ${recruiter ? recruiter.companyName : "Recruiter"} on ${new Date(scheduledDate).toDateString()} at ${timeSlot}.`,
           type: "info",
         });
@@ -1241,7 +1245,7 @@ const declareAptitudeResults = async (req, res) => {
 
       const studentDoc = await Student.findById(app.studentId);
       if (studentDoc) {
-        const title = result === "Passed" ? "Aptitude Test Passed 🎉" : "Aptitude Test Update 📝";
+        const title = result === "Passed" ? "Aptitude Test Passed" : "Aptitude Test Update";
         const message = result === "Passed"
           ? `Congratulations! You passed the Aptitude round for ${app.driveId ? app.driveId.title : "Placement Drive"}.`
           : `Thank you for participating. You were not shortlisted in the Aptitude round for ${app.driveId ? app.driveId.title : "Placement Drive"}.`;
@@ -1352,7 +1356,7 @@ const declareGDResults = async (req, res) => {
 
       const studentDoc = await Student.findById(app.studentId);
       if (studentDoc) {
-        const title = result === "Shortlisted" ? "GD Round Shortlisted 👥" : "GD Round Update 📝";
+        const title = result === "Shortlisted" ? "GD Round Shortlisted" : "GD Round Update";
         const message = result === "Shortlisted"
           ? `Congratulations! You passed the Group Discussion round for ${app.driveId ? app.driveId.title : "Placement Drive"}.`
           : `Thank you for participating. You were not shortlisted in the Group Discussion round for ${app.driveId ? app.driveId.title : "Placement Drive"}.`;
@@ -1464,11 +1468,11 @@ const declareInterviewResults = async (req, res) => {
 
       const studentDoc = await Student.findById(app.studentId);
       if (studentDoc) {
-        let title = "Interview Completed 💬";
+        let title = "Interview Completed";
         let message = `Your Interview results have been declared for ${app.driveId ? app.driveId.title : "Placement Drive"}. Status: ${result}`;
         let type = "info";
         if (result === "Selected") {
-          title = "Selected for Placement! 🏆";
+          title = "Selected for Placement!";
           message = `Congratulations! You have been selected in the Interview round for ${app.driveId ? app.driveId.title : "Placement Drive"}! Prepare for the official offer.`;
           type = "success";
         }
@@ -1593,7 +1597,7 @@ const uploadOfferLetter = async (req, res) => {
     const studentDoc = await Student.findById(application.studentId).populate("userId");
     if (studentDoc) {
       await socketService.sendRealTimeNotification(studentDoc.userId._id || studentDoc.userId, {
-        title: "Official Job Offer Received! ✉️",
+        title: "Official Job Offer Received!",
         message: `Congratulations! ${recruiter.companyName} has sent you an official job offer letter for the drive: "${application.driveId ? application.driveId.title : "Job Drive"}". Please check your Offers tab.`,
         type: "success",
       });
@@ -2147,7 +2151,7 @@ const getAllRecruiterApplications = async (req, res) => {
       if (placementInfo) {
         if (placementInfo.driveId === app.driveId?._id?.toString()) {
           appObj.isPlacedInThisDrive = true;
-          appObj.displayStatus = "Offer Accepted 🎉";
+          appObj.displayStatus = "Offer Accepted";
         } else {
           appObj.isPlacedElsewhere = true;
           appObj.isPlacedGlobally = true;

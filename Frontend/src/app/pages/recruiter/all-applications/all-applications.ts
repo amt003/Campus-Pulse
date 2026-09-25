@@ -100,17 +100,17 @@ export class RecruiterAllApplicationsComponent implements OnInit {
 
   protected getDisplayStatus(app: any): string {
     if (app.isPlacedElsewhere || (app.placementCompany && !app.isPlacedInThisDrive)) {
-      return `✅ Placed at ${app.placementCompany || 'another company'}`;
+      return `Placed at ${app.placementCompany || 'another company'}`;
     }
     const offerStatus = app.offer?.status;
     if (offerStatus === 'Accepted' || app.status === 'Offer Accepted' || app.status === 'Placed') {
-      return 'Offer Accepted 🎉';
+      return 'Offer Accepted';
     }
     if (offerStatus === 'Sent' || app.status === 'Offer Sent') {
       return 'Offer Sent';
     }
     if (offerStatus === 'Declined' || app.status === 'Offer Declined') {
-      return 'Offer Declined ❌';
+      return 'Offer Declined';
     }
     return app.status;
   }

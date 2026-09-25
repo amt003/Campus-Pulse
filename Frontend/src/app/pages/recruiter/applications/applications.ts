@@ -445,13 +445,13 @@ export class RecruiterApplicationsComponent implements OnInit {
   protected getStatusLabel(app: any): string {
     const offerStatus = app.offer?.status;
     if (offerStatus === 'Accepted' || app.status === 'Offer Accepted' || app.status === 'Placed') {
-      return 'Offer Accepted 🎉';
+      return 'Offer Accepted';
     }
     if (offerStatus === 'Sent' || app.status === 'Offer Sent') {
-      return 'Offer Sent 📩';
+      return 'Offer Sent';
     }
     if (offerStatus === 'Declined' || app.status === 'Offer Declined') {
-      return 'Offer Declined ❌';
+      return 'Offer Declined';
     }
     if (app.status === 'Interview Completed' && app.interview?.result === 'Selected') {
       return 'Selected';
@@ -604,7 +604,7 @@ export class RecruiterApplicationsComponent implements OnInit {
       next: (res) => {
         this.offerIsSubmitting.set(false);
         this.closeOfferModal();
-        this.successMessage.set(`Offer letter uploaded and sent to ${app.student?.name || 'candidate'} successfully! 🎉`);
+        this.successMessage.set(`Offer letter uploaded and sent to ${app.student?.name || 'candidate'} successfully!`);
         this.fetchApplications();
         setTimeout(() => this.successMessage.set(null), 10000);
       },
@@ -819,10 +819,22 @@ export class RecruiterApplicationsComponent implements OnInit {
       .filter(kw => !jdMatches.includes(kw))
       .map(kw => kw.toUpperCase());
 
-    // Merge with DB skill gaps (deduplicated)
+    // Merge with DB skill gaps (deduplicated & cleaned)
     const combinedSkillGaps = new Set<string>();
-    (app.xai?.skillGaps || []).forEach(s => combinedSkillGaps.add(s.toUpperCase()));
-    dynamicSkillGaps.forEach(s => combinedSkillGaps.add(s));
+    (app.xai?.skillGaps || []).forEach(s => {
+      if (!s) return;
+      const cleaned = s.replace(/\.+$/, '').trim();
+      if (cleaned && cleaned.length <= 35 && !cleaned.toLowerCase().startsWith('employment type') && !cleaned.toLowerCase().startsWith('the selected candidate')) {
+        combinedSkillGaps.add(cleaned);
+      }
+    });
+    dynamicSkillGaps.forEach(s => {
+      if (!s) return;
+      const cleaned = s.replace(/\.+$/, '').trim();
+      if (cleaned && cleaned.length <= 35) {
+        combinedSkillGaps.add(cleaned);
+      }
+    });
     
     if (app.xai) {
       app.xai.skillGaps = Array.from(combinedSkillGaps);
@@ -937,7 +949,7 @@ export class RecruiterApplicationsComponent implements OnInit {
       const ineligibleCount = totalSelected - eligibleCount;
       const priorRoundName = type === 'GD' ? 'Aptitude Test' : (this.driveHasGD() ? 'Group Discussion (GD)' : 'Aptitude Test');
       this.errorMessage.set(
-        `⚠️ Notice: ${ineligibleCount} of ${totalSelected} selected candidate(s) did not pass the ${priorRoundName} round and will be skipped.`
+        `Notice: ${ineligibleCount} of ${totalSelected} selected candidate(s) did not pass the ${priorRoundName} round and will be skipped.`
       );
       setTimeout(() => this.errorMessage.set(null), 10000);
     }
@@ -958,7 +970,7 @@ export class RecruiterApplicationsComponent implements OnInit {
     if (alreadyCount > 0) {
       // Some are already scheduled — warn but allow (backend will handle duplicates)
       this.errorMessage.set(
-        `⚠️ Warning: ${alreadyCount} of ${totalSelected} selected candidate(s) are already scheduled for ${type} and will be skipped.`
+        `Warning: ${alreadyCount} of ${totalSelected} selected candidate(s) are already scheduled for ${type} and will be skipped.`
       );
       setTimeout(() => this.errorMessage.set(null), 10000);
     }

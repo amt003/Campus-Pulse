@@ -145,8 +145,8 @@
                 <div class="subscore-bar-bg">
                   <div class="subscore-bar-fill blue" [style.width.%]="pra.subScores.aiMatch"></div>
                 </div>
-                <span class="subscore-hint" [class.unattempted]="!pra.subScoreMeta || pra.subScoreMeta.matchCount === 0">
-                  {{ pra.subScoreMeta && pra.subScoreMeta.matchCount > 0 ? (pra.subScoreMeta.matchCount + ' Drives Evaluated') : 'No Drives Evaluated' }}
+                <span class="subscore-hint" [class.unattempted]="pra.subScoreMeta?.isAiMatchEstimated">
+                  {{ pra.subScoreMeta?.isAiMatchEstimated ? 'Profile Prior (0 Evaluated)' : (pra.subScoreMeta?.matchCount + ' Drives (Recency Weighted)') }}
                 </span>
               </div>
             </div>
@@ -162,14 +162,14 @@
                   <span class="subscore-weight">20% weight</span>
                 </div>
                 <div class="subscore-val-row">
-                  <span class="subscore-number" [class.not-attempted]="pra.subScores.aptitude === 0">{{ pra.subScores.aptitude }}</span>
+                  <span class="subscore-number">{{ pra.subScores.aptitude }}</span>
                   <span class="subscore-suffix">/100</span>
                 </div>
                 <div class="subscore-bar-bg">
                   <div class="subscore-bar-fill teal" [style.width.%]="pra.subScores.aptitude"></div>
                 </div>
-                <span class="subscore-hint" [class.unattempted]="!pra.subScoreMeta || pra.subScoreMeta.aptAttempted === 0">
-                  {{ pra.subScoreMeta && pra.subScoreMeta.aptAttempted > 0 ? (pra.subScoreMeta.aptPassed + '/' + pra.subScoreMeta.aptAttempted + ' Cleared') : 'Not Attempted (0 Drives)' }}
+                <span class="subscore-hint" [class.unattempted]="pra.subScoreMeta?.isAptEstimated">
+                  {{ pra.subScoreMeta?.isAptEstimated ? 'Bayesian Baseline (0 Drives)' : (pra.subScoreMeta?.aptPassed + '/' + pra.subScoreMeta?.aptAttempted + ' Cleared') }}
                 </span>
               </div>
             </div>
@@ -185,14 +185,14 @@
                   <span class="subscore-weight">15% weight</span>
                 </div>
                 <div class="subscore-val-row">
-                  <span class="subscore-number" [class.not-attempted]="pra.subScores.gd === 0">{{ pra.subScores.gd }}</span>
+                  <span class="subscore-number">{{ pra.subScores.gd }}</span>
                   <span class="subscore-suffix">/100</span>
                 </div>
                 <div class="subscore-bar-bg">
                   <div class="subscore-bar-fill amber" [style.width.%]="pra.subScores.gd"></div>
                 </div>
-                <span class="subscore-hint" [class.unattempted]="!pra.subScoreMeta || pra.subScoreMeta.gdAttempted === 0">
-                  {{ pra.subScoreMeta && pra.subScoreMeta.gdAttempted > 0 ? (pra.subScoreMeta.gdShortlisted + '/' + pra.subScoreMeta.gdAttempted + ' Shortlisted') : 'Not Attempted (0 Drives)' }}
+                <span class="subscore-hint" [class.unattempted]="pra.subScoreMeta?.isGdEstimated">
+                  {{ pra.subScoreMeta?.isGdEstimated ? 'Bayesian Baseline (0 Drives)' : (pra.subScoreMeta?.gdShortlisted + '/' + pra.subScoreMeta?.gdAttempted + ' Cleared') }}
                 </span>
               </div>
             </div>
@@ -208,14 +208,14 @@
                   <span class="subscore-weight">10% weight</span>
                 </div>
                 <div class="subscore-val-row">
-                  <span class="subscore-number" [class.not-attempted]="pra.subScores.interview === 0">{{ pra.subScores.interview }}</span>
+                  <span class="subscore-number">{{ pra.subScores.interview }}</span>
                   <span class="subscore-suffix">/100</span>
                 </div>
                 <div class="subscore-bar-bg">
                   <div class="subscore-bar-fill green" [style.width.%]="pra.subScores.interview"></div>
                 </div>
-                <span class="subscore-hint" [class.unattempted]="!pra.subScoreMeta || pra.subScoreMeta.interviewAttempted === 0">
-                  {{ pra.subScoreMeta && pra.subScoreMeta.interviewAttempted > 0 ? (pra.subScoreMeta.interviewSelected + '/' + pra.subScoreMeta.interviewAttempted + ' Selected') : 'Not Attempted (0 Drives)' }}
+                <span class="subscore-hint" [class.unattempted]="pra.subScoreMeta?.isInterviewEstimated">
+                  {{ pra.subScoreMeta?.isInterviewEstimated ? 'Bayesian Baseline (0 Drives)' : (pra.subScoreMeta?.interviewSelected + '/' + pra.subScoreMeta?.interviewAttempted + ' Selected') }}
                 </span>
               </div>
             </div>
@@ -244,6 +244,85 @@
         </div>
 
       </section>
+
+      <!-- ── SECTION 1.5: WHAT-IF SIMULATOR CARD ────────────────── -->
+      @if (pra.whatIfActions && pra.whatIfActions.length > 0) {
+        <section class="what-if-section">
+          <div class="glass-card what-if-card">
+            <div class="what-if-header">
+              <div class="what-if-header-left">
+                <div class="what-if-icon-chip">
+                  <span class="material-symbols-outlined">vital_signs</span>
+                </div>
+                <div>
+                  <div class="what-if-eyebrow">Prescriptive Score Projection</div>
+                  <h3 class="what-if-title">Interactive "What-If" Readiness Simulator</h3>
+                  <p class="what-if-subtitle">
+                    Select upcoming milestones to simulate how focused preparation immediately elevates your Placement Readiness Score.
+                  </p>
+                </div>
+              </div>
+
+              <div class="what-if-header-right">
+                @if (isSimulating()) {
+                  <div class="sim-badge active">
+                    <span class="sim-delta-tag">+{{ totalSimulatedDelta() }} PTS</span>
+                    <span class="sim-score-tag">Projected: {{ simulatedPraScore() }}</span>
+                    <button type="button" class="btn-reset-sim" (click)="resetSimulations()" title="Reset simulation">
+                      <span class="material-symbols-outlined" style="font-size: 16px;">restart_alt</span>
+                      <span>Reset</span>
+                    </button>
+                  </div>
+                } @else {
+                  <span class="sim-status-inactive">Select milestones below to preview score gain</span>
+                }
+              </div>
+            </div>
+
+            <div class="what-if-grid">
+              @for (action of pra.whatIfActions; track action.id) {
+                <div
+                  class="what-if-action-tile"
+                  [class.tile-selected]="isActionActive(action.id)"
+                  (click)="toggleSimulation(action.id)"
+                  tabindex="0"
+                  role="button"
+                  (keydown.enter)="toggleSimulation(action.id)"
+                >
+                  <div class="action-tile-checkbox">
+                    <span class="material-symbols-outlined check-mark">
+                      {{ isActionActive(action.id) ? 'check_box' : 'check_box_outline_blank' }}
+                    </span>
+                  </div>
+
+                  <div class="action-tile-content">
+                    <div class="action-tile-top">
+                      <span class="action-tile-category">{{ action.category }}</span>
+                      <span class="action-tile-delta">+{{ action.scoreDelta }} pts</span>
+                    </div>
+                    <h4 class="action-tile-title">{{ action.title }}</h4>
+                    <p class="action-tile-desc">{{ action.description }}</p>
+                    <div class="action-tile-progress-preview">
+                      <span class="preview-label">Sub-score: {{ action.currentVal }}% → <strong>{{ action.projectedVal }}%</strong></span>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (isSimulating()) {
+              <div class="what-if-projection-summary">
+                <span class="material-symbols-outlined summary-icon">trending_up</span>
+                <div class="summary-text">
+                  With <strong>{{ selectedSimulations().length }} milestone{{ selectedSimulations().length > 1 ? 's' : '' }}</strong> achieved, your projected PRA increases from 
+                  <strong>{{ pra.praScore }}</strong> to <strong>{{ simulatedPraScore() }}</strong>, advancing you to 
+                  <span class="summary-band-chip" [ngClass]="getCategoryPillClass(simulatedPraCategory())">{{ simulatedPraCategory() }}</span>.
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
 
 
       <!-- ── SECTION 2 & 3: STAGE FUNNEL & RADAR COMPARISON ─────── -->

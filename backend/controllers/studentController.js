@@ -334,7 +334,7 @@ const applyToDrive = async (req, res) => {
         matchScore: scoreResult.matchScore,
         positiveSentences: scoreResult.positiveSentences || [],
         negativeSentences: scoreResult.negativeSentences || [],
-        skillGaps: scoreResult.skillGaps || [],
+        skillGaps: placementAnalyzerService.extractCleanSkills(scoreResult.skillGaps || []),
         strongSkills: scoreResult.strongSkills || [],
         isOfflineFallback: scoreResult.isOfflineFallback || false
       }
@@ -388,6 +388,9 @@ const getStudentApplications = async (req, res) => {
         appObj.driveId.companyName = rec.companyName;
         appObj.driveId.companyLogo = rec.companyLogo;
       }
+      if (appObj.xai && appObj.xai.skillGaps) {
+        appObj.xai.skillGaps = placementAnalyzerService.extractCleanSkills(appObj.xai.skillGaps);
+      }
       return appObj;
     });
 
@@ -428,6 +431,9 @@ const getApplicationById = async (req, res) => {
     if (appObj.driveId) {
       appObj.driveId.companyName = rec ? rec.companyName : "Placement Recruiter";
       appObj.driveId.companyLogo = rec ? rec.companyLogo : null;
+    }
+    if (appObj.xai && appObj.xai.skillGaps) {
+      appObj.xai.skillGaps = placementAnalyzerService.extractCleanSkills(appObj.xai.skillGaps);
     }
 
     const rawSchedules = await Schedule.find({
@@ -620,7 +626,7 @@ const acceptOffer = async (req, res) => {
     // Send Real-time notification to recruiter
     if (application.driveId) {
       await socketService.sendRealTimeNotification(application.driveId.recruiterId, {
-        title: "Job Offer Accepted 🎉",
+        title: "Job Offer Accepted",
         message: `${req.user.name} has accepted your job offer for the drive: "${application.driveId.title}".`,
         type: "success",
       });
@@ -628,7 +634,7 @@ const acceptOffer = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Congratulations! Offer accepted and placement status updated to Placed 🎉",
+      message: "Congratulations! Offer accepted and placement status updated to Placed",
       application,
     });
   } catch (error) {
@@ -670,7 +676,7 @@ const declineOffer = async (req, res) => {
     // Send Real-time notification to recruiter
     if (application.driveId) {
       await socketService.sendRealTimeNotification(application.driveId.recruiterId, {
-        title: "Job Offer Declined ❌",
+        title: "Job Offer Declined",
         message: `${req.user.name} has declined your job offer for the drive: "${application.driveId.title}". Reason: ${reason || "Personal Reasons"}`,
         type: "warning",
       });

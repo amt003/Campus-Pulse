@@ -1,7 +1,14 @@
 <div class="schedule-page-container">
   <div class="page-header">
-    <h2>📅 Placement Schedule & Calendar</h2>
-    <p>Track your test rounds, group discussions, and interviews organized by Current, Upcoming, and Finished events.</p>
+    <div class="header-title-row">
+      <div class="title-icon-box">
+        <span class="material-symbols-outlined">calendar_month</span>
+      </div>
+      <div>
+        <h2>Placement Schedule & Calendar</h2>
+        <p class="subtitle">Track your test rounds, group discussions, and interviews organized by Current, Upcoming, and Finished events.</p>
+      </div>
+    </div>
   </div>
 
   @if (isLoading()) {
@@ -19,7 +26,7 @@
       <div class="placed-congrats-banner" style="background: linear-gradient(135deg, #E8F8F5, #D4EFDF); border: 2px solid #27AE60; border-radius: 16px; padding: 24px 28px; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.12); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
         <div style="display: flex; align-items: center; gap: 16px;">
           <div style="width: 52px; height: 52px; border-radius: 50%; background: #27AE60; color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);">
-            🎉
+            <span class="material-symbols-outlined" style="font-size: 28px;">celebration</span>
           </div>
           <div>
             <h3 style="font-size: 18px; font-weight: 800; color: #1E8449; margin: 0 0 4px 0;">Congratulations on your Placement!</h3>
@@ -38,7 +45,7 @@
     @if (currentlyEvents().length === 0 && upcomingEvents().length === 0 && finishedEvents().length === 0) {
       <div class="empty-state-card">
         <span class="material-symbols-outlined empty-icon">event_available</span>
-        <h3>🎉 No events scheduled yet</h3>
+        <h3>No events scheduled yet</h3>
         <p>You currently have no active, upcoming, or finished placement rounds scheduled.</p>
       </div>
     }
@@ -48,7 +55,7 @@
       <div class="section-container active-section-glow">
         <h3 class="section-title text-active">
           <span class="material-symbols-outlined icon-pulse">today</span>
-          <span>🔴 Currently Active / Today's Schedules ({{ currentlyEvents().length }})</span>
+          <span>Currently Active / Today's Schedules ({{ currentlyEvents().length }})</span>
         </h3>
 
         <div class="events-grid">
@@ -91,7 +98,7 @@
                 <div class="location-box active-loc-box">
                   <div style="display: flex; align-items: center; gap: 4px;">
                     <span class="material-symbols-outlined detail-icon">location_on</span>
-                    <span class="location-text">📍 {{ event.location || 'Online' }}</span>
+                    <span class="location-text">{{ event.location || 'Online' }}</span>
                   </div>
 
                   @if (event.isFrozen || (isPlaced() && event.companyName !== placedCompany())) {
@@ -124,7 +131,7 @@
       <div class="section-container" style="margin-top: 32px;">
         <h3 class="section-title">
           <span class="material-symbols-outlined" style="color: var(--secondary);">event_upcoming</span>
-          <span>📅 Upcoming Schedules ({{ upcomingEvents().length }})</span>
+          <span>Upcoming Schedules ({{ upcomingEvents().length }})</span>
         </h3>
 
         <div class="events-grid">
@@ -160,7 +167,7 @@
                 <div class="location-box">
                   <div style="display: flex; align-items: center; gap: 4px;">
                     <span class="material-symbols-outlined detail-icon">location_on</span>
-                    <span class="location-text">📍 {{ event.location || 'Online' }}</span>
+                    <span class="location-text">{{ event.location || 'Online' }}</span>
                   </div>
 
                   @if (event.isFrozen || (isPlaced() && event.companyName !== placedCompany())) {
@@ -187,7 +194,7 @@
       <div class="section-container" style="margin-top: 36px;">
         <h3 class="section-title text-muted">
           <span class="material-symbols-outlined">task_alt</span>
-          <span>✅ Finished / Completed Schedules ({{ finishedEvents().length }})</span>
+          <span>Finished / Completed Schedules ({{ finishedEvents().length }})</span>
         </h3>
 
         <div class="events-grid">
@@ -222,7 +229,7 @@
 
                 <div class="location-box muted-box">
                   <span class="material-symbols-outlined detail-icon text-muted">location_on</span>
-                  <span class="location-text">📍 {{ event.location || 'Online' }}</span>
+                  <span class="location-text">{{ event.location || 'Online' }}</span>
                 </div>
               </div>
             </div>

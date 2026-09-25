@@ -5,6 +5,7 @@ import {
   OnDestroy,
   inject,
   signal,
+  computed,
   ElementRef,
   ViewChild,
 } from '@angular/core';
@@ -24,6 +25,17 @@ interface Suggestion {
     type: string;
     badge?: string;
   }[];
+}
+
+interface WhatIfAction {
+  id: string;
+  title: string;
+  category: string;
+  icon: string;
+  currentVal: number;
+  projectedVal: number;
+  scoreDelta: number;
+  description: string;
 }
 
 interface ReadinessData {
@@ -52,11 +64,15 @@ interface ReadinessData {
   subScoreMeta?: {
     aptAttempted: number;
     aptPassed: number;
+    isAptEstimated?: boolean;
     gdAttempted: number;
     gdShortlisted: number;
+    isGdEstimated?: boolean;
     interviewAttempted: number;
     interviewSelected: number;
+    isInterviewEstimated?: boolean;
     matchCount: number;
+    isAiMatchEstimated?: boolean;
     appliedCount: number;
   };
   stageFunnel: {
@@ -85,6 +101,7 @@ interface ReadinessData {
   };
   recurringSkillGaps: string[];
   personalizedSuggestions: Suggestion[];
+  whatIfActions?: WhatIfAction[];
   applicationsCount: number;
   lastComputedAt: string;
 }
@@ -107,6 +124,33 @@ export class StudentReadinessComponent implements OnInit, AfterViewInit, OnDestr
   protected isRefreshing = signal<boolean>(false);
   protected errorMsg = signal<string | null>(null);
   protected data = signal<ReadinessData | null>(null);
+
+  // Tier 1: Interactive Prescriptive Simulation State
+  protected selectedSimulations = signal<string[]>([]);
+
+  protected isSimulating = computed(() => this.selectedSimulations().length > 0);
+
+  protected totalSimulatedDelta = computed(() => {
+    const currentData = this.data();
+    if (!currentData || !currentData.whatIfActions) return 0;
+    const activeIds = new Set(this.selectedSimulations());
+    return currentData.whatIfActions
+      .filter((act) => activeIds.has(act.id))
+      .reduce((sum, act) => sum + act.scoreDelta, 0);
+  });
+
+  protected simulatedPraScore = computed(() => {
+    const currentData = this.data();
+    if (!currentData) return 0;
+    return Math.min(100, currentData.praScore + this.totalSimulatedDelta());
+  });
+
+  protected simulatedPraCategory = computed(() => {
+    const score = this.simulatedPraScore();
+    if (score >= 75) return 'Well Prepared';
+    if (score >= 45) return 'Needs Improvement';
+    return 'Needs Significant Improvement';
+  });
 
   private gaugeChart?: echarts.ECharts;
   private funnelChart?: echarts.ECharts;
@@ -497,5 +541,44 @@ export class StudentReadinessComponent implements OnInit, AfterViewInit, OnDestr
     if (cat.includes('well') || cat.includes('high')) return 'pill-green';
     if (cat.includes('significant')) return 'pill-red';
     return 'pill-amber';
+  }
+
+  // Tier 1: What-If Simulation Controls
+  protected toggleSimulation(actionId: string): void {
+    const current = new Set(this.selectedSimulations());
+    if (current.has(actionId)) {
+      current.delete(actionId);
+    } else {
+      current.add(actionId);
+    }
+    this.selectedSimulations.set(Array.from(current));
+    this.updateGaugeValue(this.simulatedPraScore(), this.simulatedPraCategory());
+  }
+
+  protected resetSimulations(): void {
+    this.selectedSimulations.set([]);
+    if (this.data()) {
+      this.updateGaugeValue(this.data()!.praScore, this.data()!.praCategory);
+    }
+  }
+
+  protected isActionActive(actionId: string): boolean {
+    return this.selectedSimulations().includes(actionId);
+  }
+
+  private updateGaugeValue(score: number, category: string): void {
+    if (!this.gaugeChart) return;
+    this.gaugeChart.setOption({
+      series: [
+        {
+          data: [
+            {
+              value: score,
+              name: category,
+            },
+          ],
+        },
+      ],
+    });
   }
 }

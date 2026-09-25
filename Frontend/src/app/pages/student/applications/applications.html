@@ -12,13 +12,23 @@
          ========================================== -->
     @if (!selectedApp()) {
       <div class="master-list-view">
-        <h2 style="font-size: 20px; font-weight: 800; color: var(--primary); margin: 0 0 20px 0;">My Applications</h2>
+        <div class="page-header">
+          <div class="header-title-row">
+            <div class="title-icon-box">
+              <span class="material-symbols-outlined">assignment</span>
+            </div>
+            <div>
+              <h2>My Applications</h2>
+              <p class="subtitle">Track and review your recruitment drive applications, round evaluations, and status progress.</p>
+            </div>
+          </div>
+        </div>
 
         @if (isPlaced()) {
           <div class="placed-congrats-banner" style="background: linear-gradient(135deg, #E8F8F5, #D4EFDF); border: 2px solid #27AE60; border-radius: 16px; padding: 24px 28px; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.12); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 16px;">
               <div style="width: 52px; height: 52px; border-radius: 50%; background: #27AE60; color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);">
-                🎉
+                <span class="material-symbols-outlined" style="font-size: 28px;">celebration</span>
               </div>
               <div>
                 <h3 style="font-size: 18px; font-weight: 800; color: #1E8449; margin: 0 0 4px 0;">Congratulations! You are Placed!</h3>
@@ -37,7 +47,7 @@
         @if (applications().length === 0) {
           <div class="empty-state-card" style="margin-top: 24px;">
             <span class="material-symbols-outlined empty-icon-large" style="color: var(--border);">assignment_late</span>
-            <h3>📝 No applications submitted yet</h3>
+            <h3>No applications submitted yet</h3>
             <p>You have not submitted any applications to campus drives yet. Go to your Dashboard to explore active drives and apply.</p>
           </div>
         } @else {
@@ -55,23 +65,23 @@
                   <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
                     <!-- Drive Status Pill -->
                     @if (app.driveId?.status === 'Open') {
-                      <span class="drive-status-tag open">✅ Drive Open</span>
+                      <span class="drive-status-tag open">Drive Open</span>
                     } @else if (app.driveId?.status === 'Expired') {
-                      <span class="drive-status-tag expired">⏰ Drive Expired</span>
+                      <span class="drive-status-tag expired">Drive Expired</span>
                     } @else if (app.driveId?.status === 'Closed') {
-                      <span class="drive-status-tag closed">🔒 Drive Closed</span>
+                      <span class="drive-status-tag closed">Drive Closed</span>
                     } @else if (app.driveId?.status === 'OnHold') {
-                      <span class="drive-status-tag onhold">⏸️ Drive On Hold</span>
+                      <span class="drive-status-tag onhold">Drive On Hold</span>
                     }
 
                     <!-- Application Status Pill -->
                     @if (isAppPlaced(app)) {
                       <span class="status-pill" style="font-size: 11px; padding: 4px 10px; border-radius: 20px; background: #27AE60; color: white; font-weight: 800;">
-                        Placed 🎉 (Offer Accepted)
+                        Placed (Offer Accepted)
                       </span>
                     } @else if (isPlaced()) {
                       <span class="status-pill" style="font-size: 11px; padding: 4px 10px; border-radius: 20px; background: #7F8C8D; color: white; font-weight: 700;">
-                        🔒 Frozen (Policy Locked)
+                        Frozen (Policy Locked)
                       </span>
                     } @else {
                       <span class="status-pill pill-open" style="font-size: 11px; padding: 3px 10px; border-radius: 20px;">
@@ -137,19 +147,19 @@
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             <!-- Drive Status Tag in Detail Header -->
             @if (selectedApp()!.driveId?.status === 'Open') {
-              <span class="drive-status-tag open" style="font-size: 12px; padding: 5px 12px;">✅ Drive Open</span>
+              <span class="drive-status-tag open" style="font-size: 12px; padding: 5px 12px;">Drive Open</span>
             } @else if (selectedApp()!.driveId?.status === 'Expired') {
-              <span class="drive-status-tag expired" style="font-size: 12px; padding: 5px 12px;">⏰ Drive Expired</span>
+              <span class="drive-status-tag expired" style="font-size: 12px; padding: 5px 12px;">Drive Expired</span>
             } @else if (selectedApp()!.driveId?.status === 'Closed') {
-              <span class="drive-status-tag closed" style="font-size: 12px; padding: 5px 12px;">🔒 Drive Closed</span>
+              <span class="drive-status-tag closed" style="font-size: 12px; padding: 5px 12px;">Drive Closed</span>
             } @else if (selectedApp()!.driveId?.status === 'OnHold') {
-              <span class="drive-status-tag onhold" style="font-size: 12px; padding: 5px 12px;">⏸️ Drive On Hold</span>
+              <span class="drive-status-tag onhold" style="font-size: 12px; padding: 5px 12px;">Drive On Hold</span>
             }
 
             @if (isAppPlaced(selectedApp())) {
               <span class="status-badge-green" style="background: #27AE60; color: white; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px;">
                 <span class="material-symbols-outlined" style="font-size: 16px;">verified</span>
-                <span>Placed 🎉 (Offer Accepted)</span>
+                <span>Placed (Offer Accepted)</span>
               </span>
             } @else if (isPlaced()) {
               <span class="status-badge-gray" style="background: #7F8C8D; color: white; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px;">
@@ -243,7 +253,7 @@
                         </h4>
                         @if (isScheduleCompleted(s)) {
                           <span style="background: #E8F8F5; color: #117A65; border: 1px solid #A3E4D7; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 11px; text-transform: uppercase;">
-                            Completed ✓
+                            Completed
                           </span>
                         } @else {
                           <span class="badge-scheduled">{{ s.status || 'SCHEDULED' }}</span>
@@ -294,9 +304,9 @@
                         <div class="alert-calendar-banner" style="margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
                           <p class="alert-note-text" style="margin: 0; flex: 1; min-width: 200px;">
                             @if (isScheduleCompleted(s)) {
-                              "✅ This round has been completed. Review your scores and recruiter feedback below."
+                              "This round has been completed. Review your scores and recruiter feedback below."
                             } @else if (s.meetingUrl && !isTodayOrPast(s.date)) {
-                              "⚠️ Meeting link is locked and will automatically unlock on the test date ({{ s.date | date:'mediumDate' }})."
+                              "Meeting link is locked and will automatically unlock on the test date ({{ s.date | date:'mediumDate' }})."
                             } @else {
                               "Please ensure you have a stable internet connection and a quiet environment."
                             }
@@ -488,7 +498,7 @@
                 <!-- Recruiter Uploads -->
                 @if (resources().attachments && resources().attachments.length > 0) {
                   <div class="resource-group">
-                    <h4 style="margin: 0 0 8px 0; font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 4px;">📎 Recruiter Uploads</h4>
+                    <h4 style="margin: 0 0 8px 0; font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 4px;">Recruiter Uploads</h4>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
                       @for (file of resources().attachments; track file.fileId || file.fileName) {
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #F8F9FA; border-radius: 8px; padding: 8px 12px; border: 1px solid rgba(0,0,0,0.02);">
@@ -511,7 +521,7 @@
                 <!-- Past Questions -->
                 @if (resources().pastQuestions && resources().pastQuestions.length > 0) {
                   <div class="resource-group">
-                    <h4 style="margin: 0 0 8px 0; font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 4px;">💬 Past Questions</h4>
+                    <h4 style="margin: 0 0 8px 0; font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 4px;">Past Questions</h4>
                     <div style="display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto; padding-right: 4px;">
                       @for (q of resources().pastQuestions; track q.question) {
                         <div style="display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #F1F4F6; padding-bottom: 8px;">

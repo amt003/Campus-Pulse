@@ -93,7 +93,6 @@ def score_resume():
                     else:
                         print(f"  [NO MATCH] '{jd_sent}' (Best score: {best_score:.4f} -> '{resume_sentences[best_res_idx]}')")
                         negative_sentences.append(f"Missing criteria matching: '{jd_sent}'")
-                        skill_gaps.append(jd_sent[:45] + "...")
                         
             except Exception as sent_err:
                 print(f"Sentence semantic matching error: {sent_err}")

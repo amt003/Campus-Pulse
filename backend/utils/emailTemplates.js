@@ -21,7 +21,7 @@ const emailTemplates = {
   }),
 
   recruiterApproved: ({ companyName }) => ({
-    subject: "🎉 Company Approved – CampusPulse",
+    subject: "Company Approved – CampusPulse",
     html: baseTemplate(`
       <p>Congratulations!</p>
       <p>Your recruiter account for <strong>${companyName}</strong> has been approved by the TPO.</p>
@@ -33,7 +33,7 @@ const emailTemplates = {
   }),
 
   recruiterOnHold: ({ companyName, feedback }) => ({
-    subject: "⏳ Company On Hold – CampusPulse",
+    subject: "Company On Hold – CampusPulse",
     html: baseTemplate(`
       <p>Hello,</p>
       <p>Your recruiter application for <strong>${companyName}</strong> has been placed on hold by the TPO.</p>
@@ -49,7 +49,7 @@ const emailTemplates = {
   }),
 
   studentScheduled: ({ studentName, companyName, roundType, date, time, location }) => ({
-    subject: `📅 Upcoming Scheduled Round – ${companyName}`,
+    subject: `Upcoming Scheduled Round – ${companyName}`,
     html: baseTemplate(`
       <p>Dear ${studentName},</p>
       <p>You have been scheduled for an upcoming <strong>${roundType}</strong> round with <strong>${companyName}</strong>!</p>
@@ -76,7 +76,7 @@ const emailTemplates = {
   }),
 
   reminder: ({ studentName, companyName, roundType, driveTitle, date, time, location }) => ({
-    subject: `🔔 Reminder: Tomorrow's Round at ${companyName}`,
+    subject: `Reminder: Tomorrow's Round at ${companyName}`,
     html: baseTemplate(`
       <p>Hello ${studentName},</p>
       <p>This is a reminder for your upcoming <strong>${roundType}</strong> round scheduled with <strong>${companyName}</strong>.</p>
@@ -107,7 +107,7 @@ const emailTemplates = {
   }),
 
   offerUploaded: ({ studentName, companyName }) => ({
-    subject: `🎊 Congratulations! Offer Letter from ${companyName}`,
+    subject: `Congratulations! Offer Letter from ${companyName}`,
     html: baseTemplate(`
       <p>Dear ${studentName},</p>
       <p><strong>Congratulations!</strong> <strong>${companyName}</strong> has officially extended a job offer to you.</p>
@@ -119,7 +119,7 @@ const emailTemplates = {
   }),
 
   forgotPassword: ({ name, otp }) => ({
-    subject: "🔑 Password Reset Request – CampusPulse",
+    subject: "Password Reset Request – CampusPulse",
     html: baseTemplate(`
       <p>Hello ${name},</p>
       <p>We received a request to reset your CampusPulse password.</p>

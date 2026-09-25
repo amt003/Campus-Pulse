@@ -379,7 +379,7 @@ export class RecruiterDashboardComponent implements OnInit {
         this.successMessage.set(
           isEdit 
             ? 'Drive updated successfully!'
-            : '✅ Drive submitted for TPO approval. You will be notified once it\'s live.'
+            : 'Drive submitted for TPO approval. You will be notified once it\'s live.'
         );
         this.fetchDrives();
         setTimeout(() => {
@@ -400,7 +400,7 @@ export class RecruiterDashboardComponent implements OnInit {
     this.recruiterService.resubmitDrive(driveId).subscribe({
       next: (res) => {
         this.isSubmitting.set(false);
-        this.successMessage.set('✅ Drive resubmitted for TPO approval.');
+        this.successMessage.set('Drive resubmitted for TPO approval.');
         this.fetchDrives();
         setTimeout(() => this.successMessage.set(null), 10000);
       },

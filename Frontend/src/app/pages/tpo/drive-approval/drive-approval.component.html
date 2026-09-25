@@ -1,9 +1,14 @@
 <div class="approval-page-container">
   <!-- Page Header -->
   <div class="page-header">
-    <div>
-      <h1 class="page-title">📋 Pending Drive Approvals</h1>
-      <p class="page-subtitle">Review, approve, or put recruiter recruitment drives on hold before they go live to students.</p>
+    <div class="header-title-row">
+      <div class="title-icon-box">
+        <span class="material-symbols-outlined">pending_actions</span>
+      </div>
+      <div>
+        <h1 class="page-title">Pending Drive Approvals</h1>
+        <p class="page-subtitle">Review, approve, or put recruiter recruitment drives on hold before they go live to students.</p>
+      </div>
     </div>
     <button class="btn-refresh" (click)="fetchPendingDrives(false)" [disabled]="isRefreshing()">
       <span class="material-symbols-outlined" [class.spinning]="isRefreshing()">refresh</span>
@@ -65,7 +70,7 @@
                       {{ drive.title }}
                       <span class="material-symbols-outlined view-icon">open_in_new</span>
                     </span>
-                    <p class="drive-desc">{{ drive.description | slice:0:80 }}{{ drive.description.length > 80 ? '...' : '' }}</p>
+                    <p class="drive-desc">{{ drive.description }}</p>
                     <div class="stage-pills">
                       @if (drive.hasAptitudeTest) { <span class="stage-pill">Aptitude</span> }
                       @if (drive.hasGD) { <span class="stage-pill">GD</span> }
@@ -276,7 +281,7 @@
                     <span class="step-num">1</span>
                     <span class="step-label">Aptitude Test</span>
                   </div>
-                  <span class="flow-arrow">➔</span>
+                  <span class="flow-arrow"><span class="material-symbols-outlined" style="font-size: 16px;">arrow_forward</span></span>
                 }
 
                 @if (viewingDrive()?.hasGD) {
@@ -284,7 +289,7 @@
                     <span class="step-num">{{ viewingDrive()?.hasAptitudeTest ? '2' : '1' }}</span>
                     <span class="step-label">Group Discussion</span>
                   </div>
-                  <span class="flow-arrow">➔</span>
+                  <span class="flow-arrow"><span class="material-symbols-outlined" style="font-size: 16px;">arrow_forward</span></span>
                 }
 
                 <div class="flow-step-item step-final">

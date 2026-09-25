@@ -39,10 +39,14 @@
     <div class="drive-hero-card">
       <div class="hero-left">
         <div class="company-logo-badge">
-          @if (xrayData()!.drive.companyLogo) {
-            <img [src]="xrayData()!.drive.companyLogo!" [alt]="xrayData()!.drive.companyName" />
+          @if (xrayData()!.drive.companyLogo && !isLogoFailed()) {
+            <img
+              [src]="getLogoUrl(xrayData()!.drive.companyLogo)"
+              [alt]="xrayData()!.drive.companyName || 'Company'"
+              (error)="handleLogoError()"
+            />
           } @else {
-            <span>{{ xrayData()!.drive.companyName.charAt(0).toUpperCase() }}</span>
+            <span>{{ xrayData()!.drive.companyName ? xrayData()!.drive.companyName.charAt(0).toUpperCase() : 'C' }}</span>
           }
         </div>
         <div class="hero-info">
@@ -228,10 +232,14 @@
                   <td>
                     <div class="student-profile-cell">
                       <div class="student-avatar">
-                        @if (app.student.profilePicPath) {
-                          <img [src]="'http://localhost:5000' + app.student.profilePicPath" [alt]="app.student.name" />
+                        @if (app.student.profilePicPath && !isStudentAvatarFailed(app.applicationId)) {
+                          <img
+                            [src]="'http://localhost:5000' + app.student.profilePicPath"
+                            [alt]="app.student.name"
+                            (error)="handleStudentAvatarError(app.applicationId)"
+                          />
                         } @else {
-                          <span>{{ app.student.name.charAt(0).toUpperCase() }}</span>
+                          <span>{{ app.student.name ? app.student.name.charAt(0).toUpperCase() : 'S' }}</span>
                         }
                       </div>
                       <div class="student-meta">

@@ -5,7 +5,7 @@ const getNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.user._id })
       .sort({ createdAt: -1 })
-      .limit(50); // Get latest 50 notifications
+      .limit(150); // Get latest 150 notifications
 
     return res.status(200).json({
       success: true,

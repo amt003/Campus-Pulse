@@ -405,7 +405,7 @@
 
 .chart-box-container {
   width: 100%;
-  height: 290px;
+  height: 350px;
 }
 
 .echarts-embed {
@@ -668,17 +668,15 @@
   font-weight: 750;
   color: var(--primary);
   font-size: 12.5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .candidate-email {
   font-size: 10.5px;
   color: var(--on-surface-var);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-all;
 }
 
 .mono-roll {
@@ -691,9 +689,6 @@
   border-radius: 6px;
   white-space: nowrap;
   display: inline-block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
 }
 
 .branch-pill {
@@ -717,6 +712,31 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.score-num-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.estimated-warning-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #b45309;
+  font-size: 9.5px;
+  font-weight: 800;
+  cursor: help;
+  line-height: 1.2;
+}
+
+.estimated-warning-chip .icon-mini {
+  font-size: 11px;
 }
 
 .pra-score-num {

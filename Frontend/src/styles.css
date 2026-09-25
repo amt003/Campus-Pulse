@@ -166,3 +166,65 @@ html.lenis-stopped {
   background: transparent !important;
 }
 
+/* ─── Standardized Page Header Component Styling ───────────────────────────── */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.title-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #1A5276 0%, #2980B9 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(26, 82, 118, 0.25);
+  flex-shrink: 0;
+}
+
+.title-icon-box .material-symbols-outlined {
+  font-size: 26px;
+  color: #ffffff;
+}
+
+.page-header h1,
+.page-header h2,
+.page-header .page-title,
+.header-title-row h1,
+.header-title-row h2,
+.header-title-row .page-title {
+  font-size: 24px;
+  font-weight: 850;
+  color: #1C2833;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.4px;
+  line-height: 1.25;
+}
+
+.page-header .subtitle,
+.page-header .page-subtitle,
+.header-title-row .subtitle,
+.header-title-row .page-subtitle,
+.header-title-row p {
+  font-size: 13.5px;
+  color: #5D6D7E;
+  margin: 0;
+  max-width: 650px;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+

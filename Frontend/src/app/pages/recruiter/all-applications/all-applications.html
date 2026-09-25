@@ -1,9 +1,14 @@
 <div class="applications-page-container">
   <!-- Page Header -->
   <div class="page-header">
-    <div>
-      <h1 class="page-title">Applications Tracker</h1>
-      <p class="page-subtitle">Master record of all student applications across your company's recruitment drives.</p>
+    <div class="header-title-row">
+      <div class="title-icon-box">
+        <span class="material-symbols-outlined">group</span>
+      </div>
+      <div>
+        <h1 class="page-title">Applications Tracker</h1>
+        <p class="page-subtitle">Master record of all student applications across your company's recruitment drives.</p>
+      </div>
     </div>
   </div>
 
@@ -90,7 +95,7 @@
                 </td>
                 <td>
                   <span class="ai-score-pill">
-                    ⚡ {{ app.aiMatchScore ? app.aiMatchScore + '%' : 'N/A' }}
+                    <span class="material-symbols-outlined" style="font-size: 13px; vertical-align: middle;">bolt</span> {{ app.aiMatchScore ? app.aiMatchScore + '%' : 'N/A' }}
                   </span>
                 </td>
                 <td>

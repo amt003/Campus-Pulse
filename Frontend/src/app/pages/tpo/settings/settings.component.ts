@@ -83,7 +83,7 @@ export class TpoSettingsComponent implements OnInit {
     return {
       status: 'valid',
       type: 'success',
-      text: `✓ Date range is valid (${duration} days). Drives and events will be constrained to this window.`
+      text: `Date range is valid (${duration} days). Drives and events will be constrained to this window.`
     };
   });
 
@@ -227,7 +227,7 @@ export class TpoSettingsComponent implements OnInit {
         this.configData.set(res.data);
         const msg = res.message || 'Placement season configuration saved successfully!';
         this.successMessage.set(msg);
-        this.toastService.success('Configuration Saved 💾', msg);
+        this.toastService.success('Configuration Saved', msg);
       },
       error: (err) => {
         this.isSaving.set(false);

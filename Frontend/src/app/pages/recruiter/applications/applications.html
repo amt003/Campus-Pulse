@@ -20,9 +20,14 @@
       <button class="btn-back-circle" (click)="goBack()" title="Back to Dashboard">
         <span class="material-symbols-outlined">chevron_left</span>
       </button>
-      <div>
-        <h1 class="header-main-title">📋 Applications - {{ driveTitle() }}</h1>
-        <span class="header-company-sub">{{ companyName() }}</span>
+      <div class="header-title-row">
+        <div class="title-icon-box">
+          <span class="material-symbols-outlined">assignment</span>
+        </div>
+        <div>
+          <h1 class="header-main-title">Applications - {{ driveTitle() }}</h1>
+          <span class="header-company-sub">{{ companyName() }}</span>
+        </div>
       </div>
     </div>
     
@@ -111,7 +116,7 @@
         (click)="openBulkAptitudeModal()"
       >
         <span class="material-symbols-outlined" style="font-size: 16px;">upload_file</span>
-        <span>📊 Bulk Upload Scores</span>
+        <span>Bulk Upload Scores</span>
       </button>
 
       <button 
@@ -287,11 +292,11 @@
               <td style="text-align: center; font-weight: 700;">
                 @let r = (currentPage() - 1) * pageSize + i + 1;
                 @if (r === 1) {
-                  <span title="Rank #1" style="font-size: 14px;">🥇 #1</span>
+                  <span title="Rank #1" style="font-size: 14px; font-weight: 800; color: #D4AC0D;">#1</span>
                 } @else if (r === 2) {
-                  <span title="Rank #2" style="font-size: 14px;">🥈 #2</span>
+                  <span title="Rank #2" style="font-size: 14px; font-weight: 800; color: #7F8C8D;">#2</span>
                 } @else if (r === 3) {
-                  <span title="Rank #3" style="font-size: 14px;">🥉 #3</span>
+                  <span title="Rank #3" style="font-size: 14px; font-weight: 800; color: #CA6F1E;">#3</span>
                 } @else {
                   <span style="color: var(--text-muted); font-size: 12.5px;">#{{ r }}</span>
                 }
@@ -347,7 +352,7 @@
               <td>
                 @if (app.isPlacedGlobally || app.isPlaced) {
                   <span class="badge-placed" [title]="'This student has accepted an offer at ' + (app.placementCompany || 'another company')">
-                    ✅ Placed at {{ app.placementCompany || 'another company' }}
+                    Placed at {{ app.placementCompany || 'another company' }}
                   </span>
                 } @else {
                   <span class="status-cell-style" [class]="'status-' + getStatusClass(app).toLowerCase()">
@@ -369,7 +374,7 @@
                   @if (app.status === 'Placed' || app.status === 'Offer Accepted' || app.offer?.status === 'Accepted') {
                     <span style="font-size: 11px; font-weight: 800; color: #1E8449; background: #D4EFDF; padding: 3px 8px; border-radius: 4px; border: 1px solid #27AE60; display: inline-flex; align-items: center; gap: 3px;">
                       <span class="material-symbols-outlined" style="font-size: 13px;">verified</span>
-                      <span>Offer Accepted 🎉</span>
+                      <span>Offer Accepted</span>
                     </span>
                     @if (app.offer?.filePath || app.offer?.fileId) {
                       <button class="btn-bulk-schedule" style="padding: 4px 8px; font-size: 11px; background: #EBF5FB; color: #1B4F72; border: 1px solid #AED6F1;" (click)="downloadOfferLetter(app.applicationId)" title="Download Offer Letter PDF">
@@ -645,7 +650,7 @@
                     </div>
                     @if (selectedXaiApp()?.xai?.skillGaps && selectedXaiApp()!.xai!.skillGaps!.length > 0) {
                       <div style="display: flex; gap: 8px; align-items: center; font-size: 11.5px; font-weight: 800; border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 2px;">
-                        <span style="color: #C0392B;">⚠️ Missing Required Technologies:</span>
+                        <span style="color: #C0392B;">Missing Required Technologies:</span>
                         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                           @for (skill of selectedXaiApp()?.xai?.skillGaps; track skill) {
                             <span style="background: #FDEDEC; border: 1px solid #E74C3C; color: #C0392B; font-size: 9.5px; padding: 2px 6px; border-radius: 4px; font-weight: 750;">{{ skill }}</span>
@@ -929,7 +934,7 @@
         <div class="modal-footer" style="padding: 16px 24px; background: #F8F9FA;">
           <button class="btn-cancel" [disabled]="offerIsSubmitting()" (click)="closeOfferModal()">Cancel</button>
           <button class="btn-submit" style="background: #27AE60; border-color: #27AE60; color: white;" [disabled]="!offerFile || offerIsSubmitting()" (click)="submitOfferLetter()">
-            {{ offerIsSubmitting() ? 'Uploading...' : '📤 Upload & Send Offer' }}
+            {{ offerIsSubmitting() ? 'Uploading...' : 'Upload & Send Offer' }}
           </button>
         </div>
       </div>
@@ -942,7 +947,7 @@
       <div class="modal-card" (click)="$event.stopPropagation()" style="max-width: 620px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;">
         
         <div class="modal-header">
-          <h3>📊 Bulk Aptitude Scores & Cutoff Evaluation</h3>
+          <h3>Bulk Aptitude Scores & Cutoff Evaluation</h3>
           <button class="btn-close" (click)="closeBulkAptitudeModal()">&times;</button>
         </div>
 
@@ -963,17 +968,17 @@
 
               <div style="background: #E8F8F5; border: 1px solid #A3E4D7; padding: 12px; border-radius: 8px; text-align: center;">
                 <span style="display: block; font-size: 20px; font-weight: 900; color: #27AE60;">{{ bulkAptitudeSummary()?.passed }}</span>
-                <span style="font-size: 10px; font-weight: 800; color: #1E8449; text-transform: uppercase;">🟢 Passed</span>
+                <span style="font-size: 10px; font-weight: 800; color: #1E8449; text-transform: uppercase;">Passed</span>
               </div>
 
               <div style="background: #FADBD8; border: 1px solid #E74C3C; padding: 12px; border-radius: 8px; text-align: center;">
                 <span style="display: block; font-size: 20px; font-weight: 900; color: #C0392B;">{{ bulkAptitudeSummary()?.failed }}</span>
-                <span style="font-size: 10px; font-weight: 800; color: #78281F; text-transform: uppercase;">🔴 Failed</span>
+                <span style="font-size: 10px; font-weight: 800; color: #78281F; text-transform: uppercase;">Failed</span>
               </div>
 
               <div style="background: #FEF9E7; border: 1px solid #F1C40F; padding: 12px; border-radius: 8px; text-align: center;">
                 <span style="display: block; font-size: 20px; font-weight: 900; color: #7D6608;">{{ bulkAptitudeSummary()?.skipped }}</span>
-                <span style="font-size: 10px; font-weight: 800; color: #7D6608; text-transform: uppercase;">⚠️ Skipped</span>
+                <span style="font-size: 10px; font-weight: 800; color: #7D6608; text-transform: uppercase;">Skipped</span>
               </div>
             </div>
 
@@ -1020,7 +1025,7 @@
             <!-- Cutoff Score Input -->
             <div class="form-group">
               <label style="font-weight: 800; font-size: 13.5px; color: var(--primary); margin-bottom: 4px; display: block;">
-                🎯 Cutoff Passing Marks *
+                Cutoff Passing Marks *
               </label>
               <input 
                 type="number" 
@@ -1085,7 +1090,7 @@
                           <td style="padding: 6px 12px; font-weight: 700;">{{ item.score }} pts</td>
                           <td style="padding: 6px 12px;">
                             <span [style.color]="item.status === 'Passed' ? '#27AE60' : '#E74C3C'" style="font-weight: 800; padding: 2px 6px; border-radius: 4px;" [style.background]="item.status === 'Passed' ? '#E8F8F5' : '#FADBD8'">
-                              {{ item.status === 'Passed' ? '🟢 Passed' : '🔴 Failed' }}
+                              {{ item.status === 'Passed' ? 'Passed' : 'Failed' }}
                             </span>
                           </td>
                         </tr>
@@ -1106,7 +1111,7 @@
               [disabled]="parsedCandidateScores().length === 0 || bulkAptitudeIsSubmitting()" 
               (click)="submitBulkAptitudeEvaluation()"
             >
-              {{ bulkAptitudeIsSubmitting() ? 'Evaluating Batch...' : '🚀 Evaluate Batch Scores' }}
+              {{ bulkAptitudeIsSubmitting() ? 'Evaluating Batch...' : 'Evaluate Batch Scores' }}
             </button>
           </div>
         }

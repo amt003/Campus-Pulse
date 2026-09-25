@@ -56,6 +56,8 @@ interface RankedStudent {
   applicationsCount: number;
   hasResume: boolean;
   activeBacklogs: number;
+  isEstimated?: boolean;
+  calculationError?: string;
 }
 
 interface IndividualReadiness {
@@ -364,7 +366,7 @@ export class TpoAnalyzerComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.deptSkillsChart = echarts.init(this.deptSkillsRef.nativeElement);
 
-    const top6 = skills.slice(0, 6).reverse();
+    const top10 = skills.slice(0, 10).reverse();
 
     const option: echarts.EChartsOption = {
       tooltip: {
@@ -377,9 +379,9 @@ export class TpoAnalyzerComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       grid: {
         top: 15,
-        bottom: 20,
-        left: 150,
-        right: 50,
+        bottom: 10,
+        left: 210,
+        right: 45,
       },
       xAxis: {
         type: 'value',
@@ -388,19 +390,19 @@ export class TpoAnalyzerComponent implements OnInit, AfterViewInit, OnDestroy {
       },
       yAxis: {
         type: 'category',
-        data: top6.map((s) => s.name),
+        data: top10.map((s) => s.name),
         axisLine: { lineStyle: { color: 'rgba(0, 59, 90, 0.15)' } },
         axisLabel: {
           color: '#091d2e',
-          fontSize: 11.5,
+          fontSize: 11,
           fontWeight: 700,
-          formatter: (val: string) => (val.length > 20 ? val.substring(0, 18) + '…' : val),
+          formatter: (val: string) => val,
         },
       },
       series: [
         {
           type: 'bar',
-          data: top6.map((s) => ({
+          data: top10.map((s) => ({
             value: s.count,
             itemStyle: {
               color: '#d97706',
@@ -415,7 +417,7 @@ export class TpoAnalyzerComponent implements OnInit, AfterViewInit, OnDestroy {
             fontSize: 11.5,
             formatter: '{c}',
           },
-          barWidth: 18,
+          barWidth: 14,
         },
       ],
     };

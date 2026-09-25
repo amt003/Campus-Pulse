@@ -1,0 +1,208 @@
+<div class="notifications-page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left-col">
+      <div class="header-title-row">
+        <div class="title-icon-box">
+          <span class="material-symbols-outlined">notifications_active</span>
+        </div>
+        <div>
+          <h2>Notification Center</h2>
+          <p class="subtitle">Stay updated on placement drives, schedules, application progress, and announcements.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      @if (unreadCount() > 0) {
+        <button class="btn-action btn-mark-all" (click)="markAllAsRead()" title="Mark all as read">
+          <span class="material-symbols-outlined">done_all</span>
+          <span>Mark All as Read</span>
+        </button>
+      }
+      <button class="btn-action btn-refresh" (click)="refresh()" [disabled]="isRefreshing()" title="Refresh notifications">
+        <span class="material-symbols-outlined" [class.spin]="isRefreshing()">refresh</span>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Control & Filter Bar -->
+  <div class="control-bar-card">
+    <!-- Filter Pills -->
+    <div class="filter-pills" data-lenis-prevent>
+      <button class="filter-pill" [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">
+        <span class="material-symbols-outlined">inbox</span>
+        <span>All</span>
+        <span class="pill-badge">{{ countAll() }}</span>
+      </button>
+
+      <button class="filter-pill pill-unread" [class.active]="activeFilter() === 'unread'" (click)="setFilter('unread')">
+        <span class="material-symbols-outlined">mark_email_unread</span>
+        <span>Unread</span>
+        @if (countUnread() > 0) {
+          <span class="pill-badge badge-unread">{{ countUnread() }}</span>
+        } @else {
+          <span class="pill-badge">0</span>
+        }
+      </button>
+
+      <button class="filter-pill" [class.active]="activeFilter() === 'success'" (click)="setFilter('success')">
+        <span class="material-symbols-outlined pill-icon-success">check_circle</span>
+        <span>Success & Offers</span>
+        <span class="pill-badge">{{ countSuccess() }}</span>
+      </button>
+
+      <button class="filter-pill" [class.active]="activeFilter() === 'warning'" (click)="setFilter('warning')">
+        <span class="material-symbols-outlined pill-icon-warning">schedule</span>
+        <span>Schedules & Deadlines</span>
+        <span class="pill-badge">{{ countWarning() }}</span>
+      </button>
+
+      <button class="filter-pill" [class.active]="activeFilter() === 'info'" (click)="setFilter('info')">
+        <span class="material-symbols-outlined pill-icon-info">info</span>
+        <span>Updates</span>
+        <span class="pill-badge">{{ countInfo() }}</span>
+      </button>
+    </div>
+
+    <!-- Search Input Bar -->
+    <div class="search-box-wrapper">
+      <div class="search-input-group">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
+          type="text"
+          placeholder="Search notifications by title, company, or message..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          class="search-input"
+        />
+        @if (searchQuery()) {
+          <button class="btn-clear-search" (click)="clearSearch()" title="Clear search">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification List Section -->
+  <div class="notifications-content">
+    @if (filteredNotifications().length === 0) {
+      <div class="empty-notifications-card">
+        <div class="empty-icon-wrap">
+          @if (searchQuery()) {
+            <span class="material-symbols-outlined">search_off</span>
+          } @else if (activeFilter() === 'unread') {
+            <span class="material-symbols-outlined">drafts</span>
+          } @else {
+            <span class="material-symbols-outlined">notifications_off</span>
+          }
+        </div>
+        <h3>
+          @if (searchQuery()) {
+            No notifications matching "{{ searchQuery() }}"
+          } @else if (activeFilter() === 'unread') {
+            You're all caught up!
+          } @else {
+            No notifications in this category
+          }
+        </h3>
+        <p>
+          @if (searchQuery()) {
+            Try searching for a different keyword or clear your filter.
+          } @else if (activeFilter() === 'unread') {
+            There are no unread notifications right now. Check the "All" tab to view past notifications.
+          } @else {
+            You don't have any notifications under this filter at the moment.
+          }
+        </p>
+        @if (searchQuery() || activeFilter() !== 'all') {
+          <button class="btn-reset-filters" (click)="setFilter('all'); clearSearch()">
+            <span>Show All Notifications</span>
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="notifications-list">
+        @for (notif of filteredNotifications(); track notif._id) {
+          <div
+            class="notification-card"
+            [class.unread]="!notif.isRead"
+            [class.type-success]="notif.type === 'success'"
+            [class.type-warning]="notif.type === 'warning'"
+            [class.type-error]="notif.type === 'error'"
+            [class.type-info]="notif.type === 'info'"
+            (click)="markAsRead(notif._id)"
+          >
+            <!-- Left status & icon indicator -->
+            <div class="notif-icon-col">
+              <div class="notif-type-icon-wrapper" [ngClass]="notif.type">
+                <span class="material-symbols-outlined">
+                  {{
+                    notif.type === 'success' ? 'verified' :
+                    (notif.type === 'warning' ? 'notifications_active' :
+                    (notif.type === 'error' ? 'error' : 'campaign'))
+                  }}
+                </span>
+              </div>
+              @if (!notif.isRead) {
+                <div class="unread-pulse-dot" title="Unread notification"></div>
+              }
+            </div>
+
+            <!-- Body Details -->
+            <div class="notif-body-col">
+              <div class="notif-header-line">
+                <div class="notif-title-group">
+                  <h4 class="notif-title">{{ notif.title }}</h4>
+                  @if (!notif.isRead) {
+                    <span class="new-pill-badge">New</span>
+                  }
+                </div>
+                <div class="notif-meta-group">
+                  <span class="notif-time-badge" title="{{ notif.createdAt | date:'medium' }}">
+                    <span class="material-symbols-outlined">schedule</span>
+                    <span>{{ formatTimestamp(notif.createdAt) }}</span>
+                  </span>
+                </div>
+              </div>
+
+              <p class="notif-message-text">{{ notif.message }}</p>
+
+              <!-- Footer Actions -->
+              <div class="notif-card-actions">
+                @if (getActionRoute(notif)) {
+                  <a
+                    [routerLink]="getActionRoute(notif)"
+                    class="btn-context-action"
+                    (click)="$event.stopPropagation(); markAsRead(notif._id)"
+                  >
+                    <span>{{ getActionLabel(notif) }}</span>
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                  </a>
+                }
+
+                @if (!notif.isRead) {
+                  <button
+                    class="btn-mark-single-read"
+                    (click)="markAsRead(notif._id, $event)"
+                    title="Mark as read"
+                  >
+                    <span class="material-symbols-outlined">check</span>
+                    <span>Mark as read</span>
+                  </button>
+                } @else {
+                  <span class="read-indicator">
+                    <span class="material-symbols-outlined">done_all</span>
+                    <span>Read</span>
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -431,7 +431,7 @@ export class StudentDashboardComponent implements OnInit {
       if (isCompleted || isPassed) {
         statusText = app.aptitude?.score !== null && app.aptitude?.score !== undefined 
           ? `Score: ${app.aptitude.score} pts (Passed Cutoff)` 
-          : 'Aptitude Test Passed ✓';
+          : 'Aptitude Test Passed';
       } else if (isFailed) {
         statusText = app.aptitude?.score !== null && app.aptitude?.score !== undefined 
           ? `Score: ${app.aptitude.score} pts (Below Cutoff)` 
@@ -464,7 +464,7 @@ export class StudentDashboardComponent implements OnInit {
       if (isCompleted || isPassed) {
         statusText = app.gd?.score !== null && app.gd?.score !== undefined 
           ? `Score: ${app.gd.score} pts (Shortlisted)` 
-          : 'GD Round Shortlisted ✓';
+          : 'GD Round Shortlisted';
       } else if (isFailed) {
         statusText = 'Not Shortlisted in GD';
       } else if (isScheduled) {
@@ -492,7 +492,7 @@ export class StudentDashboardComponent implements OnInit {
 
     let intStatusText = 'Pending Schedule';
     if (isInterviewPassed) {
-      intStatusText = 'Selected in Interview Round 🎉';
+      intStatusText = 'Selected in Interview Round';
     } else if (isInterviewFailed) {
       intStatusText = 'Not Selected in Interview';
     } else if (isInterviewScheduled) {
@@ -519,9 +519,9 @@ export class StudentDashboardComponent implements OnInit {
 
     let offerStatusText = 'Awaiting Final Results';
     if (isPlaced) {
-      offerStatusText = 'Placed 🎉 (Offer Accepted)';
+      offerStatusText = 'Placed (Offer Accepted)';
     } else if (isOfferSent) {
-      offerStatusText = 'Official Offer Letter Sent! ✉️';
+      offerStatusText = 'Official Offer Letter Sent!';
     } else if (app.offer?.status === 'Declined') {
       offerStatusText = 'Offer Declined';
     }

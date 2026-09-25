@@ -114,6 +114,26 @@ export class TpoOverseeDrivesComponent implements OnInit, OnDestroy {
     }
   }
 
+  protected failedLogos = new Set<string>();
+
+  protected getLogoUrl(logoPath?: string | null): string | null {
+    if (!logoPath) return null;
+    if (logoPath.startsWith('http://') || logoPath.startsWith('https://') || logoPath.startsWith('data:')) {
+      return logoPath;
+    }
+    const cleanPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
+    const fullPath = cleanPath.startsWith('/uploads/') ? cleanPath : `/uploads/logos${cleanPath}`;
+    return `http://localhost:5000${fullPath}`;
+  }
+
+  protected handleLogoError(driveId: string): void {
+    this.failedLogos.add(driveId);
+  }
+
+  protected isLogoFailed(driveId: string): boolean {
+    return this.failedLogos.has(driveId);
+  }
+
   protected navigateToXray(driveId: string): void {
     this.closeViewModal();
     this.router.navigate(['/tpo/drive-xray', driveId]);

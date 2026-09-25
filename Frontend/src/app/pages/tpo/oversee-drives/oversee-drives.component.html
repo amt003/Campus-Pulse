@@ -131,8 +131,12 @@
                 <td>
                   <div class="company-cell">
                     <div class="company-avatar">
-                      @if (drive.recruiter.companyLogo) {
-                        <img [src]="drive.recruiter.companyLogo" [alt]="drive.recruiter.companyName" />
+                      @if (drive.recruiter.companyLogo && !isLogoFailed(drive._id)) {
+                        <img
+                          [src]="getLogoUrl(drive.recruiter.companyLogo)"
+                          [alt]="drive.recruiter.companyName || 'Company'"
+                          (error)="handleLogoError(drive._id)"
+                        />
                       } @else {
                         <span>{{ drive.recruiter.companyName ? drive.recruiter.companyName.charAt(0).toUpperCase() : 'C' }}</span>
                       }
@@ -160,11 +164,8 @@
                 <td>
                   <div class="branches-wrap">
                     @if (drive.eligibleBranches && drive.eligibleBranches.length > 0) {
-                      @for (b of drive.eligibleBranches.slice(0, 3); track b) {
+                      @for (b of drive.eligibleBranches; track b) {
                         <span class="branch-tag">{{ b }}</span>
-                      }
-                      @if (drive.eligibleBranches.length > 3) {
-                        <span class="branch-tag-more">+{{ drive.eligibleBranches.length - 3 }}</span>
                       }
                     } @else {
                       <span class="text-muted">All Branches</span>

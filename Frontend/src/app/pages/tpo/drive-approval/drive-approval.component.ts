@@ -127,7 +127,7 @@ export class TpoDriveApprovalComponent implements OnInit, OnDestroy {
 
     this.tpoService.approveDrive(drive._id).subscribe({
       next: (res) => {
-        this.toastService.success('Drive Approved 🎉', res.message || 'Students can now apply for this drive.');
+        this.toastService.success('Drive Approved', res.message || 'Students can now apply for this drive.');
         this.pendingDrives.update(list => list.filter(d => d._id !== drive._id));
       },
       error: (err) => {
@@ -173,7 +173,7 @@ export class TpoDriveApprovalComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.isSubmittingModal.set(false);
         this.closeModal();
-        this.toastService.success('Drive Rejected ❌', res.message || 'Recruiter has been notified of the decision.');
+        this.toastService.success('Drive Rejected', res.message || 'Recruiter has been notified of the decision.');
         this.pendingDrives.update(list => list.filter(d => d._id !== drive._id));
       },
       error: (err) => {

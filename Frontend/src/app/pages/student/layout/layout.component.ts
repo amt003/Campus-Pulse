@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { StudentService, StudentProfile } from '../../../services/student.service';
@@ -24,6 +24,7 @@ export class StudentLayoutComponent implements OnInit, OnDestroy {
   protected readonly unreadCount = this.notificationService.unreadCount;
   protected readonly notifications = this.notificationService.notifications;
   protected readonly activeToasts = this.notificationService.activeToasts;
+  protected readonly latestNotifications = computed(() => this.notifications().slice(0, 4));
 
   protected dismissToast(id: string): void {
     this.notificationService.dismissToast(id);

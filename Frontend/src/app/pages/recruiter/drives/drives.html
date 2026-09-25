@@ -1,9 +1,14 @@
 <div class="drives-page-container">
   <!-- Page Header -->
   <div class="page-header">
-    <div>
-      <h1 class="page-title">Job Drives</h1>
-      <p class="page-subtitle">Manage recruitment drives, track applicants, and update preparation resources.</p>
+    <div class="header-title-row">
+      <div class="title-icon-box">
+        <span class="material-symbols-outlined">work</span>
+      </div>
+      <div>
+        <h1 class="page-title">Job Drives</h1>
+        <p class="page-subtitle">Manage recruitment drives, track applicants, and update preparation resources.</p>
+      </div>
     </div>
     <a routerLink="/recruiter/dashboard" class="btn-create-drive">
       <span class="material-symbols-outlined">add_circle</span>
@@ -68,17 +73,17 @@
           <div class="card-top-bar">
             <span class="ctc-pill">{{ getCTCInLpa(drive.ctc) }}</span>
             @if (drive.status === 'Open') {
-              <span class="status-pill active">✅ Open</span>
+              <span class="status-pill active">Open</span>
             } @else if (drive.status === 'Pending') {
-              <span class="status-pill" style="background: #fef3c7; color: #d97706; border-color: #fde68a;">⏳ Pending Approval</span>
+              <span class="status-pill" style="background: #fef3c7; color: #d97706; border-color: #fde68a;">Pending Approval</span>
             } @else if (drive.status === 'OnHold') {
-              <span class="status-pill" style="background: #ffedd5; color: #c2410c; border-color: #fed7aa;">⏸️ On Hold</span>
+              <span class="status-pill" style="background: #ffedd5; color: #c2410c; border-color: #fed7aa;">On Hold</span>
             } @else if (drive.status === 'Rejected') {
-              <span class="status-pill" style="background: #fee2e2; color: #dc2626; border-color: #fca5a5;">❌ Rejected</span>
+              <span class="status-pill" style="background: #fee2e2; color: #dc2626; border-color: #fca5a5;">Rejected</span>
             } @else if (drive.status === 'Expired') {
-              <span class="status-pill" style="background: #f1f5f9; color: #64748b; border-color: #cbd5e1;">⏰ Expired</span>
+              <span class="status-pill" style="background: #f1f5f9; color: #64748b; border-color: #cbd5e1;">Expired</span>
             } @else {
-              <span class="status-pill closed">🔒 Closed</span>
+              <span class="status-pill closed">Closed</span>
             }
           </div>
 

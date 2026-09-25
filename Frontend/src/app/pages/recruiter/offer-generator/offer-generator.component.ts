@@ -256,7 +256,7 @@ export class OfferGeneratorComponent implements OnInit, AfterViewInit {
       this.recruiterService.uploadOfferLetter(this.applicationId(), pdfFile).subscribe({
         next: (res) => {
           this.isSubmitting.set(false);
-          this.successMessage.set('🎉 Offer letter attached and sent successfully!');
+          this.successMessage.set('Offer letter attached and sent successfully!');
           setTimeout(() => {
             this.router.navigate(['/recruiter/dashboard']);
           }, 1800);

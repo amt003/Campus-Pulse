@@ -220,7 +220,7 @@ import { SmoothScrollService } from '../../../services/smooth-scroll.service';
                     <span>Official Offer Document Issued</span>
                   </div>
                   <span class="offer-status-note" *ngIf="app.offer?.status === 'Accepted'">
-                    ✅ Offer Accepted by Student
+                    Offer Accepted by Student
                   </span>
                 </div>
 

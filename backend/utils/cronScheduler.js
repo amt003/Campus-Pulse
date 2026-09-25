@@ -61,32 +61,38 @@ const initCronScheduler = () => {
       console.log(`[Cron] Found ${upcomingSchedules.length} schedules for tomorrow.`);
 
       for (const schedule of upcomingSchedules) {
-        if (
-          schedule.studentId &&
-          schedule.studentId.userId &&
-          schedule.studentId.userId.email
-        ) {
-          const userEmail = schedule.studentId.userId.email;
-          const studentName = schedule.studentId.userId.name;
-          const driveTitle = schedule.driveId ? schedule.driveId.title : "Placement Drive";
-          const companyName = schedule.recruiterId ? schedule.recruiterId.companyName : "Campus Recruiter";
+        try {
+          if (
+            schedule.studentId &&
+            schedule.studentId.userId &&
+            schedule.studentId.userId.email
+          ) {
+            const userEmail = schedule.studentId.userId.email;
+            const studentName = schedule.studentId.userId.name;
+            const driveTitle = schedule.driveId ? schedule.driveId.title : "Placement Drive";
+            const companyName = schedule.recruiterId ? schedule.recruiterId.companyName : "Campus Recruiter";
 
-          await sendEmail({
-            to: userEmail,
-            ...emailTemplates.reminder({
-              studentName,
-              companyName,
-              roundType: schedule.eventType,
-              driveTitle,
-              date: schedule.date,
-              time: schedule.timeSlot,
-              location: schedule.location || "Online",
-            }),
-          });
+            await sendEmail({
+              to: userEmail,
+              ...emailTemplates.reminder({
+                studentName,
+                companyName,
+                roundType: schedule.eventType,
+                driveTitle,
+                date: schedule.date,
+                time: schedule.timeSlot,
+                location: schedule.location || "Online",
+              }),
+            });
 
-          schedule.reminderSent = true;
-          await schedule.save();
-          console.log(`[Cron] Reminder sent to ${userEmail} for ${companyName} (${schedule.eventType})`);
+            await Schedule.updateOne(
+              { _id: schedule._id },
+              { $set: { reminderSent: true } }
+            );
+            console.log(`[Cron] Reminder sent to ${userEmail} for ${companyName} (${schedule.eventType})`);
+          }
+        } catch (itemError) {
+          console.error(`[Cron Error] Failed to process reminder for schedule ${schedule._id}:`, itemError.message);
         }
       }
     } catch (error) {

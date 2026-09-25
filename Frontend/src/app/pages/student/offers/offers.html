@@ -44,7 +44,7 @@
           <div class="status-banner banner-accepted">
             <span class="material-symbols-outlined banner-icon">verified</span>
             <div>
-              <h3>🎉 Offer Accepted! You are Officially Placed!</h3>
+              <h3>Offer Accepted! You are Officially Placed!</h3>
               <p>Accepted on {{ (offerDetails()?.acceptedAt || selectedApplication()?.updatedAt) | date:'mediumDate' }}. The university training and placement cell has been notified.</p>
             </div>
           </div>
@@ -52,7 +52,7 @@
           <div class="status-banner banner-declined">
             <span class="material-symbols-outlined banner-icon">cancel</span>
             <div>
-              <h3>❌ Offer Declined</h3>
+              <h3>Offer Declined</h3>
               <p>Declined on {{ (offerDetails()?.declinedAt || selectedApplication()?.updatedAt) | date:'mediumDate' }}. Reason: <strong>{{ offerDetails()?.declineReason || 'Personal Reasons' }}</strong></p>
             </div>
           </div>
@@ -60,7 +60,7 @@
           <div class="status-banner banner-pending">
             <span class="material-symbols-outlined banner-icon">hourglass_top</span>
             <div>
-              <h3>⏳ Action Required: Job Offer Received</h3>
+              <h3>Action Required: Job Offer Received</h3>
               <p>Please review your offer letter below. This offer expires in 
                 <strong [style.color]="getDaysRemaining(offerDetails()?.expiryDate) <= 2 ? '#E74C3C' : '#D4AC0D'">
                   {{ getDaysRemaining(offerDetails()?.expiryDate) }} day(s)
@@ -90,13 +90,13 @@
             } @else {
               <button type="button" class="btn-action-accept" [disabled]="isSubmittingAction()" (click)="acceptOffer()">
                 <span class="material-symbols-outlined">check_circle</span>
-                <span>{{ isSubmittingAction() ? 'Processing...' : '✅ Accept Offer' }}</span>
+                <span>{{ isSubmittingAction() ? 'Processing...' : 'Accept Offer' }}</span>
               </button>
             }
             
             <button type="button" class="btn-action-decline" [disabled]="isSubmittingAction() || isConfirmingAccept()" (click)="openDeclineModal()">
               <span class="material-symbols-outlined">cancel</span>
-              <span>❌ Decline Offer</span>
+              <span>Decline Offer</span>
             </button>
           </div>
         }
@@ -138,8 +138,15 @@
     <!-- All Offers Received Overview -->
     <div class="offers-list-wrapper">
       <div class="page-header">
-        <h2>🎉 Received Job Offers</h2>
-        <p>Review and respond to job offer letters issued by recruiters for your campus placement drives.</p>
+        <div class="header-title-row">
+          <div class="title-icon-box">
+            <span class="material-symbols-outlined">workspace_premium</span>
+          </div>
+          <div>
+            <h2>Received Job Offers</h2>
+            <p class="subtitle">Review and respond to job offer letters issued by recruiters for your campus placement drives.</p>
+          </div>
+        </div>
       </div>
 
       @if (isLoading()) {
@@ -161,7 +168,7 @@
                 <div class="card-top-header">
                   <span class="company-name">{{ (app.driveId && app.driveId.companyName) || 'Campus Recruiter' }}</span>
                   <span class="offer-status-badge" [class]="'badge-' + (app.offer?.status || app.status).toLowerCase()">
-                    {{ app.offer?.status === 'Accepted' || app.status === 'Placed' ? 'Placed 🎉' : (app.offer?.status === 'Declined' ? 'Declined' : 'Offer Received') }}
+                    {{ app.offer?.status === 'Accepted' || app.status === 'Placed' ? 'Placed' : (app.offer?.status === 'Declined' ? 'Declined' : 'Offer Received') }}
                   </span>
                 </div>
 

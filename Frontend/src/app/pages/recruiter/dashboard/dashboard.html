@@ -48,7 +48,7 @@
           <div class="meta-row">
             <span class="meta-label">Automated Verification:</span>
             <div class="verification-chips">
-              <span class="chip chip-success">Domain (WHOIS) ✅</span>
+              <span class="chip chip-success">Domain (WHOIS)</span>
             </div>
           </div>
         </div>
@@ -105,10 +105,15 @@
       }
 
       <!-- Command Center Header -->
-      <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 20px;">
-        <div>
-          <h1 style="font-size: 26px; font-weight: 850; color: var(--primary); margin: 0 0 6px 0; letter-spacing: -0.5px;">Recruiter Command Center</h1>
-          <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Manage your active recruitment drives and track student applications for the Placement Cycle.</p>
+      <div class="page-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+        <div class="header-title-row">
+          <div class="title-icon-box">
+            <span class="material-symbols-outlined">space_dashboard</span>
+          </div>
+          <div>
+            <h1 class="page-title">Recruiter Command Center</h1>
+            <p class="page-subtitle">Manage your active recruitment drives and track student applications for the Placement Cycle.</p>
+          </div>
         </div>
         <div style="display: flex; gap: 12px; align-items: center;">
           <button (click)="exportDrivesToCSV()" style="display: flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 9999px; border: 1.5px solid #27AE60; background: white; color: #27AE60; font-size: 13px; font-weight: 750; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 6px rgba(39,174,96,0.05);">
@@ -132,7 +137,7 @@
             <div>
               <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #475569; display: block; margin-bottom: 2px;">Current Placement Season</span>
               <span style="font-size: 15px; font-weight: 800; color: #0f172a;">
-                📅 {{ seasonConfig()?.seasonStart | date:'mediumDate' }} &nbsp;&rarr;&nbsp; {{ seasonConfig()?.seasonEnd | date:'mediumDate' }}
+                {{ seasonConfig()?.seasonStart | date:'mediumDate' }} &nbsp;&rarr;&nbsp; {{ seasonConfig()?.seasonEnd | date:'mediumDate' }}
               </span>
             </div>
           </div>
@@ -238,17 +243,17 @@
                         {{ (d.ctc / 100000).toFixed(1) }} LPA
                       </span>
                       @if (d.status === 'Open') {
-                        <span style="background: rgba(39, 174, 96, 0.15); color: #16a34a; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">✅ Open</span>
+                        <span style="background: rgba(39, 174, 96, 0.15); color: #16a34a; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">Open</span>
                       } @else if (d.status === 'Pending') {
-                        <span style="background: #fef3c7; color: #d97706; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">⏳ Pending Approval</span>
+                        <span style="background: #fef3c7; color: #d97706; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">Pending Approval</span>
                       } @else if (d.status === 'OnHold') {
-                        <span style="background: #ffedd5; color: #c2410c; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">⏸️ On Hold</span>
+                        <span style="background: #ffedd5; color: #c2410c; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">On Hold</span>
                       } @else if (d.status === 'Rejected') {
-                        <span style="background: #fee2e2; color: #dc2626; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">❌ Rejected</span>
+                        <span style="background: #fee2e2; color: #dc2626; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">Rejected</span>
                       } @else if (d.status === 'Expired') {
-                        <span style="background: #f1f5f9; color: #64748b; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">⏰ Expired</span>
+                        <span style="background: #f1f5f9; color: #64748b; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">Expired</span>
                       } @else {
-                        <span style="background: #f1f5f9; color: #64748b; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">🔒 Closed</span>
+                        <span style="background: #f1f5f9; color: #64748b; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">Closed</span>
                       }
                     </div>
                   </div>

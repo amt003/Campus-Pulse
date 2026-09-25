@@ -12,6 +12,19 @@
 
     @if (!isLoading()) {
 
+      <!-- Page Header -->
+      <div class="page-header" style="margin-bottom: 24px;">
+        <div class="header-title-row">
+          <div class="title-icon-box">
+            <span class="material-symbols-outlined">how_to_reg</span>
+          </div>
+          <div>
+            <h2>Recruiter Approvals & Trust Audits</h2>
+            <p class="subtitle">Review and verify employer domain registrations, automated WHOIS checks, and company credibility scores.</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Category Tabs Switcher -->
       <div class="tabs-switcher-container">
         <div class="tabs-bar">
@@ -127,16 +140,16 @@
 
                     <td>
                       @if (rec.verificationDetails?.whoisData?.isValid) {
-                        <span class="status-tag tag-success">🌐 Active Domain</span>
+                        <span class="status-tag tag-success"><span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">language</span> Active Domain</span>
                       } @else if (rec.verificationDetails?.whoisData) {
-                        <span class="status-tag tag-warning">⚠️ Needs Verification</span>
+                        <span class="status-tag tag-warning"><span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">warning</span> Needs Verification</span>
                       } @else {
-                        <span class="status-tag tag-warning">⚠️ Not Verified</span>
+                        <span class="status-tag tag-warning"><span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">warning</span> Not Verified</span>
                       }
                     </td>
 
                     <td>
-                      <span class="status-tag tag-success">✉️ Submitted</span>
+                      <span class="status-tag tag-success"><span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">mail</span> Submitted</span>
                     </td>
 
                     <td>

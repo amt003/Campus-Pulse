@@ -251,4 +251,29 @@ export class TpoDriveXrayComponent implements OnInit, OnDestroy {
 
     this.toastService.success('CSV Exported', `Exported ${apps.length} student records.`);
   }
+
+  protected isLogoFailed = signal<boolean>(false);
+  protected failedStudentAvatars = new Set<string>();
+
+  protected getLogoUrl(logoPath?: string | null): string | null {
+    if (!logoPath) return null;
+    if (logoPath.startsWith('http://') || logoPath.startsWith('https://') || logoPath.startsWith('data:')) {
+      return logoPath;
+    }
+    const cleanPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
+    const fullPath = cleanPath.startsWith('/uploads/') ? cleanPath : `/uploads/logos${cleanPath}`;
+    return `http://localhost:5000${fullPath}`;
+  }
+
+  protected handleLogoError(): void {
+    this.isLogoFailed.set(true);
+  }
+
+  protected handleStudentAvatarError(appId: string): void {
+    this.failedStudentAvatars.add(appId);
+  }
+
+  protected isStudentAvatarFailed(appId: string): boolean {
+    return this.failedStudentAvatars.has(appId);
+  }
 }

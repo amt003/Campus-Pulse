@@ -9,7 +9,7 @@
         <span class="material-symbols-outlined">calendar_month</span>
       </div>
       <div>
-        <h1 class="page-title">📅 Master Calendar – All Schedules</h1>
+        <h1 class="page-title">Master Calendar – All Schedules</h1>
         <p class="page-subtitle">View all Aptitude, GD, and Interview schedules across all companies to detect clashes and balance student load.</p>
       </div>
     </div>
@@ -35,7 +35,7 @@
         <div class="clash-items-list">
           @for (clash of summary()!.clashesDetected; track clash.date) {
             <div class="clash-pill">
-              <span class="clash-date">📅 {{ clash.date | date:'EEE, dd MMM' }}:</span>
+              <span class="clash-date">{{ clash.date | date:'EEE, dd MMM' }}:</span>
               <span class="clash-detail">
                 @if (clash.companyCount > 1) {
                   <strong>{{ clash.companies.join(' & ') }}</strong> have concurrent schedules ({{ clash.totalStudents }} students)
@@ -299,7 +299,7 @@
 
       <button class="btn-export-csv" (click)="exportCSV()" title="Export current filtered calendar to CSV">
         <span class="material-symbols-outlined">download</span>
-        <span>📥 Export as CSV</span>
+        <span>Export as CSV</span>
       </button>
     </div>
   }
@@ -326,11 +326,11 @@
                 {{ getRoundTypeLabel(selectedSlot()!.eventType) }}
               </span>
               <span class="meta-dot">•</span>
-              <span class="modal-sub-text">🕐 {{ selectedSlot()!.timeSlot }}</span>
+              <span class="modal-sub-text">{{ selectedSlot()!.timeSlot }}</span>
               <span class="meta-dot">•</span>
-              <span class="modal-sub-text">📍 {{ selectedSlot()!.location || 'Online' }}</span>
+              <span class="modal-sub-text">{{ selectedSlot()!.location || 'Online' }}</span>
               <span class="meta-dot">•</span>
-              <span class="modal-sub-text">📅 {{ selectedSlotDate() | date:'mediumDate' }}</span>
+              <span class="modal-sub-text">{{ selectedSlotDate() | date:'mediumDate' }}</span>
             </div>
           </div>
         </div>

@@ -14,6 +14,7 @@ import { TpoDriveXrayComponent } from './pages/tpo/drive-xray/drive-xray.compone
 import { TpoCalendarComponent } from './pages/tpo/calendar/calendar.component';
 import { TpoAnalyzerComponent } from './pages/tpo/analyzer/analyzer.component';
 import { StudentReadinessComponent } from './pages/student/readiness/readiness.component';
+import { NotificationsComponent } from './pages/notifications/notifications.component';
 import { RecruiterDashboardComponent } from './pages/recruiter/dashboard/dashboard';
 import { RecruiterLayoutComponent } from './pages/recruiter/layout/layout.component';
 import { RecruiterProfileComponent } from './pages/recruiter/profile/profile';
@@ -111,6 +112,10 @@ export const routes: Routes = [
         path: 'analyzer',
         component: TpoAnalyzerComponent,
       },
+      {
+        path: 'notifications',
+        component: NotificationsComponent,
+      },
     ],
   },
   {
@@ -139,6 +144,10 @@ export const routes: Routes = [
       {
         path: 'offers',
         component: RecruiterOffersComponent,
+      },
+      {
+        path: 'notifications',
+        component: NotificationsComponent,
       },
       {
         path: 'profile',
@@ -184,6 +193,10 @@ export const routes: Routes = [
       {
         path: 'offer/:applicationId',
         component: StudentOffersComponent,
+      },
+      {
+        path: 'notifications',
+        component: NotificationsComponent,
       },
       {
         path: 'profile',
