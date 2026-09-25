@@ -55,10 +55,12 @@ app.get("/uploads/resumes/:filename", (req, res) => {
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 const { initializeCollegeConfig } = require("./utils/initCollegeConfig");
+const { seedCuratedQuestions } = require("./utils/seedCuratedQuestions");
 
 // --- Connect to Database & Initialize Background Services ---
 connectDB().then(() => {
   initializeCollegeConfig();
+  seedCuratedQuestions();
   // Initialize Background Cron Jobs after DB connection is ready
   initCronScheduler();
 });

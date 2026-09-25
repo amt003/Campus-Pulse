@@ -43,6 +43,7 @@ const {
   getDraftQuestions,
   approveDraftQuestion,
   rejectDraftQuestion,
+  generateFromBank,
 } = require("../controllers/questionBankController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const { uploadImage, uploadOffer } = require("../middleware/uploadMiddleware");
@@ -93,7 +94,8 @@ router.post("/drive/:driveId/attachment", memoryUpload.single("file"), uploadDri
 router.delete("/drive/:driveId/attachment/:fileId", deleteDriveAttachment);
 router.get("/drive/attachment/download/:fileId", downloadDriveAttachment);
 
-// Question Bank Routes (Phase 2 & Phase 3)
+// Question Bank Routes (Phase 2 & Phase 3 & Phase 4)
+router.post("/test/generate-from-bank", generateFromBank);
 router.post("/question/generate", generateDraftQuestions);
 router.get("/question/drafts", getDraftQuestions);
 router.put("/question/:id/approve", approveDraftQuestion);

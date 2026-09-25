@@ -489,6 +489,77 @@ const rejectDraftQuestion = async (req, res) => {
   }
 };
 
+// @desc    Generate random questions from curated bank by category counts
+// @route   POST /api/recruiter/test/generate-from-bank
+// @access  Private (Recruiter)
+const generateFromBank = async (req, res) => {
+  try {
+    const recruiter = await getAuthenticatedRecruiter(req.user._id);
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    const {
+      quantitative = 0,
+      logical = 0,
+      verbal = 0,
+      technical = 0,
+    } = req.body;
+
+    const categoryCounts = {
+      Quantitative: Math.max(0, parseInt(quantitative, 10) || 0),
+      Logical: Math.max(0, parseInt(logical, 10) || 0),
+      Verbal: Math.max(0, parseInt(verbal, 10) || 0),
+      Technical: Math.max(0, parseInt(technical, 10) || 0),
+    };
+
+    const totalRequested = Object.values(categoryCounts).reduce((a, b) => a + b, 0);
+    if (totalRequested === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please specify at least one category with a count greater than 0",
+      });
+    }
+
+    let selectedQuestions = [];
+
+    for (const [category, count] of Object.entries(categoryCounts)) {
+      if (count <= 0) continue;
+
+      const questions = await QuestionBank.aggregate([
+        {
+          $match: {
+            recruiterId: null,
+            source: "curated",
+            status: "approved",
+            category: category,
+          },
+        },
+        { $sample: { size: count } },
+      ]);
+
+      selectedQuestions = selectedQuestions.concat(questions);
+    }
+
+    return res.status(200).json({
+      success: true,
+      count: selectedQuestions.length,
+      questions: selectedQuestions,
+      data: selectedQuestions,
+    });
+  } catch (error) {
+    console.error("[QuestionBankController] generateFromBank error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to generate questions from bank",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   addQuestion,
   getQuestions,
@@ -498,4 +569,5 @@ module.exports = {
   getDraftQuestions,
   approveDraftQuestion,
   rejectDraftQuestion,
+  generateFromBank,
 };
