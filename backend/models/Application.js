@@ -51,6 +51,7 @@ const applicationSchema = new mongoose.Schema(
       feedback: { type: String, default: null },
       markedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Recruiter", default: null },
       markedAt: { type: Date, default: null },
+      source: { type: String, default: "unknown" },
     },
     gd: {
       status: {
