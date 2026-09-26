@@ -45,6 +45,12 @@ const {
   rejectDraftQuestion,
   generateFromBank,
 } = require("../controllers/questionBankController");
+const {
+  createTest,
+  publishTest,
+  getTestDetails,
+  getTestResults,
+} = require("../controllers/aptitudeTestController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const { uploadImage, uploadOffer } = require("../middleware/uploadMiddleware");
 const multer = require("multer");
@@ -94,8 +100,14 @@ router.post("/drive/:driveId/attachment", memoryUpload.single("file"), uploadDri
 router.delete("/drive/:driveId/attachment/:fileId", deleteDriveAttachment);
 router.get("/drive/attachment/download/:fileId", downloadDriveAttachment);
 
-// Question Bank Routes (Phase 2 & Phase 3 & Phase 4)
+// Aptitude Test Routes (Phase 5)
 router.post("/test/generate-from-bank", generateFromBank);
+router.post("/test", createTest);
+router.put("/test/:id/publish", publishTest);
+router.get("/test/:id/results", getTestResults);
+router.get("/test/:id", getTestDetails);
+
+// Question Bank Routes (Phase 2 & Phase 3 & Phase 4)
 router.post("/question/generate", generateDraftQuestions);
 router.get("/question/drafts", getDraftQuestions);
 router.put("/question/:id/approve", approveDraftQuestion);
