@@ -1,0 +1,846 @@
+<div class="create-test-page-container">
+  <!-- Page Header -->
+  <header class="wizard-header">
+    <div class="header-left">
+      <div class="header-icon-box">
+        <span class="material-symbols-outlined">assignment_add</span>
+      </div>
+      <div>
+        <h1 class="page-title">Create Aptitude Test</h1>
+        <p class="page-subtitle">Configure test parameters, curate questions, and schedule assessments for candidates</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/recruiter/dashboard" class="btn-cancel-wizard" id="btn-cancel-create-test">
+        <span class="material-symbols-outlined">close</span>
+        <span>Exit Wizard</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Stepper Progression Bar -->
+  <nav class="stepper-bar" role="tablist" aria-label="Test Creation Steps">
+    <!-- Step 1 Indicator -->
+    <button
+      class="step-item"
+      [class.active]="currentStep() === 1"
+      [class.completed]="currentStep() > 1"
+      (click)="goToStep(1)"
+      id="step-tab-1"
+    >
+      <div class="step-num-circle">
+        @if (currentStep() > 1) {
+          <span class="material-symbols-outlined step-check-icon">check</span>
+        } @else {
+          <span>1</span>
+        }
+      </div>
+      <div class="step-text-wrap">
+        <span class="step-label">Step 1</span>
+        <span class="step-name">Basic Info</span>
+      </div>
+    </button>
+
+    <div class="step-connector" [class.completed]="currentStep() > 1"></div>
+
+    <!-- Step 2 Indicator -->
+    <button
+      class="step-item"
+      [class.active]="currentStep() === 2"
+      [class.completed]="currentStep() > 2"
+      (click)="goToStep(2)"
+      id="step-tab-2"
+    >
+      <div class="step-num-circle">
+        @if (currentStep() > 2) {
+          <span class="material-symbols-outlined step-check-icon">check</span>
+        } @else {
+          <span>2</span>
+        }
+      </div>
+      <div class="step-text-wrap">
+        <span class="step-label">Step 2</span>
+        <span class="step-name">Question Selection</span>
+      </div>
+      @if (selectedQuestionIds().length > 0) {
+        <span class="step-badge-counter">{{ selectedQuestionIds().length }} selected</span>
+      }
+    </button>
+
+    <div class="step-connector" [class.completed]="currentStep() > 2"></div>
+
+    <!-- Step 3 Indicator -->
+    <button
+      class="step-item"
+      [class.active]="currentStep() === 3"
+      (click)="goToStep(3)"
+      id="step-tab-3"
+    >
+      <div class="step-num-circle">
+        <span>3</span>
+      </div>
+      <div class="step-text-wrap">
+        <span class="step-label">Step 3</span>
+        <span class="step-name">Configuration &amp; Publish</span>
+      </div>
+    </button>
+  </nav>
+
+  <!-- Error Banner -->
+  @if (submissionError()) {
+    <div class="alert-banner alert-error" id="banner-wizard-error">
+      <div class="alert-left">
+        <span class="material-symbols-outlined alert-icon">error</span>
+        <div>
+          <div class="alert-title">Submission Error</div>
+          <div class="alert-msg">{{ submissionError() }}</div>
+        </div>
+      </div>
+      <button class="btn-alert-close" (click)="submissionError.set(null)">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- STEP 1: BASIC INFO                                                        -->
+  <!-- ========================================================================= -->
+  @if (currentStep() === 1) {
+    <section class="wizard-step-content" id="step-1-content">
+      <div class="step-card">
+        <div class="card-section-header">
+          <span class="material-symbols-outlined section-icon">info</span>
+          <div>
+            <h2 class="card-section-title">Assessment Basic Information</h2>
+            <p class="card-section-subtitle">Link this assessment to a recruitment drive and define schedule parameters</p>
+          </div>
+        </div>
+
+        <div class="form-body">
+          <!-- Job Drive Selection -->
+          <div class="form-group">
+            <label for="select-drive" class="form-label">
+              Associated Job Drive <span class="required">*</span>
+            </label>
+            @if (isLoadingDrives()) {
+              <div class="loading-input-placeholder">Loading job drives...</div>
+            } @else if (drives().length === 0) {
+              <div class="warning-callout">
+                <span class="material-symbols-outlined">warning</span>
+                <span>No job drives found. Please create a drive first from your dashboard.</span>
+              </div>
+            } @else {
+              <select
+                id="select-drive"
+                class="form-select"
+                [ngModel]="selectedDriveId()"
+                (ngModelChange)="onDriveChange($event)"
+              >
+                @for (d of drives(); track d._id) {
+                  <option [value]="d._id">
+                    {{ d.title }} (Status: {{ d.status }})
+                  </option>
+                }
+              </select>
+            }
+            <span class="form-hint">The test will be administered to candidates who apply for or are shortlisted for this drive.</span>
+          </div>
+
+          <!-- Test Title -->
+          <div class="form-group">
+            <label for="input-test-title" class="form-label">
+              Test Title <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="input-test-title"
+              class="form-input"
+              placeholder="e.g. Software Development Engineer - Aptitude Screening"
+              [ngModel]="testTitle()"
+              (ngModelChange)="testTitle.set($event)"
+            />
+            <span class="form-hint">This title will be displayed to candidates on their portal.</span>
+          </div>
+
+          <!-- Duration & Passing Score Row -->
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="input-duration" class="form-label">
+                Duration (Minutes) <span class="required">*</span>
+              </label>
+              <div class="input-with-adornment">
+                <input
+                  type="number"
+                  id="input-duration"
+                  class="form-input"
+                  min="5"
+                  max="300"
+                  [ngModel]="durationMinutes()"
+                  (ngModelChange)="durationMinutes.set($event)"
+                />
+                <span class="input-adornment">mins</span>
+              </div>
+              <span class="form-hint">Time allowed to complete all test questions.</span>
+            </div>
+
+            <div class="form-group flex-1">
+              <label for="input-passing-score" class="form-label">
+                Passing Cutoff (%) <span class="required">*</span>
+              </label>
+              <div class="input-with-adornment">
+                <input
+                  type="number"
+                  id="input-passing-score"
+                  class="form-input"
+                  min="0"
+                  max="100"
+                  [ngModel]="passingScore()"
+                  (ngModelChange)="passingScore.set($event)"
+                />
+                <span class="input-adornment">%</span>
+              </div>
+              <span class="form-hint">Minimum percentage score required to pass (e.g. 70%).</span>
+            </div>
+          </div>
+
+          <!-- Scheduled Date & Time Row -->
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="input-scheduled-date" class="form-label">
+                Scheduled Date <span class="required">*</span>
+              </label>
+              <input
+                type="date"
+                id="input-scheduled-date"
+                class="form-input"
+                [ngModel]="scheduledDate()"
+                (ngModelChange)="scheduledDate.set($event)"
+              />
+              <span class="form-hint">The date on which candidates will sit for the assessment.</span>
+            </div>
+
+            <div class="form-group flex-1">
+              <label for="input-scheduled-time" class="form-label">
+                Start Time <span class="required">*</span>
+              </label>
+              <input
+                type="time"
+                id="input-scheduled-time"
+                class="form-input"
+                [ngModel]="scheduledTime()"
+                (ngModelChange)="scheduledTime.set($event)"
+              />
+              <span class="form-hint">
+                Calculated Window: <strong>{{ scheduledTimeSlot() }}</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wizard Navigation Footer -->
+        <div class="wizard-nav-footer">
+          <div></div>
+          <button
+            class="btn-nav-next"
+            (click)="goToStep(2)"
+            [disabled]="!selectedDriveId() || !testTitle().trim() || !scheduledDate()"
+            id="btn-step1-next"
+          >
+            <span>Next: Question Selection</span>
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- STEP 2: QUESTION SELECTION                                                -->
+  <!-- ========================================================================= -->
+  @if (currentStep() === 2) {
+    <section class="wizard-step-content" id="step-2-content">
+      <!-- Mode Selection Segmented Cards -->
+      <div class="mode-selection-card">
+        <h3 class="mode-header-title">Select Question Sourcing Mode</h3>
+        <p class="mode-header-subtitle">Choose how you want to curate questions for this assessment</p>
+
+        <div class="mode-radio-grid">
+          <!-- Manual Card -->
+          <label
+            class="mode-card"
+            [class.selected]="generationMode() === 'manual'"
+            (click)="setGenerationMode('manual')"
+          >
+            <input
+              type="radio"
+              name="generationModeRadio"
+              value="manual"
+              [checked]="generationMode() === 'manual'"
+            />
+            <div class="mode-icon-circle mode-manual">
+              <span class="material-symbols-outlined">edit_note</span>
+            </div>
+            <div class="mode-text">
+              <div class="mode-title">Manual Questions</div>
+              <div class="mode-desc">Select from approved questions you authored manually</div>
+            </div>
+          </label>
+
+          <!-- AI-Generated Card -->
+          <label
+            class="mode-card"
+            [class.selected]="generationMode() === 'ai'"
+            (click)="setGenerationMode('ai')"
+          >
+            <input
+              type="radio"
+              name="generationModeRadio"
+              value="ai"
+              [checked]="generationMode() === 'ai'"
+            />
+            <div class="mode-icon-circle mode-ai">
+              <span class="material-symbols-outlined">auto_awesome</span>
+            </div>
+            <div class="mode-text">
+              <div class="mode-title">AI-Generated</div>
+              <div class="mode-desc">Select questions generated via Gemini 1.5 Flash AI</div>
+            </div>
+          </label>
+
+          <!-- Curated Bank Card -->
+          <label
+            class="mode-card"
+            [class.selected]="generationMode() === 'curated'"
+            (click)="setGenerationMode('curated')"
+          >
+            <input
+              type="radio"
+              name="generationModeRadio"
+              value="curated"
+              [checked]="generationMode() === 'curated'"
+            />
+            <div class="mode-icon-circle mode-curated">
+              <span class="material-symbols-outlined">verified</span>
+            </div>
+            <div class="mode-text">
+              <div class="mode-title">Curated Bank</div>
+              <div class="mode-desc">Auto-sample from our 100 pre-vetted campus questions</div>
+            </div>
+          </label>
+
+          <!-- Mixed Mode Card -->
+          <label
+            class="mode-card"
+            [class.selected]="generationMode() === 'mixed'"
+            (click)="setGenerationMode('mixed')"
+          >
+            <input
+              type="radio"
+              name="generationModeRadio"
+              value="mixed"
+              [checked]="generationMode() === 'mixed'"
+            />
+            <div class="mode-icon-circle mode-mixed">
+              <span class="material-symbols-outlined">dataset</span>
+            </div>
+            <div class="mode-text">
+              <div class="mode-title">Mixed Sourcing</div>
+              <div class="mode-desc">Mix manual, AI-generated, and curated questions</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Mode-Specific Controls -->
+
+      <!-- MODE: CURATED SPECIFICATION PANEL -->
+      @if (generationMode() === 'curated') {
+        <div class="step-card curated-spec-card">
+          <div class="card-section-header">
+            <span class="material-symbols-outlined section-icon">tune</span>
+            <div>
+              <h3 class="card-section-title">Curated Bank Category Distribution</h3>
+              <p class="card-section-subtitle">Specify how many questions to randomly sample from each curated subject domain</p>
+            </div>
+          </div>
+
+          <div class="curated-grid">
+            <div class="curated-count-item">
+              <label class="curated-count-label">Quantitative Aptitude</label>
+              <input
+                type="number"
+                class="form-input curated-num-input"
+                min="0"
+                max="30"
+                [ngModel]="curatedCounts().quantitative"
+                (ngModelChange)="curatedCounts().quantitative = $event"
+              />
+              <span class="curated-hint">30 vetted questions available</span>
+            </div>
+
+            <div class="curated-count-item">
+              <label class="curated-count-label">Logical Reasoning</label>
+              <input
+                type="number"
+                class="form-input curated-num-input"
+                min="0"
+                max="25"
+                [ngModel]="curatedCounts().logical"
+                (ngModelChange)="curatedCounts().logical = $event"
+              />
+              <span class="curated-hint">25 vetted questions available</span>
+            </div>
+
+            <div class="curated-count-item">
+              <label class="curated-count-label">Verbal Ability</label>
+              <input
+                type="number"
+                class="form-input curated-num-input"
+                min="0"
+                max="25"
+                [ngModel]="curatedCounts().verbal"
+                (ngModelChange)="curatedCounts().verbal = $event"
+              />
+              <span class="curated-hint">25 vetted questions available</span>
+            </div>
+
+            <div class="curated-count-item">
+              <label class="curated-count-label">Technical Fundamentals</label>
+              <input
+                type="number"
+                class="form-input curated-num-input"
+                min="0"
+                max="20"
+                [ngModel]="curatedCounts().technical"
+                (ngModelChange)="curatedCounts().technical = $event"
+              />
+              <span class="curated-hint">20 vetted questions available</span>
+            </div>
+          </div>
+
+          <div class="curated-action-row">
+            <button
+              class="btn-sample-curated"
+              (click)="fetchFromCuratedBank()"
+              [disabled]="isFetchingCurated()"
+              id="btn-sample-curated"
+            >
+              @if (isFetchingCurated()) {
+                <div class="btn-spinner"></div>
+                <span>Sampling from Curated Bank...</span>
+              } @else {
+                <span class="material-symbols-outlined">shuffle</span>
+                <span>Sample Random Curated Questions</span>
+              }
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- QUESTIONS SELECTION TABLE & FILTERS (Manual, AI, Mixed, or Curated Preview) -->
+      <div class="step-card questions-picker-card">
+        <!-- Search & Category Filters Bar -->
+        <div class="controls-card table-controls-bar">
+          <div class="search-wrap">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Filter questions by keywords..."
+              [(ngModel)]="questionSearchTerm"
+              id="input-filter-test-questions"
+            />
+          </div>
+
+          <div class="filters-wrap">
+            <select
+              class="filter-select"
+              [(ngModel)]="questionCategoryFilter"
+              id="select-category-filter"
+            >
+              <option value="all">All Categories</option>
+              <option value="Quantitative">Quantitative</option>
+              <option value="Logical">Logical</option>
+              <option value="Verbal">Verbal</option>
+              <option value="Technical">Technical</option>
+            </select>
+
+            <select
+              class="filter-select"
+              [(ngModel)]="questionDifficultyFilter"
+              id="select-difficulty-filter"
+            >
+              <option value="all">All Difficulties</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+
+            <button
+              class="btn-secondary btn-sm"
+              (click)="selectAllVisible()"
+              title="Select all visible matching questions"
+            >
+              Select All Visible
+            </button>
+            <button
+              class="btn-secondary btn-sm"
+              (click)="clearAllSelected()"
+              title="Deselect all"
+            >
+              Clear Selection
+            </button>
+          </div>
+        </div>
+
+        <!-- Selected Summary Pill Bar -->
+        <div class="selection-summary-bar">
+          <div class="summary-left">
+            <span class="material-symbols-outlined summary-icon">checklist</span>
+            <span class="summary-total">Total Selected: <strong>{{ selectedQuestionIds().length }}</strong> questions</span>
+          </div>
+
+          <div class="summary-breakdown">
+            <span class="badge badge-category" data-cat="Quantitative">
+              Quant: {{ selectedCategoryBreakdown()['Quantitative'] }}
+            </span>
+            <span class="badge badge-category" data-cat="Logical">
+              Logic: {{ selectedCategoryBreakdown()['Logical'] }}
+            </span>
+            <span class="badge badge-category" data-cat="Verbal">
+              Verbal: {{ selectedCategoryBreakdown()['Verbal'] }}
+            </span>
+            <span class="badge badge-category" data-cat="Technical">
+              Tech: {{ selectedCategoryBreakdown()['Technical'] }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Questions Table -->
+        @if (isLoadingQuestions()) {
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading question bank...</p>
+          </div>
+        } @else if (filteredModeQuestions().length === 0) {
+          <div class="empty-state">
+            <span class="material-symbols-outlined empty-icon">quiz</span>
+            <h4>No Questions Found in Current Mode</h4>
+            <p>
+              @if (generationMode() === 'ai') {
+                No AI-generated questions found. Use the Question Bank's Auto-Generate tab to create some.
+              } @else if (generationMode() === 'manual') {
+                No manual questions found. Add questions manually in the Question Bank.
+              } @else {
+                Try changing your search term or category filters.
+              }
+            </p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="qb-table picker-table" id="table-question-selection">
+              <thead>
+                <tr>
+                  <th style="width: 5%;">Select</th>
+                  <th style="width: 48%;">Question Statement</th>
+                  <th style="width: 15%;">Category</th>
+                  <th style="width: 12%;">Difficulty</th>
+                  <th style="width: 12%;">Source</th>
+                  <th style="width: 8%; text-align: center;">Times Used</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (q of filteredModeQuestions(); track q._id) {
+                  <tr
+                    class="qb-row selectable-row"
+                    [class.is-selected]="selectedQuestionIds().includes(q._id)"
+                    (click)="toggleQuestionSelection(q._id)"
+                  >
+                    <!-- Checkbox -->
+                    <td (click)="$event.stopPropagation()">
+                      <input
+                        type="checkbox"
+                        class="picker-checkbox"
+                        [checked]="selectedQuestionIds().includes(q._id)"
+                        (change)="toggleQuestionSelection(q._id)"
+                        [id]="'chk-q-' + q._id"
+                      />
+                    </td>
+
+                    <!-- Question Details -->
+                    <td class="col-question">
+                      <div class="question-text-truncate" [title]="q.questionText">
+                        {{ q.questionText }}
+                      </div>
+                      <div class="options-preview">
+                        <span class="opt-count">{{ q.options.length }} choices</span>
+                        <span class="preview-dot">•</span>
+                        <span class="correct-badge">Correct: Option {{ ['A', 'B', 'C', 'D'][q.correctOption] || (q.correctOption + 1) }}</span>
+                      </div>
+                    </td>
+
+                    <!-- Category -->
+                    <td>
+                      <span class="badge badge-category" [attr.data-cat]="q.category">
+                        {{ q.category }}
+                      </span>
+                    </td>
+
+                    <!-- Difficulty -->
+                    <td>
+                      <span class="badge badge-difficulty" [attr.data-diff]="q.difficulty">
+                        {{ q.difficulty }}
+                      </span>
+                    </td>
+
+                    <!-- Source -->
+                    <td>
+                      <span class="badge badge-source" [attr.data-source]="q.source">
+                        {{ q.source }}
+                      </span>
+                    </td>
+
+                    <!-- Times Used -->
+                    <td style="text-align: center;">
+                      <span class="times-used-badge">
+                        <span>{{ q.timesUsed || 0 }}</span>
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        <!-- Wizard Navigation Footer -->
+        <div class="wizard-nav-footer">
+          <button class="btn-nav-back" (click)="goToStep(1)">
+            <span class="material-symbols-outlined">arrow_back</span>
+            <span>Back to Basic Info</span>
+          </button>
+
+          <button
+            class="btn-nav-next"
+            (click)="goToStep(3)"
+            [disabled]="selectedQuestionIds().length === 0"
+            id="btn-step2-next"
+          >
+            <span>Next: Configuration ({{ selectedQuestionIds().length }} selected)</span>
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- STEP 3: CONFIGURATION & PUBLISH                                           -->
+  <!-- ========================================================================= -->
+  @if (currentStep() === 3) {
+    <section class="wizard-step-content" id="step-3-content">
+      <div class="step-3-grid">
+        <!-- Left: Configuration Toggles Card -->
+        <div class="step-card config-card">
+          <div class="card-section-header">
+            <span class="material-symbols-outlined section-icon">tune</span>
+            <div>
+              <h2 class="card-section-title">Test Delivery Options</h2>
+              <p class="card-section-subtitle">Configure integrity protections and question randomization</p>
+            </div>
+          </div>
+
+          <div class="config-toggles-list">
+            <!-- Toggle: Shuffle Questions -->
+            <div class="toggle-item">
+              <div class="toggle-info">
+                <div class="toggle-title">Shuffle Question Order</div>
+                <div class="toggle-desc">Randomize the sequence of questions presented to each candidate</div>
+              </div>
+              <label class="switch-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="shuffleQuestions()"
+                  (ngModelChange)="shuffleQuestions.set($event)"
+                  id="toggle-shuffle-questions"
+                />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- Toggle: Shuffle Options -->
+            <div class="toggle-item">
+              <div class="toggle-info">
+                <div class="toggle-title">Shuffle Answer Options</div>
+                <div class="toggle-desc">Randomize the order of multiple-choice answers for each question</div>
+              </div>
+              <label class="switch-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="shuffleOptions()"
+                  (ngModelChange)="shuffleOptions.set($event)"
+                  id="toggle-shuffle-options"
+                />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- Toggle: Enable Anti-Cheat -->
+            <div class="toggle-item">
+              <div class="toggle-info">
+                <div class="toggle-title">Anti-Cheat Monitoring</div>
+                <div class="toggle-desc">Track tab switching, fullscreen exits, and window focus violations</div>
+              </div>
+              <label class="switch-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="antiCheatEnabled()"
+                  (ngModelChange)="antiCheatEnabled.set($event)"
+                  id="toggle-anti-cheat"
+                />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- Input: Max Violations -->
+            <div class="form-group violation-group" [class.disabled]="!antiCheatEnabled()">
+              <label for="input-max-violations" class="form-label">
+                Max Allowed Violations
+              </label>
+              <div class="input-with-hint">
+                <input
+                  type="number"
+                  id="input-max-violations"
+                  class="form-input"
+                  min="1"
+                  max="10"
+                  [disabled]="!antiCheatEnabled()"
+                  [ngModel]="maxViolations()"
+                  (ngModelChange)="maxViolations.set($event)"
+                />
+                <span class="form-hint">
+                  The test will automatically auto-submit upon reaching this violation threshold (default: 3).
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Assessment Summary Review Card -->
+        <div class="step-card summary-card">
+          <div class="card-section-header">
+            <span class="material-symbols-outlined section-icon">verified_user</span>
+            <div>
+              <h2 class="card-section-title">Assessment Summary</h2>
+              <p class="card-section-subtitle">Review before saving as draft or publishing</p>
+            </div>
+          </div>
+
+          <div class="summary-details-list">
+            <div class="summary-row">
+              <span class="s-label">Job Drive:</span>
+              <span class="s-value"><strong>{{ selectedDrive()?.title || 'Selected Drive' }}</strong></span>
+            </div>
+
+            <div class="summary-row">
+              <span class="s-label">Test Title:</span>
+              <span class="s-value">{{ testTitle() }}</span>
+            </div>
+
+            <div class="summary-row">
+              <span class="s-label">Duration:</span>
+              <span class="s-value">{{ durationMinutes() }} Minutes</span>
+            </div>
+
+            <div class="summary-row">
+              <span class="s-label">Passing Cutoff:</span>
+              <span class="s-value">{{ passingScore() }}%</span>
+            </div>
+
+            <div class="summary-row">
+              <span class="s-label">Scheduled Date:</span>
+              <span class="s-value">{{ scheduledDate() | date:'fullDate' }}</span>
+            </div>
+
+            <div class="summary-row">
+              <span class="s-label">Time Window:</span>
+              <span class="s-value">{{ scheduledTimeSlot() }}</span>
+            </div>
+
+            <div class="summary-row">
+              <span class="s-label">Total Questions:</span>
+              <span class="s-value"><strong>{{ selectedQuestionIds().length }} questions</strong></span>
+            </div>
+
+            <div class="summary-row">
+              <span class="s-label">Category Mix:</span>
+              <span class="s-value">
+                Q: {{ selectedCategoryBreakdown()['Quantitative'] }} |
+                L: {{ selectedCategoryBreakdown()['Logical'] }} |
+                V: {{ selectedCategoryBreakdown()['Verbal'] }} |
+                T: {{ selectedCategoryBreakdown()['Technical'] }}
+              </span>
+            </div>
+
+            <div class="summary-row">
+              <span class="s-label">Anti-Cheat:</span>
+              <span class="s-value">
+                {{ antiCheatEnabled() ? 'Enabled (Limit: ' + maxViolations() + ')' : 'Disabled' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Notice Box -->
+          <div class="publish-notice-box">
+            <span class="material-symbols-outlined notice-icon">info</span>
+            <p>
+              Publishing will activate the assessment, notify shortlisted candidates, and generate individual
+              scheduled conflict-aware time slots on the master calendar.
+            </p>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="wizard-publish-actions">
+            <button
+              class="btn-save-draft"
+              (click)="saveAsDraft()"
+              [disabled]="isSubmitting()"
+              id="btn-save-test-draft"
+            >
+              @if (isSubmitting()) {
+                <div class="btn-spinner-dark"></div>
+              } @else {
+                <span class="material-symbols-outlined">save</span>
+              }
+              <span>Save as Draft</span>
+            </button>
+
+            <button
+              class="btn-publish-test"
+              (click)="publishTest()"
+              [disabled]="isSubmitting()"
+              id="btn-publish-test"
+            >
+              @if (isSubmitting()) {
+                <div class="btn-spinner"></div>
+                <span>Processing &amp; Publishing...</span>
+              } @else {
+                <span class="material-symbols-outlined">rocket_launch</span>
+                <span>Publish Test</span>
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer back button -->
+      <div class="wizard-nav-footer">
+        <button class="btn-nav-back" (click)="goToStep(2)" [disabled]="isSubmitting()">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Back to Question Selection</span>
+        </button>
+        <div></div>
+      </div>
+    </section>
+  }
+</div>

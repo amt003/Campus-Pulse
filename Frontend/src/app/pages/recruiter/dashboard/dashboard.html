@@ -346,6 +346,93 @@
         </div>
       }
 
+      <!-- Aptitude Assessments Card / Table -->
+      <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.015);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h4 style="font-size: 16px; font-weight: 800; color: #1B4F72; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+              <span class="material-symbols-outlined" style="font-size: 20px; color: var(--secondary);">assignment</span>
+              <span>Aptitude Assessments</span>
+            </h4>
+            <p style="margin: 0; font-size: 12.5px; color: var(--text-muted);">
+              Manage and monitor scheduled assessments for your recruitment drives.
+            </p>
+          </div>
+          <a
+            routerLink="/recruiter/create-test"
+            style="display: inline-flex; align-items: center; gap: 6px; background: var(--primary); color: white; padding: 8px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 700; text-decoration: none; transition: all 0.2s;"
+            id="btn-dash-create-test"
+          >
+            <span class="material-symbols-outlined" style="font-size: 18px;">add_circle</span>
+            <span>Create New Test</span>
+          </a>
+        </div>
+
+        @if (tests().length === 0) {
+          <div style="background: #F8F9FA; border-radius: 12px; padding: 32px 16px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border);">
+            <span class="material-symbols-outlined" style="font-size: 36px; color: #BDC3C7; margin-bottom: 8px; display: block;">quiz</span>
+            <strong style="font-size: 13.5px; color: var(--text-dark); display: block; margin-bottom: 4px;">No Aptitude Tests Created Yet</strong>
+            <p style="margin: 0 0 14px 0; font-size: 12px;">Create customized assessments with manual, AI-generated, or curated questions.</p>
+            <a routerLink="/recruiter/create-test" style="display: inline-flex; align-items: center; gap: 6px; background: var(--primary); color: white; padding: 8px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 700; text-decoration: none;">
+              <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
+              <span>Create Your First Test</span>
+            </a>
+          </div>
+        } @else {
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;" id="table-dash-tests">
+              <thead>
+                <tr style="background: #F8FAFC; border-bottom: 1.5px solid #E2E8F0;">
+                  <th style="padding: 10px 14px; font-weight: 750; color: #475569; font-size: 11.5px; text-transform: uppercase;">Test Title</th>
+                  <th style="padding: 10px 14px; font-weight: 750; color: #475569; font-size: 11.5px; text-transform: uppercase;">Drive</th>
+                  <th style="padding: 10px 14px; font-weight: 750; color: #475569; font-size: 11.5px; text-transform: uppercase;">Status</th>
+                  <th style="padding: 10px 14px; font-weight: 750; color: #475569; font-size: 11.5px; text-transform: uppercase;">Duration</th>
+                  <th style="padding: 10px 14px; font-weight: 750; color: #475569; font-size: 11.5px; text-transform: uppercase;">Cutoff</th>
+                  <th style="padding: 10px 14px; font-weight: 750; color: #475569; font-size: 11.5px; text-transform: uppercase;">Questions</th>
+                  <th style="padding: 10px 14px; font-weight: 750; color: #475569; font-size: 11.5px; text-transform: uppercase;">Scheduled For</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (t of tests(); track t._id) {
+                  <tr style="border-bottom: 1px solid #EDF2F7;">
+                    <td style="padding: 12px 14px; font-weight: 700; color: #1E293B;">
+                      {{ t.title }}
+                    </td>
+                    <td style="padding: 12px 14px; color: #475569;">
+                      {{ t.driveId?.title || 'Drive' }}
+                    </td>
+                    <td style="padding: 12px 14px;">
+                      <span
+                        [style.background]="t.status === 'Active' ? '#E6F9ED' : (t.status === 'Draft' ? '#FEF3C7' : '#F1F5F9')"
+                        [style.color]="t.status === 'Active' ? '#1E824C' : (t.status === 'Draft' ? '#D97706' : '#64748B')"
+                        style="display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 750;"
+                      >
+                        {{ t.status }}
+                      </span>
+                    </td>
+                    <td style="padding: 12px 14px; color: #475569;">
+                      {{ t.durationMinutes }} mins
+                    </td>
+                    <td style="padding: 12px 14px; color: #475569;">
+                      {{ t.passingScore }}%
+                    </td>
+                    <td style="padding: 12px 14px; color: #475569;">
+                      {{ t.questionIds?.length || 0 }} Qs
+                    </td>
+                    <td style="padding: 12px 14px; color: #475569;">
+                      {{ t.scheduledDate | date:'mediumDate' }}
+                      @if (t.timeSlot) {
+                        <span style="font-size: 11px; color: #64748B; display: block;">{{ t.timeSlot }}</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
       <!-- Bottom Section Layout (Talent Pipeline Overview & Upcoming Interviews) -->
       <div style="display: grid; grid-template-columns: 1.8fr 1fr; gap: 24px; margin-bottom: 24px;">
         

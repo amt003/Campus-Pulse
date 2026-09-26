@@ -25,6 +25,7 @@ import { RecruiterDrivesComponent } from './pages/recruiter/drives/drives';
 import { RecruiterAllApplicationsComponent } from './pages/recruiter/all-applications/all-applications';
 import { RecruiterOffersComponent } from './pages/recruiter/offers/offers';
 import { RecruiterQuestionBankComponent } from './pages/recruiter/question-bank/question-bank.component';
+import { RecruiterCreateTestComponent } from './pages/recruiter/create-test/create-test.component';
 import { StudentLayoutComponent } from './pages/student/layout/layout.component';
 import { StudentDashboardComponent } from './pages/student/dashboard/dashboard';
 import { StudentApplicationsComponent } from './pages/student/applications/applications';
@@ -141,6 +142,10 @@ export const routes: Routes = [
       {
         path: 'question-bank',
         component: RecruiterQuestionBankComponent,
+      },
+      {
+        path: 'create-test',
+        component: RecruiterCreateTestComponent,
       },
       {
         path: 'all-applications',

@@ -50,6 +50,7 @@ const {
   publishTest,
   getTestDetails,
   getTestResults,
+  getRecruiterTests,
 } = require("../controllers/aptitudeTestController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const { uploadImage, uploadOffer } = require("../middleware/uploadMiddleware");
@@ -103,6 +104,7 @@ router.get("/drive/attachment/download/:fileId", downloadDriveAttachment);
 // Aptitude Test Routes (Phase 5)
 router.post("/test/generate-from-bank", generateFromBank);
 router.post("/test", createTest);
+router.get("/tests", getRecruiterTests);
 router.put("/test/:id/publish", publishTest);
 router.get("/test/:id/results", getTestResults);
 router.get("/test/:id", getTestDetails);

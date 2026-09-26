@@ -447,9 +447,44 @@ const getTestResults = async (req, res) => {
   }
 };
 
+// @desc    Get all aptitude tests created by the recruiter
+// @route   GET /api/recruiter/tests
+// @access  Private (Recruiter)
+const getRecruiterTests = async (req, res) => {
+  try {
+    const recruiter = await getAuthenticatedRecruiter(req.user._id);
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    const tests = await AptitudeTest.find({ recruiterId: recruiter._id })
+      .populate("driveId", "title description ctc status")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: tests.length,
+      tests,
+      data: tests,
+    });
+  } catch (error) {
+    console.error("[AptitudeTestController] getRecruiterTests error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch aptitude tests",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createTest,
   publishTest,
   getTestDetails,
   getTestResults,
+  getRecruiterTests,
 };
+

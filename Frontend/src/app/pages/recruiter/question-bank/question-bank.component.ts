@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { RecruiterService } from '../../../services/recruiter.service';
 import { ToastService } from '../../../services/toast.service';
 
@@ -29,6 +31,10 @@ export class RecruiterQuestionBankComponent implements OnInit {
   private readonly recruiterService = inject(RecruiterService);
   private readonly toastService = inject(ToastService);
 
+  // Tab State
+  protected activeTab = signal<'bank' | 'generate' | 'drafts'>('bank');
+
+  // Main Question Bank State
   protected questions = signal<QuestionItem[]>([]);
   protected isLoading = signal<boolean>(true);
   protected isSaving = signal<boolean>(false);
@@ -39,12 +45,27 @@ export class RecruiterQuestionBankComponent implements OnInit {
   protected selectedDifficulty = signal<string>('all');
   protected searchTerm = signal<string>('');
 
-  // Modal State
+  // Drafts State
+  protected draftQuestions = signal<QuestionItem[]>([]);
+  protected isLoadingDrafts = signal<boolean>(false);
+  protected processingDraftId = signal<string | null>(null);
+  protected isBulkProcessing = signal<boolean>(false);
+  protected pendingDraftsCount = computed(() => this.draftQuestions().length);
+
+  // AI Generator Form State
+  protected genCount = signal<number>(5);
+  protected genCategory = signal<'Quantitative' | 'Logical' | 'Verbal' | 'Technical'>('Quantitative');
+  protected genDifficulty = signal<'Easy' | 'Medium' | 'Hard'>('Medium');
+  protected isGenerating = signal<boolean>(false);
+  protected generationError = signal<string | null>(null);
+  protected generationSuccess = signal<string | null>(null);
+
+  // Add/Edit Modal State
   protected isModalOpen = signal<boolean>(false);
   protected isEditing = signal<boolean>(false);
   protected editingQuestionId = signal<string | null>(null);
 
-  // Form State
+  // Manual Form State
   protected formData = signal<{
     questionText: string;
     options: string[];
@@ -59,7 +80,7 @@ export class RecruiterQuestionBankComponent implements OnInit {
     difficulty: 'Medium',
   });
 
-  // Filtered Questions computed signal
+  // Filtered Questions computed signal for Main Bank
   protected filteredQuestions = computed(() => {
     let list = this.questions();
     const search = this.searchTerm().toLowerCase().trim();
@@ -78,8 +99,22 @@ export class RecruiterQuestionBankComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadQuestions();
+    this.loadDrafts();
   }
 
+  protected switchTab(tab: 'bank' | 'generate' | 'drafts'): void {
+    this.activeTab.set(tab);
+    if (tab === 'bank') {
+      this.loadQuestions();
+    } else if (tab === 'drafts') {
+      this.loadDrafts();
+    } else if (tab === 'generate') {
+      this.generationError.set(null);
+      this.generationSuccess.set(null);
+    }
+  }
+
+  // Question Bank Data Fetch
   protected loadQuestions(): void {
     this.isLoading.set(true);
     const filter: { category?: string; difficulty?: string } = {};
@@ -107,10 +142,169 @@ export class RecruiterQuestionBankComponent implements OnInit {
     });
   }
 
+  // Draft Questions Data Fetch
+  protected loadDrafts(): void {
+    this.isLoadingDrafts.set(true);
+    this.recruiterService.getDraftQuestions().subscribe({
+      next: (res) => {
+        this.isLoadingDrafts.set(false);
+        const drafts = res.questions || res.data || [];
+        this.draftQuestions.set(drafts);
+      },
+      error: (err) => {
+        this.isLoadingDrafts.set(false);
+        this.toastService.error(
+          'Failed to Load Drafts',
+          err.error?.message || 'Could not fetch draft questions'
+        );
+      },
+    });
+  }
+
   protected onFilterChange(): void {
     this.loadQuestions();
   }
 
+  // AI Question Generation
+  protected generateAIQuestions(): void {
+    const count = Number(this.genCount());
+    if (isNaN(count) || count < 1 || count > 50) {
+      this.generationError.set('Please specify a question count between 1 and 50.');
+      this.toastService.warning('Invalid Count', 'Question count must be between 1 and 50.');
+      return;
+    }
+
+    this.isGenerating.set(true);
+    this.generationError.set(null);
+    this.generationSuccess.set(null);
+
+    this.recruiterService
+      .generateQuestions({
+        count,
+        category: this.genCategory(),
+        difficulty: this.genDifficulty(),
+      })
+      .subscribe({
+        next: (res) => {
+          this.isGenerating.set(false);
+          const generatedCount = res.count || res.questions?.length || count;
+          this.generationSuccess.set(
+            `Successfully generated ${generatedCount} questions! They have been saved as drafts for review.`
+          );
+          this.toastService.success(
+            'AI Generation Complete',
+            `Generated ${generatedCount} draft question(s). Review and approve them in the Drafts tab.`
+          );
+          this.loadDrafts();
+        },
+        error: (err) => {
+          this.isGenerating.set(false);
+          const errMsg =
+            err.error?.message ||
+            err.message ||
+            'Gemini AI generation failed. Please check your network and Gemini API key configuration.';
+          this.generationError.set(errMsg);
+          this.toastService.error('AI Generation Failed', errMsg);
+        },
+      });
+  }
+
+  // Approve a single draft question
+  protected approveDraft(id: string): void {
+    if (!id) return;
+    this.processingDraftId.set(id);
+
+    this.recruiterService.approveDraftQuestion(id).subscribe({
+      next: () => {
+        this.processingDraftId.set(null);
+        this.draftQuestions.set(this.draftQuestions().filter((q) => q._id !== id));
+        this.toastService.success('Draft Approved', 'Question has moved to your Question Bank');
+        // Refresh question bank in background
+        this.loadQuestions();
+      },
+      error: (err) => {
+        this.processingDraftId.set(null);
+        this.toastService.error('Approval Failed', err.error?.message || 'Could not approve draft question');
+      },
+    });
+  }
+
+  // Reject a single draft question
+  protected rejectDraft(id: string): void {
+    if (!id) return;
+    this.processingDraftId.set(id);
+
+    this.recruiterService.rejectDraftQuestion(id).subscribe({
+      next: () => {
+        this.processingDraftId.set(null);
+        this.draftQuestions.set(this.draftQuestions().filter((q) => q._id !== id));
+        this.toastService.info('Draft Rejected', 'Question was rejected and removed from drafts');
+      },
+      error: (err) => {
+        this.processingDraftId.set(null);
+        this.toastService.error('Rejection Failed', err.error?.message || 'Could not reject draft question');
+      },
+    });
+  }
+
+  // Bulk Approve All Drafts
+  protected approveAllDrafts(): void {
+    const drafts = this.draftQuestions();
+    if (drafts.length === 0) return;
+
+    if (!confirm(`Are you sure you want to approve all ${drafts.length} draft question(s)? They will become available in the active question bank.`)) {
+      return;
+    }
+
+    this.isBulkProcessing.set(true);
+    const requests = drafts.map((d) =>
+      this.recruiterService.approveDraftQuestion(d._id!).pipe(catchError((e) => of(null)))
+    );
+
+    forkJoin(requests).subscribe({
+      next: () => {
+        this.isBulkProcessing.set(false);
+        this.toastService.success('Bulk Approval Complete', `Processed all pending draft questions.`);
+        this.loadDrafts();
+        this.loadQuestions();
+      },
+      error: () => {
+        this.isBulkProcessing.set(false);
+        this.toastService.error('Bulk Approval Failed', 'An error occurred during bulk approval.');
+        this.loadDrafts();
+      },
+    });
+  }
+
+  // Bulk Reject All Drafts
+  protected rejectAllDrafts(): void {
+    const drafts = this.draftQuestions();
+    if (drafts.length === 0) return;
+
+    if (!confirm(`Are you sure you want to reject all ${drafts.length} draft question(s)? This will remove them permanently.`)) {
+      return;
+    }
+
+    this.isBulkProcessing.set(true);
+    const requests = drafts.map((d) =>
+      this.recruiterService.rejectDraftQuestion(d._id!).pipe(catchError((e) => of(null)))
+    );
+
+    forkJoin(requests).subscribe({
+      next: () => {
+        this.isBulkProcessing.set(false);
+        this.toastService.info('Bulk Rejection Complete', 'Draft questions were rejected.');
+        this.loadDrafts();
+      },
+      error: () => {
+        this.isBulkProcessing.set(false);
+        this.toastService.error('Bulk Rejection Failed', 'An error occurred during bulk rejection.');
+        this.loadDrafts();
+      },
+    });
+  }
+
+  // Manual Modal Openers
   protected openAddModal(): void {
     this.isEditing.set(false);
     this.editingQuestionId.set(null);
@@ -173,7 +367,7 @@ export class RecruiterQuestionBankComponent implements OnInit {
 
     if (this.isEditing() && this.editingQuestionId()) {
       this.recruiterService.updateQuestion(this.editingQuestionId()!, data).subscribe({
-        next: (res) => {
+        next: () => {
           this.isSaving.set(false);
           this.isModalOpen.set(false);
           this.toastService.success('Question Updated', 'Question was updated successfully');
@@ -186,7 +380,7 @@ export class RecruiterQuestionBankComponent implements OnInit {
       });
     } else {
       this.recruiterService.addQuestion(data).subscribe({
-        next: (res) => {
+        next: () => {
           this.isSaving.set(false);
           this.isModalOpen.set(false);
           this.toastService.success('Question Added', 'New question added to your bank');

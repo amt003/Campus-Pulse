@@ -45,6 +45,7 @@ export class RecruiterDashboardComponent implements OnInit {
   protected isLoading = signal<boolean>(true);
   protected profile = signal<RecruiterProfile | null>(null);
   protected drives = signal<DriveItem[]>([]);
+  protected tests = signal<any[]>([]);
   protected isRefreshing = signal<boolean>(false);
   protected successMessage = signal<string | null>(null);
   protected errorMessage = signal<string | null>(null);
@@ -210,10 +211,23 @@ export class RecruiterDashboardComponent implements OnInit {
         this.activeDrivesCount.set(driveList.filter((d) => d.status === 'Open').length);
         this.totalApplicationsCount.set(driveList.reduce((acc, d) => acc + (d.applicationsCount || 0), 0));
         this.fetchAnalytics();
+        this.fetchTests();
       },
       error: (err) => {
         console.error('Failed to fetch drives:', err);
         this.fetchAnalytics();
+        this.fetchTests();
+      },
+    });
+  }
+
+  protected fetchTests(): void {
+    this.recruiterService.getTests().subscribe({
+      next: (res) => {
+        this.tests.set(res.tests || res.data || []);
+      },
+      error: (err) => {
+        console.error('Failed to fetch tests:', err);
       },
     });
   }

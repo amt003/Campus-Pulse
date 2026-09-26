@@ -108,6 +108,14 @@ const getQuestions = async (req, res) => {
 
     const query = { recruiterId: recruiter._id };
 
+    if (req.query.status) {
+      if (req.query.status !== "all") {
+        query.status = req.query.status.trim();
+      }
+    } else {
+      query.status = "approved";
+    }
+
     if (req.query.category) {
       const validCategories = ["Quantitative", "Logical", "Verbal", "Technical"];
       const matched = validCategories.find(

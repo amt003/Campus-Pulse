@@ -276,4 +276,74 @@ export class RecruiterService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  // AI Question Generation & Drafts (Phase 8)
+  generateQuestions(data: { count: number; category: string; difficulty: string; apiKey?: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/question/generate`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  getDraftQuestions(filter?: { category?: string; difficulty?: string }): Observable<any> {
+    let params = new HttpParams();
+    if (filter?.category && filter.category !== 'all') {
+      params = params.set('category', filter.category);
+    }
+    if (filter?.difficulty && filter.difficulty !== 'all') {
+      params = params.set('difficulty', filter.difficulty);
+    }
+    return this.http.get(`${this.apiUrl}/question/drafts`, {
+      headers: this.getAuthHeaders(),
+      params,
+    });
+  }
+
+  approveDraftQuestion(id: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/question/${id}/approve`, {}, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  rejectDraftQuestion(id: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/question/${id}/reject`, {}, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Aptitude Test Creation & Management (Phase 9)
+  createTest(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/test`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  publishTest(id: string, data?: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/test/${id}/publish`, data || {}, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  generateFromBank(counts: {
+    quantitative?: number;
+    logical?: number;
+    verbal?: number;
+    technical?: number;
+  }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/test/generate-from-bank`, counts, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  getTests(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/tests`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  getTestDetails(id: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/test/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
 }
+

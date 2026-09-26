@@ -6,171 +6,576 @@
       <p class="page-subtitle">Manage, curate, and review multiple choice questions for in-house aptitude tests</p>
     </div>
     <div class="header-actions">
-      <button class="btn-primary" (click)="openAddModal()" id="btn-add-question">
-        <span class="material-symbols-outlined">add_circle</span>
-        <span>Add Question</span>
-      </button>
+      @if (activeTab() === 'bank') {
+        <button class="btn-primary" (click)="openAddModal()" id="btn-add-question">
+          <span class="material-symbols-outlined">add_circle</span>
+          <span>Add Question</span>
+        </button>
+      } @else if (activeTab() === 'drafts' && draftQuestions().length > 0) {
+        <div class="bulk-header-actions">
+          <button
+            class="btn-bulk-approve"
+            (click)="approveAllDrafts()"
+            [disabled]="isBulkProcessing()"
+            id="btn-bulk-approve-top"
+          >
+            <span class="material-symbols-outlined">done_all</span>
+            <span>Approve All ({{ draftQuestions().length }})</span>
+          </button>
+          <button
+            class="btn-bulk-reject"
+            (click)="rejectAllDrafts()"
+            [disabled]="isBulkProcessing()"
+            id="btn-bulk-reject-top"
+          >
+            <span class="material-symbols-outlined">delete_sweep</span>
+            <span>Reject All</span>
+          </button>
+        </div>
+      }
     </div>
   </header>
 
-  <!-- Controls Bar (Search & Filter Dropdowns) -->
-  <section class="controls-card">
-    <div class="search-wrap">
-      <span class="material-symbols-outlined search-icon">search</span>
-      <input
-        type="text"
-        class="search-input"
-        placeholder="Search questions by keyword or topic..."
-        [(ngModel)]="searchTerm"
-        id="input-search-questions"
-      />
-    </div>
+  <!-- Navigation Tabs Bar -->
+  <nav class="qb-tabs-nav" role="tablist">
+    <button
+      class="qb-tab-btn"
+      [class.active]="activeTab() === 'bank'"
+      (click)="switchTab('bank')"
+      id="tab-btn-bank"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'bank'"
+    >
+      <span class="material-symbols-outlined tab-icon">library_books</span>
+      <span>Question Bank</span>
+      <span class="tab-counter">{{ questions().length }}</span>
+    </button>
 
-    <div class="filters-wrap">
-      <!-- Category Filter -->
-      <div class="filter-group">
-        <label for="filter-category" class="filter-label">Category:</label>
-        <select
-          id="filter-category"
-          class="filter-select"
-          [(ngModel)]="selectedCategory"
-          (change)="onFilterChange()"
-        >
-          <option value="all">All Categories</option>
-          <option value="Quantitative">Quantitative</option>
-          <option value="Logical">Logical</option>
-          <option value="Verbal">Verbal</option>
-          <option value="Technical">Technical</option>
-        </select>
+    <button
+      class="qb-tab-btn"
+      [class.active]="activeTab() === 'generate'"
+      (click)="switchTab('generate')"
+      id="tab-btn-generate"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'generate'"
+    >
+      <span class="material-symbols-outlined tab-icon">auto_awesome</span>
+      <span>Auto-Generate</span>
+      <span class="tab-badge-ai">AI</span>
+    </button>
+
+    <button
+      class="qb-tab-btn"
+      [class.active]="activeTab() === 'drafts'"
+      (click)="switchTab('drafts')"
+      id="tab-btn-drafts"
+      role="tab"
+      [attr.aria-selected]="activeTab() === 'drafts'"
+    >
+      <span class="material-symbols-outlined tab-icon">rate_review</span>
+      <span>Drafts</span>
+      <span
+        class="tab-counter"
+        [class.pending-highlight]="pendingDraftsCount() > 0"
+        id="drafts-pending-counter"
+      >
+        {{ pendingDraftsCount() }} pending
+      </span>
+    </button>
+  </nav>
+
+  <!-- TAB 1: QUESTION BANK (MAIN) -->
+  @if (activeTab() === 'bank') {
+    <!-- Controls Bar (Search & Filter Dropdowns) -->
+    <section class="controls-card">
+      <div class="search-wrap">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search questions by keyword or topic..."
+          [(ngModel)]="searchTerm"
+          id="input-search-questions"
+        />
       </div>
 
-      <!-- Difficulty Filter -->
-      <div class="filter-group">
-        <label for="filter-difficulty" class="filter-label">Difficulty:</label>
-        <select
-          id="filter-difficulty"
-          class="filter-select"
-          [(ngModel)]="selectedDifficulty"
-          (change)="onFilterChange()"
-        >
-          <option value="all">All Difficulties</option>
-          <option value="Easy">Easy</option>
-          <option value="Medium">Medium</option>
-          <option value="Hard">Hard</option>
-        </select>
+      <div class="filters-wrap">
+        <!-- Category Filter -->
+        <div class="filter-group">
+          <label for="filter-category" class="filter-label">Category:</label>
+          <select
+            id="filter-category"
+            class="filter-select"
+            [(ngModel)]="selectedCategory"
+            (change)="onFilterChange()"
+          >
+            <option value="all">All Categories</option>
+            <option value="Quantitative">Quantitative</option>
+            <option value="Logical">Logical</option>
+            <option value="Verbal">Verbal</option>
+            <option value="Technical">Technical</option>
+          </select>
+        </div>
+
+        <!-- Difficulty Filter -->
+        <div class="filter-group">
+          <label for="filter-difficulty" class="filter-label">Difficulty:</label>
+          <select
+            id="filter-difficulty"
+            class="filter-select"
+            [(ngModel)]="selectedDifficulty"
+            (change)="onFilterChange()"
+          >
+            <option value="all">All Difficulties</option>
+            <option value="Easy">Easy</option>
+            <option value="Medium">Medium</option>
+            <option value="Hard">Hard</option>
+          </select>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Questions Table Card -->
-  <div class="table-card">
-    @if (isLoading()) {
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading Question Bank...</p>
-      </div>
-    } @else if (filteredQuestions().length === 0) {
-      <div class="empty-state">
-        <span class="material-symbols-outlined empty-icon">quiz</span>
-        <h3>No Questions Found</h3>
-        <p>
-          @if (searchTerm() || selectedCategory() !== 'all' || selectedDifficulty() !== 'all') {
-            No questions match your current filters. Try resetting the search or category filters.
-          } @else {
-            Your question bank is currently empty. Click "Add Question" above to add your first question!
-          }
-        </p>
-      </div>
-    } @else {
-      <div class="table-responsive">
-        <table class="qb-table" id="table-question-bank">
-          <thead>
-            <tr>
-              <th style="width: 42%;">Question</th>
-              <th style="width: 14%;">Category</th>
-              <th style="width: 12%;">Difficulty</th>
-              <th style="width: 12%;">Source</th>
-              <th style="width: 10%; text-align: center;">Times Used</th>
-              <th style="width: 10%; text-align: right;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (q of filteredQuestions(); track q._id || $index) {
-              <tr class="qb-row">
-                <!-- Question Statement -->
-                <td class="col-question">
-                  <div class="question-text-truncate" [title]="q.questionText">
-                    {{ q.questionText }}
-                  </div>
-                  <div class="options-preview">
-                    <span class="opt-count">{{ q.options.length }} options</span>
-                    <span class="preview-dot">•</span>
-                    <span class="correct-badge">Correct: Option {{ q.correctOption + 1 }}</span>
-                  </div>
-                </td>
-
-                <!-- Category -->
-                <td>
-                  <span class="badge badge-category" [attr.data-cat]="q.category">
-                    {{ q.category }}
-                  </span>
-                </td>
-
-                <!-- Difficulty -->
-                <td>
-                  <span class="badge badge-difficulty" [attr.data-diff]="q.difficulty">
-                    {{ q.difficulty }}
-                  </span>
-                </td>
-
-                <!-- Source -->
-                <td>
-                  <span class="badge badge-source" [attr.data-source]="q.source || 'manual'">
-                    {{ q.source || 'manual' }}
-                  </span>
-                </td>
-
-                <!-- Times Used -->
-                <td style="text-align: center;">
-                  <span class="times-used-badge">
-                    <span class="material-symbols-outlined times-icon">history</span>
-                    <span>{{ q.timesUsed || 0 }}</span>
-                  </span>
-                </td>
-
-                <!-- Actions -->
-                <td style="text-align: right;">
-                  <div class="action-buttons">
-                    <button
-                      class="btn-icon btn-edit"
-                      (click)="openEditModal(q)"
-                      title="Edit Question"
-                      [id]="'btn-edit-q-' + q._id"
-                    >
-                      <span class="material-symbols-outlined">edit</span>
-                    </button>
-                    <button
-                      class="btn-icon btn-delete"
-                      (click)="deleteQuestion(q._id!)"
-                      [disabled]="deletingId() === q._id"
-                      title="Delete Question"
-                      [id]="'btn-delete-q-' + q._id"
-                    >
-                      <span class="material-symbols-outlined">
-                        {{ deletingId() === q._id ? 'hourglass_empty' : 'delete' }}
-                      </span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
+    <!-- Questions Table Card -->
+    <div class="table-card">
+      @if (isLoading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading Question Bank...</p>
+        </div>
+      } @else if (filteredQuestions().length === 0) {
+        <div class="empty-state">
+          <span class="material-symbols-outlined empty-icon">quiz</span>
+          <h3>No Questions Found</h3>
+          <p>
+            @if (searchTerm() || selectedCategory() !== 'all' || selectedDifficulty() !== 'all') {
+              No questions match your current filters. Try resetting the search or category filters.
+            } @else {
+              Your question bank is currently empty. Click "Add Question" or try "Auto-Generate" using AI!
             }
-          </tbody>
-        </table>
-      </div>
-    }
-  </div>
+          </p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="qb-table" id="table-question-bank">
+            <thead>
+              <tr>
+                <th style="width: 42%;">Question</th>
+                <th style="width: 14%;">Category</th>
+                <th style="width: 12%;">Difficulty</th>
+                <th style="width: 12%;">Source</th>
+                <th style="width: 10%; text-align: center;">Times Used</th>
+                <th style="width: 10%; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (q of filteredQuestions(); track q._id || $index) {
+                <tr class="qb-row">
+                  <!-- Question Statement -->
+                  <td class="col-question">
+                    <div class="question-text-truncate" [title]="q.questionText">
+                      {{ q.questionText }}
+                    </div>
+                    <div class="options-preview">
+                      <span class="opt-count">{{ q.options.length }} options</span>
+                      <span class="preview-dot">•</span>
+                      <span class="correct-badge">Correct: Option {{ ['A', 'B', 'C', 'D'][q.correctOption] || (q.correctOption + 1) }}</span>
+                    </div>
+                  </td>
 
-  <!-- Add / Edit Question Modal -->
+                  <!-- Category -->
+                  <td>
+                    <span class="badge badge-category" [attr.data-cat]="q.category">
+                      {{ q.category }}
+                    </span>
+                  </td>
+
+                  <!-- Difficulty -->
+                  <td>
+                    <span class="badge badge-difficulty" [attr.data-diff]="q.difficulty">
+                      {{ q.difficulty }}
+                    </span>
+                  </td>
+
+                  <!-- Source -->
+                  <td>
+                    <span class="badge badge-source" [attr.data-source]="q.source || 'manual'">
+                      {{ q.source || 'manual' }}
+                    </span>
+                  </td>
+
+                  <!-- Times Used -->
+                  <td style="text-align: center;">
+                    <span class="times-used-badge">
+                      <span class="material-symbols-outlined times-icon">history</span>
+                      <span>{{ q.timesUsed || 0 }}</span>
+                    </span>
+                  </td>
+
+                  <!-- Actions -->
+                  <td style="text-align: right;">
+                    <div class="action-buttons">
+                      <button
+                        class="btn-icon btn-edit"
+                        (click)="openEditModal(q)"
+                        title="Edit Question"
+                        [id]="'btn-edit-q-' + q._id"
+                      >
+                        <span class="material-symbols-outlined">edit</span>
+                      </button>
+                      <button
+                        class="btn-icon btn-delete"
+                        (click)="deleteQuestion(q._id!)"
+                        [disabled]="deletingId() === q._id"
+                        title="Delete Question"
+                        [id]="'btn-delete-q-' + q._id"
+                      >
+                        <span class="material-symbols-outlined">
+                          {{ deletingId() === q._id ? 'hourglass_empty' : 'delete' }}
+                        </span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- TAB 2: AUTO-GENERATE WITH AI -->
+  @if (activeTab() === 'generate') {
+    <div class="generate-tab-layout">
+      <!-- Main Generator Card -->
+      <section class="generator-card">
+        <div class="card-hero">
+          <div class="hero-badge">
+            <span class="material-symbols-outlined hero-sparkle">auto_awesome</span>
+            <span>Gemini 1.5 Flash AI Engine</span>
+          </div>
+          <h2 class="card-hero-title">Auto-Generate Multiple Choice Questions</h2>
+          <p class="card-hero-subtitle">
+            Quickly generate verified, high-quality assessment questions tailored by category and difficulty.
+            Generated questions will land directly in your <strong>Drafts queue</strong> for review and approval.
+          </p>
+        </div>
+
+        <!-- Error Banner -->
+        @if (generationError()) {
+          <div class="alert-banner alert-error" id="banner-generation-error">
+            <div class="alert-left">
+              <span class="material-symbols-outlined alert-icon">error</span>
+              <div>
+                <div class="alert-title">AI Generation Failed</div>
+                <div class="alert-msg">{{ generationError() }}</div>
+              </div>
+            </div>
+            <button class="btn-alert-close" (click)="generationError.set(null)">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        }
+
+        <!-- Success Banner -->
+        @if (generationSuccess()) {
+          <div class="alert-banner alert-success" id="banner-generation-success">
+            <div class="alert-left">
+              <span class="material-symbols-outlined alert-icon">check_circle</span>
+              <div>
+                <div class="alert-title">Questions Generated!</div>
+                <div class="alert-msg">{{ generationSuccess() }}</div>
+              </div>
+            </div>
+            <button class="btn-review-now" (click)="switchTab('drafts')" id="btn-goto-drafts">
+              <span>Review Drafts</span>
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+          </div>
+        }
+
+        <!-- Generator Form -->
+        <div class="generator-form">
+          <div class="gen-form-grid">
+            <!-- Count Input -->
+            <div class="gen-field">
+              <label for="input-gen-count" class="gen-label">
+                Number of Questions <span class="required">*</span>
+              </label>
+              <div class="input-with-hint">
+                <input
+                  type="number"
+                  id="input-gen-count"
+                  class="gen-input"
+                  min="1"
+                  max="50"
+                  [ngModel]="genCount()"
+                  (ngModelChange)="genCount.set($event)"
+                  placeholder="e.g. 5"
+                  [disabled]="isGenerating()"
+                />
+                <span class="field-hint">Range: 1 to 50 questions per batch</span>
+              </div>
+            </div>
+
+            <!-- Category Dropdown -->
+            <div class="gen-field">
+              <label for="select-gen-category" class="gen-label">
+                Category <span class="required">*</span>
+              </label>
+              <select
+                id="select-gen-category"
+                class="gen-select"
+                [ngModel]="genCategory()"
+                (ngModelChange)="genCategory.set($event)"
+                [disabled]="isGenerating()"
+              >
+                <option value="Quantitative">Quantitative Aptitude</option>
+                <option value="Logical">Logical Reasoning</option>
+                <option value="Verbal">Verbal Ability</option>
+                <option value="Technical">Technical Fundamentals</option>
+              </select>
+              <span class="field-hint">Select the subject domain</span>
+            </div>
+
+            <!-- Difficulty Dropdown -->
+            <div class="gen-field">
+              <label for="select-gen-difficulty" class="gen-label">
+                Difficulty Level <span class="required">*</span>
+              </label>
+              <select
+                id="select-gen-difficulty"
+                class="gen-select"
+                [ngModel]="genDifficulty()"
+                (ngModelChange)="genDifficulty.set($event)"
+                [disabled]="isGenerating()"
+              >
+                <option value="Easy">Easy (Entry level screening)</option>
+                <option value="Medium">Medium (Standard difficulty)</option>
+                <option value="Hard">Hard (Advanced aptitude)</option>
+              </select>
+              <span class="field-hint">Defines problem complexity</span>
+            </div>
+          </div>
+
+          <!-- Generate Action Button -->
+          <div class="gen-actions">
+            <button
+              class="btn-generate-ai"
+              (click)="generateAIQuestions()"
+              [disabled]="isGenerating()"
+              id="btn-trigger-ai-generate"
+            >
+              @if (isGenerating()) {
+                <div class="btn-spinner"></div>
+                <span>Generating questions with Gemini AI...</span>
+              } @else {
+                <span class="material-symbols-outlined">auto_awesome</span>
+                <span>Generate {{ genCount() }} {{ genCategory() }} Questions</span>
+              }
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Informational Guide Cards -->
+      <section class="info-guide-grid">
+        <div class="guide-card">
+          <div class="guide-icon-wrap icon-safety">
+            <span class="material-symbols-outlined">verified_user</span>
+          </div>
+          <h4>Safety &amp; Review First</h4>
+          <p>
+            Generated questions are always marked as <strong>Draft</strong>. They are never added to your live
+            tests until you review and explicitly approve them.
+          </p>
+        </div>
+
+        <div class="guide-card">
+          <div class="guide-icon-wrap icon-curated">
+            <span class="material-symbols-outlined">psychology</span>
+          </div>
+          <h4>High Relevance &amp; Balance</h4>
+          <p>
+            Prompts enforce structured 4-choice MCQs with clear explanations and balanced answer options tailored for
+            campus placement drives.
+          </p>
+        </div>
+
+        <div class="guide-card">
+          <div class="guide-icon-wrap icon-instant">
+            <span class="material-symbols-outlined">bolt</span>
+          </div>
+          <h4>Fast Iteration</h4>
+          <p>
+            Review batches effortlessly using the 1-click <strong>Approve All</strong> or granular row-by-row
+            approvals in the Drafts tab.
+          </p>
+        </div>
+      </section>
+    </div>
+  }
+
+  <!-- TAB 3: DRAFTS REVIEW QUEUE -->
+  @if (activeTab() === 'drafts') {
+    <div class="drafts-tab-layout">
+      <!-- Drafts Header Controls -->
+      <section class="controls-card drafts-controls">
+        <div class="drafts-meta">
+          <h3 class="drafts-meta-title">Pending Draft Questions</h3>
+          <p class="drafts-meta-subtitle">
+            Review questions generated by Gemini AI. Approved questions will become available immediately in your Question Bank.
+          </p>
+        </div>
+
+        @if (draftQuestions().length > 0) {
+          <div class="draft-bulk-actions">
+            <button
+              class="btn-bulk-approve"
+              (click)="approveAllDrafts()"
+              [disabled]="isBulkProcessing()"
+              id="btn-bulk-approve"
+            >
+              @if (isBulkProcessing()) {
+                <div class="btn-spinner-dark"></div>
+              } @else {
+                <span class="material-symbols-outlined">done_all</span>
+              }
+              <span>Approve All ({{ draftQuestions().length }})</span>
+            </button>
+
+            <button
+              class="btn-bulk-reject"
+              (click)="rejectAllDrafts()"
+              [disabled]="isBulkProcessing()"
+              id="btn-bulk-reject"
+            >
+              <span class="material-symbols-outlined">delete_sweep</span>
+              <span>Reject All</span>
+            </button>
+          </div>
+        }
+      </section>
+
+      <!-- Drafts Table Card -->
+      <div class="table-card">
+        @if (isLoadingDrafts()) {
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading pending draft questions...</p>
+          </div>
+        } @else if (draftQuestions().length === 0) {
+          <div class="empty-state">
+            <span class="material-symbols-outlined empty-icon empty-draft-icon">inventory_2</span>
+            <h3>No Draft Questions Pending</h3>
+            <p>
+              Your review queue is clear! Head over to the <strong>Auto-Generate</strong> tab to generate a batch of new questions with Gemini AI.
+            </p>
+            <div class="empty-action-wrap">
+              <button class="btn-primary" (click)="switchTab('generate')" id="btn-empty-goto-generate">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                <span>Go to Auto-Generate</span>
+              </button>
+            </div>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="qb-table" id="table-drafts">
+              <thead>
+                <tr>
+                  <th style="width: 44%;">Question &amp; Options</th>
+                  <th style="width: 14%;">Category</th>
+                  <th style="width: 12%;">Difficulty</th>
+                  <th style="width: 10%;">Source</th>
+                  <th style="width: 20%; text-align: right;">Review Decision</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (q of draftQuestions(); track q._id || $index) {
+                  <tr class="qb-row draft-row" [id]="'draft-row-' + q._id">
+                    <!-- Question & Option Details -->
+                    <td class="col-question">
+                      <div class="question-text-truncate draft-question-text" [title]="q.questionText">
+                        {{ q.questionText }}
+                      </div>
+                      <div class="draft-options-list">
+                        @for (opt of q.options; track $index) {
+                          <div
+                            class="draft-opt-item"
+                            [class.is-correct]="q.correctOption === $index"
+                          >
+                            <span class="opt-label">{{ ['A', 'B', 'C', 'D'][$index] }}</span>
+                            <span class="opt-text">{{ opt }}</span>
+                            @if (q.correctOption === $index) {
+                              <span class="opt-correct-chip">Correct Key</span>
+                            }
+                          </div>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- Category -->
+                    <td>
+                      <span class="badge badge-category" [attr.data-cat]="q.category">
+                        {{ q.category }}
+                      </span>
+                    </td>
+
+                    <!-- Difficulty -->
+                    <td>
+                      <span class="badge badge-difficulty" [attr.data-diff]="q.difficulty">
+                        {{ q.difficulty }}
+                      </span>
+                    </td>
+
+                    <!-- Source -->
+                    <td>
+                      <span class="badge badge-source" [attr.data-source]="q.source || 'ai_generated'">
+                        {{ q.source || 'ai_generated' }}
+                      </span>
+                    </td>
+
+                    <!-- Actions -->
+                    <td style="text-align: right;">
+                      <div class="draft-action-btns">
+                        <button
+                          class="btn-draft-approve"
+                          (click)="approveDraft(q._id!)"
+                          [disabled]="processingDraftId() === q._id || isBulkProcessing()"
+                          title="Approve and move to Question Bank"
+                          [id]="'btn-approve-' + q._id"
+                        >
+                          @if (processingDraftId() === q._id) {
+                            <div class="btn-spinner-green"></div>
+                          } @else {
+                            <span class="material-symbols-outlined btn-icon-small">check</span>
+                          }
+                          <span>Approve</span>
+                        </button>
+
+                        <button
+                          class="btn-draft-reject"
+                          (click)="rejectDraft(q._id!)"
+                          [disabled]="processingDraftId() === q._id || isBulkProcessing()"
+                          title="Reject and discard"
+                          [id]="'btn-reject-' + q._id"
+                        >
+                          <span class="material-symbols-outlined btn-icon-small">close</span>
+                          <span>Reject</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Add / Edit Manual Question Modal (Existing from Phase 7) -->
   @if (isModalOpen()) {
     <div class="modal-backdrop" (click)="closeModal()">
       <div class="modal-dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
@@ -302,3 +707,4 @@
     </div>
   }
 </div>
+
