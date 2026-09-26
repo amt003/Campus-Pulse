@@ -1,3 +1,26 @@
+:host {
+  --primary:   #1A5276;
+  --primary-hover: #14425E;
+  --secondary: #006497;
+  --success:   #27AE60;
+  --warning:   #F39C12;
+  --danger:    #E74C3C;
+  --bg-page:   #F8F9FA;
+  --surface:   #FFFFFF;
+  --text-dark: #1C2833;
+  --text-muted:#5D6D7E;
+  --border:    #E5E8E8;
+  --surface-low: #EBF5FB;
+
+  --color-primary: #1A5276;
+  --color-secondary: #006497;
+  --color-surface-low: #EBF5FB;
+  --color-outline: #E5E8E8;
+  --color-on-surface-variant: #5D6D7E;
+
+  display: block;
+}
+
 .qb-page-container {
   max-width: 1320px;
   margin: 0 auto;
@@ -31,7 +54,7 @@
   margin: 0;
   font-size: 26px;
   font-weight: 850;
-  color: var(--color-primary, #003b5a);
+  color: var(--color-primary, #1A5276);
   letter-spacing: -0.5px;
 }
 
@@ -45,7 +68,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--color-primary, #003b5a);
+  background: var(--color-primary, #1A5276);
   color: white;
   padding: 10px 18px;
   border-radius: 8px;
@@ -361,7 +384,7 @@
   width: 36px;
   height: 36px;
   border: 3px solid #e1e6eb;
-  border-top-color: #003b5a;
+  border-top-color: #1A5276;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 12px;
@@ -447,7 +470,7 @@
 }
 
 .modal-icon {
-  color: #003b5a;
+  color: #1A5276;
   font-size: 24px;
 }
 
@@ -455,7 +478,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 800;
-  color: #003b5a;
+  color: #1A5276;
 }
 
 .btn-close {
@@ -668,14 +691,14 @@
 }
 
 .qb-tab-btn:hover {
-  color: #003b5a;
+  color: #1A5276;
   background: #f8fafc;
 }
 
 .qb-tab-btn.active {
-  color: #003b5a;
+  color: #1A5276;
   font-weight: 800;
-  border-bottom-color: #003b5a;
+  border-bottom-color: #1A5276;
   background: #f0f7fa;
 }
 
@@ -809,7 +832,7 @@
   margin: 0 0 8px 0;
   font-size: 22px;
   font-weight: 850;
-  color: #003b5a;
+  color: #1A5276;
 }
 
 .card-hero-subtitle {
@@ -970,7 +993,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(135deg, #003b5a, #006497);
+  background: linear-gradient(135deg, #1A5276, #006497);
   color: white;
   padding: 13px 28px;
   border-radius: 10px;
@@ -1064,7 +1087,7 @@
   margin: 0 0 4px 0;
   font-size: 16px;
   font-weight: 800;
-  color: #003b5a;
+  color: #1A5276;
 }
 
 .drafts-meta-subtitle {

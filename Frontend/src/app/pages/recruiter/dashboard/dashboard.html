@@ -390,6 +390,7 @@
                   <th style="padding: 10px 14px; font-weight: 750; color: #475569; font-size: 11.5px; text-transform: uppercase;">Cutoff</th>
                   <th style="padding: 10px 14px; font-weight: 750; color: #475569; font-size: 11.5px; text-transform: uppercase;">Questions</th>
                   <th style="padding: 10px 14px; font-weight: 750; color: #475569; font-size: 11.5px; text-transform: uppercase;">Scheduled For</th>
+                  <th style="padding: 10px 14px; font-weight: 750; color: #475569; font-size: 11.5px; text-transform: uppercase;">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -424,6 +425,16 @@
                       @if (t.timeSlot) {
                         <span style="font-size: 11px; color: #64748B; display: block;">{{ t.timeSlot }}</span>
                       }
+                    </td>
+                    <td style="padding: 12px 14px;">
+                      <a
+                        [routerLink]="['/recruiter/test-results', t._id]"
+                        style="display: inline-flex; align-items: center; gap: 4px; background: #E0F2FE; color: #0284C7; border: 1px solid #BAE6FD; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 750; text-decoration: none; transition: all 0.2s;"
+                        [id]="'btn-view-results-' + t._id"
+                      >
+                        <span class="material-symbols-outlined" style="font-size: 15px;">analytics</span>
+                        <span>Results</span>
+                      </a>
                     </td>
                   </tr>
                 }

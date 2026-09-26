@@ -1,3 +1,26 @@
+:host {
+  --primary:   #1A5276;
+  --primary-hover: #14425E;
+  --secondary: #006497;
+  --success:   #27AE60;
+  --warning:   #F39C12;
+  --danger:    #E74C3C;
+  --bg-page:   #F8F9FA;
+  --surface:   #FFFFFF;
+  --text-dark: #1C2833;
+  --text-muted:#5D6D7E;
+  --border:    #E5E8E8;
+  --surface-low: #EBF5FB;
+
+  --color-primary: #1A5276;
+  --color-secondary: #006497;
+  --color-surface-low: #EBF5FB;
+  --color-outline: #E5E8E8;
+  --color-on-surface-variant: #5D6D7E;
+
+  display: block;
+}
+
 .create-test-page-container {
   max-width: 1240px;
   margin: 0 auto;
@@ -37,8 +60,8 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: #e0f2fe;
-  color: #006497;
+  background: var(--surface-low);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -52,7 +75,7 @@
   margin: 0;
   font-size: 24px;
   font-weight: 850;
-  color: var(--color-primary, #003b5a);
+  color: var(--color-primary, #1A5276);
   letter-spacing: -0.5px;
 }
 
@@ -132,9 +155,9 @@
 }
 
 .step-item.active .step-num-circle {
-  background: var(--color-primary, #003b5a);
+  background: var(--color-primary, #1A5276);
   color: white;
-  border-color: var(--color-primary, #003b5a);
+  border-color: var(--color-primary, #1A5276);
   box-shadow: 0 0 0 4px rgba(0, 59, 90, 0.15);
 }
 
@@ -169,7 +192,7 @@
 }
 
 .step-item.active .step-name {
-  color: var(--color-primary, #003b5a);
+  color: var(--color-primary, #1A5276);
   font-weight: 850;
 }
 
@@ -253,14 +276,14 @@
 
 .section-icon {
   font-size: 24px;
-  color: var(--color-primary, #003b5a);
+  color: var(--color-primary, #1A5276);
 }
 
 .card-section-title {
   margin: 0;
   font-size: 18px;
   font-weight: 850;
-  color: #003b5a;
+  color: #1A5276;
 }
 
 .card-section-subtitle {
@@ -368,7 +391,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--color-primary, #003b5a);
+  background: var(--color-primary, #1A5276);
   color: white;
   padding: 11px 22px;
   border-radius: 8px;
@@ -425,7 +448,7 @@
   margin: 0;
   font-size: 16.5px;
   font-weight: 800;
-  color: #003b5a;
+  color: #1A5276;
 }
 
 .mode-header-subtitle {
@@ -458,9 +481,9 @@
 }
 
 .mode-card.selected {
-  border-color: #003b5a;
+  border-color: #1A5276;
   background: #f0f7fa;
-  box-shadow: 0 0 0 1px #003b5a;
+  box-shadow: 0 0 0 1px #1A5276;
 }
 
 .mode-card input[type="radio"] {
@@ -668,7 +691,7 @@
 }
 
 .summary-icon {
-  color: #003b5a;
+  color: #1A5276;
   font-size: 20px;
 }
 
@@ -734,7 +757,7 @@
 .picker-checkbox {
   width: 17px;
   height: 17px;
-  accent-color: #003b5a;
+  accent-color: #1A5276;
   cursor: pointer;
 }
 
@@ -843,7 +866,7 @@
   width: 32px;
   height: 32px;
   border: 3px solid #e2e8f0;
-  border-top-color: #003b5a;
+  border-top-color: #1A5276;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 10px;
@@ -1042,7 +1065,7 @@ input:checked + .slider:before {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(135deg, #003b5a, #006497);
+  background: linear-gradient(135deg, #1A5276, #006497);
   color: white;
   border: none;
   padding: 12px;

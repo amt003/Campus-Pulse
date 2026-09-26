@@ -292,7 +292,7 @@ export class StudentTakeTestComponent implements OnInit, OnDestroy {
             'Test Disqualified',
             `Max violations (${this.maxViolations()}) reached. Your test was automatically submitted.`
           );
-          this.router.navigate(['/student/dashboard']);
+          this.router.navigate(['/student/test-result', attId]);
           return;
         }
 
@@ -405,12 +405,12 @@ export class StudentTakeTestComponent implements OnInit, OnDestroy {
           'Assessment Submitted!',
           `Score: ${res.score}/${res.totalQuestions} (${res.percentage}%) - Result: ${res.result}`
         );
-        this.router.navigate(['/student/dashboard']);
+        this.router.navigate(['/student/test-result', attId]);
       },
       error: (err) => {
         this.isSubmitting.set(false);
         this.toastService.error('Submission Notice', err.error?.message || 'Assessment submitted');
-        this.router.navigate(['/student/dashboard']);
+        this.router.navigate(['/student/test-result', attId]);
       },
     });
   }

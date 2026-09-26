@@ -33,6 +33,8 @@ import { StudentSchedulesComponent } from './pages/student/schedules/schedules';
 import { StudentOffersComponent } from './pages/student/offers/offers';
 import { StudentProfileComponent } from './pages/student/profile/profile';
 import { StudentTakeTestComponent } from './pages/student/take-test/take-test.component';
+import { StudentTestResultComponent } from './pages/student/test-result/test-result.component';
+import { RecruiterTestResultsComponent } from './pages/recruiter/test-results/test-results.component';
 import { TermsComponent } from './pages/terms/terms.component';
 import { ForgotPasswordComponent } from './pages/auth/forgot-password/forgot-password.component';
 import { roleAuthGuard } from './guards/auth.guard';
@@ -172,6 +174,10 @@ export const routes: Routes = [
         path: 'offer/:applicationId',
         component: OfferGeneratorComponent,
       },
+      {
+        path: 'test-results/:testId',
+        component: RecruiterTestResultsComponent,
+      },
     ],
   },
   {
@@ -220,6 +226,10 @@ export const routes: Routes = [
       {
         path: 'take-test/:testId',
         component: StudentTakeTestComponent,
+      },
+      {
+        path: 'test-result/:attemptId',
+        component: StudentTestResultComponent,
       },
     ],
   },

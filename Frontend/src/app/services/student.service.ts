@@ -248,4 +248,8 @@ export class StudentService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  getMyResult(attemptId: string): Observable<any> {
+    return this.getMyTestResult(attemptId);
+  }
 }

@@ -391,8 +391,12 @@ const getTestResults = async (req, res) => {
         if (qIndex !== -1) {
           totalAttemptsForQuestion++;
           const candidateAnswer = attempt.answers ? attempt.answers[qIndex] : null;
-          if (candidateAnswer !== null && candidateAnswer !== undefined && candidateAnswer === q.correctOption) {
-            correctAttempts++;
+          if (candidateAnswer !== null && candidateAnswer !== undefined) {
+            const order = (attempt.optionOrder && attempt.optionOrder[qIndex]) || [0, 1, 2, 3];
+            const chosenOriginalIndex = order[candidateAnswer];
+            if (chosenOriginalIndex === q.correctOption) {
+              correctAttempts++;
+            }
           }
         }
       }
@@ -405,9 +409,11 @@ const getTestResults = async (req, res) => {
       return {
         questionId: q._id,
         questionText: q.questionText,
+        options: q.options || [],
         category: q.category,
         difficulty: q.difficulty,
         correctOption: q.correctOption,
+        correctAnswerText: (q.options && q.options[q.correctOption]) || `Option ${['A','B','C','D'][q.correctOption]}`,
         totalAttempts: totalAttemptsForQuestion,
         correctAttempts,
         accuracyPercentage,

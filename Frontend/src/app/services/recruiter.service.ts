@@ -345,5 +345,11 @@ export class RecruiterService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  getTestResults(testId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/test/${testId}/results`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
 }
 

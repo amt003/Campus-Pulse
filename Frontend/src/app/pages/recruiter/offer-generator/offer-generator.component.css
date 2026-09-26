@@ -1,7 +1,25 @@
-/* =========================================
-   Offer Generator — Premium Redesign CSS
-   Color Palette: #1A5276 (primary navy), #27AE60 (emerald), #006497 (secondary)
-   ========================================= */
+:host {
+  --primary:   #1A5276;
+  --primary-hover: #14425E;
+  --secondary: #006497;
+  --success:   #27AE60;
+  --warning:   #F39C12;
+  --danger:    #E74C3C;
+  --bg-page:   #F8F9FA;
+  --surface:   #FFFFFF;
+  --text-dark: #1C2833;
+  --text-muted:#5D6D7E;
+  --border:    #E5E8E8;
+  --surface-low: #EBF5FB;
+
+  --color-primary: #1A5276;
+  --color-secondary: #006497;
+  --color-surface-low: #EBF5FB;
+  --color-outline: #E5E8E8;
+  --color-on-surface-variant: #5D6D7E;
+
+  display: block;
+}
 
 /* ---- Container ---- */
 .offer-generator-container {

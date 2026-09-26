@@ -1,0 +1,407 @@
+<div class="test-results-root">
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="state-container">
+      <div class="spinner-large"></div>
+      <h3>Loading Assessment Analytics...</h3>
+      <p>Aggregating candidate attempts, computing question accuracy curves, and evaluating proctoring logs.</p>
+    </div>
+  } @else if (errorMessage()) {
+    <!-- Error State -->
+    <div class="state-container error-state">
+      <span class="material-symbols-outlined icon-large text-danger">error</span>
+      <h3>Results Unavailable</h3>
+      <p>{{ errorMessage() }}</p>
+      <a routerLink="/recruiter/dashboard" class="btn-primary">Back to Dashboard</a>
+    </div>
+  } @else {
+    <!-- Executive Header Bar -->
+    <header class="page-header">
+      <div class="header-left">
+        <div class="header-icon-box">
+          <span class="material-symbols-outlined">analytics</span>
+        </div>
+        <div>
+          <div class="breadcrumb-trail">
+            <a routerLink="/recruiter/dashboard">Dashboard</a>
+            <span class="sep">/</span>
+            <span>Aptitude Assessments</span>
+            <span class="sep">/</span>
+            <span>Results &amp; Analytics</span>
+          </div>
+          <h1 class="page-title">{{ testTitle() }}</h1>
+          <span class="subtitle-text">Passing Cutoff: <strong>{{ passingScore() }}%</strong></span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button
+          class="btn-export-csv"
+          (click)="exportAsCSV()"
+          [disabled]="attempts().length === 0"
+          id="btn-export-test-results-csv"
+          title="Download candidate score records as CSV"
+        >
+          <span class="material-symbols-outlined">download</span>
+          <span>Export as CSV</span>
+        </button>
+
+        <a routerLink="/recruiter/dashboard" class="btn-secondary-back" id="btn-back-rec-dash">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Back to Dashboard</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Metrics Summary Cards Grid -->
+    <div class="metrics-summary-grid">
+      <div class="metric-card">
+        <div class="metric-icon-wrap bg-blue">
+          <span class="material-symbols-outlined">group</span>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">Candidates Attempted</span>
+          <strong class="metric-val">{{ totalAttemptsCount() }}</strong>
+          <span class="metric-sub">Total submissions</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon-wrap bg-green">
+          <span class="material-symbols-outlined">check_circle</span>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">Pass Rate</span>
+          <strong class="metric-val">{{ passRate() }}%</strong>
+          <span class="metric-sub">{{ passedCount() }} of {{ totalAttemptsCount() }} Passed</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon-wrap bg-purple">
+          <span class="material-symbols-outlined">monitoring</span>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">Average Score</span>
+          <strong class="metric-val">{{ avgScore() }}%</strong>
+          <span class="metric-sub">Mean candidate accuracy</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon-wrap bg-amber">
+          <span class="material-symbols-outlined">shield</span>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">Flagged Attempts</span>
+          <strong class="metric-val" [class.text-danger]="flaggedCount() > 0">{{ flaggedCount() }}</strong>
+          <span class="metric-sub">Proctoring threshold alerts</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Container with Tabs -->
+    <div class="results-content-card">
+      <!-- Tabs Bar -->
+      <nav class="results-tabs-bar" role="tablist">
+        <button
+          class="tab-btn"
+          [class.active]="activeTab() === 'candidates'"
+          (click)="activeTab.set('candidates')"
+          id="tab-btn-candidates"
+          role="tab"
+        >
+          <span class="material-symbols-outlined">people</span>
+          <span>Candidate Attempts ({{ attempts().length }})</span>
+        </button>
+
+        <button
+          class="tab-btn"
+          [class.active]="activeTab() === 'questions'"
+          (click)="activeTab.set('questions')"
+          id="tab-btn-questions"
+          role="tab"
+        >
+          <span class="material-symbols-outlined">quiz</span>
+          <span>Question-Wise Accuracy ({{ questionStats().length }})</span>
+        </button>
+      </nav>
+
+      <!-- =================================================================== -->
+      <!-- TAB 1: CANDIDATES ATTEMPTS TABLE                                     -->
+      <!-- =================================================================== -->
+      @if (activeTab() === 'candidates') {
+        <div class="tab-pane-body">
+          <!-- Filters & Search Toolbar -->
+          <div class="table-toolbar">
+            <div class="search-box">
+              <span class="material-symbols-outlined search-icon">search</span>
+              <input
+                type="text"
+                placeholder="Search candidate name, roll number, or email..."
+                [ngModel]="searchQuery()"
+                (ngModelChange)="searchQuery.set($event)"
+                id="input-search-candidate-results"
+              />
+              @if (searchQuery()) {
+                <button class="btn-clear-search" (click)="searchQuery.set('')">&times;</button>
+              }
+            </div>
+
+            <div class="filter-pills-row">
+              <button
+                class="filter-pill"
+                [class.active]="resultFilter() === 'ALL'"
+                (click)="resultFilter.set('ALL')"
+              >
+                All ({{ attempts().length }})
+              </button>
+              <button
+                class="filter-pill filter-pass"
+                [class.active]="resultFilter() === 'Pass'"
+                (click)="resultFilter.set('Pass')"
+              >
+                Passed ({{ passedCount() }})
+              </button>
+              <button
+                class="filter-pill filter-fail"
+                [class.active]="resultFilter() === 'Fail'"
+                (click)="resultFilter.set('Fail')"
+              >
+                Failed ({{ failedCount() }})
+              </button>
+              <button
+                class="filter-pill filter-flagged"
+                [class.active]="resultFilter() === 'Flagged'"
+                (click)="resultFilter.set('Flagged')"
+              >
+                Flagged ({{ flaggedCount() }})
+              </button>
+            </div>
+          </div>
+
+          <!-- Candidates Table -->
+          @if (filteredAttempts().length === 0) {
+            <div class="empty-table-state">
+              <span class="material-symbols-outlined">person_off</span>
+              <p>No candidate attempts matched your filter criteria.</p>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="data-table" id="table-candidate-attempts">
+                <thead>
+                  <tr>
+                    <th>Candidate</th>
+                    <th>Roll Number</th>
+                    <th>Score</th>
+                    <th>Percentage</th>
+                    <th>Result</th>
+                    <th>Violations</th>
+                    <th>Proctoring Status</th>
+                    <th>Submitted At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (att of filteredAttempts(); track att._id) {
+                    <tr [class.row-flagged]="att.flagged">
+                      <!-- Candidate Info -->
+                      <td>
+                        <div class="candidate-info-cell">
+                          <strong class="candidate-name">{{ att.studentId?.userId?.name || 'Candidate' }}</strong>
+                          <span class="candidate-email">{{ att.studentId?.userId?.email || '—' }}</span>
+                        </div>
+                      </td>
+
+                      <!-- Roll Number -->
+                      <td>
+                        <span class="font-code">{{ att.studentId?.userId?.rollNumber || 'N/A' }}</span>
+                      </td>
+
+                      <!-- Score -->
+                      <td>
+                        <strong>{{ att.score }} / {{ att.totalQuestions }}</strong>
+                      </td>
+
+                      <!-- Percentage -->
+                      <td>
+                        <div class="percent-cell">
+                          <div class="mini-progress-track">
+                            <div
+                              class="mini-progress-bar"
+                              [style.width.%]="att.percentage"
+                              [class.bg-pass]="att.result === 'Pass'"
+                              [class.bg-fail]="att.result === 'Fail'"
+                            ></div>
+                          </div>
+                          <span class="percent-label">{{ att.percentage }}%</span>
+                        </div>
+                      </td>
+
+                      <!-- Result -->
+                      <td>
+                        <span
+                          class="badge-result"
+                          [class.badge-pass]="att.result === 'Pass'"
+                          [class.badge-fail]="att.result === 'Fail'"
+                        >
+                          <span class="material-symbols-outlined">
+                            {{ att.result === 'Pass' ? 'check_circle' : 'cancel' }}
+                          </span>
+                          <span>{{ att.result }}</span>
+                        </span>
+                      </td>
+
+                      <!-- Violations -->
+                      <td>
+                        <span
+                          class="violations-badge"
+                          [class.has-strikes]="att.violationCount > 0"
+                          [class.strikes-max]="att.violationCount >= 3"
+                        >
+                          <span class="material-symbols-outlined">shield</span>
+                          <span>{{ att.violationCount }} / 3</span>
+                        </span>
+                      </td>
+
+                      <!-- Proctoring Status & Flags -->
+                      <td>
+                        <div class="tags-stack">
+                          @if (att.flagged) {
+                            <span class="badge-flagged" title="Anti-cheat violation threshold exceeded">
+                              <span class="material-symbols-outlined">flag</span>
+                              <span>FLAGGED</span>
+                            </span>
+                          }
+                          @if (att.autoSubmitted) {
+                            <span class="badge-auto" title="Test was auto-submitted due to timer expiry or disqualification">
+                              <span class="material-symbols-outlined">schedule_send</span>
+                              <span>Auto-Submit</span>
+                            </span>
+                          }
+                          @if (!att.flagged && !att.autoSubmitted) {
+                            <span class="badge-clean">
+                              <span class="material-symbols-outlined">verified</span>
+                              <span>Verified Clean</span>
+                            </span>
+                          }
+                        </div>
+                      </td>
+
+                      <!-- Submitted At -->
+                      <td>
+                        <span class="date-cell">
+                          {{ att.submittedAt | date:'medium' }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- =================================================================== -->
+      <!-- TAB 2: QUESTION-WISE ACCURACY & CALIBRATION TABLE                    -->
+      <!-- =================================================================== -->
+      @if (activeTab() === 'questions') {
+        <div class="tab-pane-body">
+          <div class="question-stats-intro">
+            <div>
+              <h3 class="section-title">Item Calibration &amp; Accuracy Breakdown</h3>
+              <p class="section-subtitle">
+                Accuracy statistics for each assessment item. Items with &gt;80% accuracy are calibrated as <strong>Too Easy</strong>, while items &lt;30% accuracy are <strong>Too Hard</strong>. Correct answers are visible to recruiters for audit verification.
+              </p>
+            </div>
+          </div>
+
+          @if (questionStats().length === 0) {
+            <div class="empty-table-state">
+              <span class="material-symbols-outlined">quiz</span>
+              <p>No questions found in this assessment.</p>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="data-table" id="table-question-accuracy">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Question Statement</th>
+                    <th>Category</th>
+                    <th>Difficulty</th>
+                    <th>Correct Answer (Recruiter View)</th>
+                    <th>Attempts</th>
+                    <th>Accuracy (% Correct)</th>
+                    <th>Calibration Tag</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (q of questionStats(); track q.questionId; let idx = $index) {
+                    <tr>
+                      <!-- Number -->
+                      <td class="font-code text-muted">{{ idx + 1 }}</td>
+
+                      <!-- Question Statement -->
+                      <td>
+                        <div class="question-text-cell">
+                          <span>{{ q.questionText }}</span>
+                        </div>
+                      </td>
+
+                      <!-- Category -->
+                      <td>
+                        <span class="badge badge-cat">{{ q.category }}</span>
+                      </td>
+
+                      <!-- Difficulty -->
+                      <td>
+                        <span class="badge badge-diff" [attr.data-diff]="q.difficulty">{{ q.difficulty }}</span>
+                      </td>
+
+                      <!-- Correct Answer (Displayed for Recruiter) -->
+                      <td>
+                        <div class="correct-answer-cell">
+                          <span class="opt-letter-tag">{{ getOptionLetter(q.correctOption) }}</span>
+                          <span class="opt-text">{{ q.correctAnswerText }}</span>
+                        </div>
+                      </td>
+
+                      <!-- Attempts -->
+                      <td>
+                        <span class="font-code">{{ q.correctAttempts }} / {{ q.totalAttempts }}</span>
+                      </td>
+
+                      <!-- Accuracy Bar -->
+                      <td>
+                        <div class="accuracy-bar-wrap">
+                          <div class="progress-track">
+                            <div
+                              class="progress-fill"
+                              [style.width.%]="q.accuracyPercentage"
+                              [class.bg-high]="q.accuracyPercentage >= 75"
+                              [class.bg-mid]="q.accuracyPercentage >= 40 && q.accuracyPercentage < 75"
+                              [class.bg-low]="q.accuracyPercentage < 40"
+                            ></div>
+                          </div>
+                          <span class="accuracy-percent-text">{{ q.accuracyPercentage }}%</span>
+                        </div>
+                      </td>
+
+                      <!-- Calibration Tag -->
+                      <td>
+                        <span class="calibration-tag" [ngClass]="getDifficultyTag(q.accuracyPercentage).class">
+                          {{ getDifficultyTag(q.accuracyPercentage).label }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

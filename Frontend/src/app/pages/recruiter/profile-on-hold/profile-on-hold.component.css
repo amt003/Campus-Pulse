@@ -1,16 +1,39 @@
+:host {
+  --primary:   #1A5276;
+  --primary-hover: #14425E;
+  --secondary: #006497;
+  --success:   #27AE60;
+  --warning:   #F39C12;
+  --danger:    #E74C3C;
+  --bg-page:   #F8F9FA;
+  --surface:   #FFFFFF;
+  --text-dark: #1C2833;
+  --text-muted:#5D6D7E;
+  --border:    #E5E8E8;
+  --surface-low: #EBF5FB;
+
+  --color-primary: #1A5276;
+  --color-secondary: #006497;
+  --color-surface-low: #EBF5FB;
+  --color-outline: #E5E8E8;
+  --color-on-surface-variant: #5D6D7E;
+
+  display: block;
+}
+
 /* =============================================
    Profile On Hold Edit Component Styles
    ============================================= */
 
 .edit-hold-root {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f3f5fa 0%, #eef1f6 100%);
+  background: var(--bg-page);
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 40px 20px;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  color: #1a252f;
+  color: var(--text-dark);
 }
 
 .edit-hold-container {
@@ -34,12 +57,12 @@
   align-items: center;
   gap: 8px;
   text-decoration: none;
-  color: #003b5a;
+  color: var(--primary);
 }
 
 .brand-icon {
   font-size: 26px;
-  color: #006497;
+  color: var(--primary);
 }
 
 .brand-name {
@@ -75,7 +98,7 @@
 .card-title {
   font-size: 24px;
   font-weight: 800;
-  color: #003b5a;
+  color: #1A5276;
   margin: 0 0 6px 0;
   letter-spacing: -0.02em;
 }
@@ -290,7 +313,7 @@
 }
 
 .btn-submit:hover:not(:disabled) {
-  background: linear-gradient(135deg, #004f7a, #003b5a);
+  background: linear-gradient(135deg, #004f7a, #1A5276);
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(0, 100, 151, 0.25);
 }

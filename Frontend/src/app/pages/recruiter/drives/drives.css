@@ -1,3 +1,26 @@
+:host {
+  --primary:   #1A5276;
+  --primary-hover: #14425E;
+  --secondary: #006497;
+  --success:   #27AE60;
+  --warning:   #F39C12;
+  --danger:    #E74C3C;
+  --bg-page:   #F8F9FA;
+  --surface:   #FFFFFF;
+  --text-dark: #1C2833;
+  --text-muted:#5D6D7E;
+  --border:    #E5E8E8;
+  --surface-low: #EBF5FB;
+
+  --color-primary: #1A5276;
+  --color-secondary: #006497;
+  --color-surface-low: #EBF5FB;
+  --color-outline: #E5E8E8;
+  --color-on-surface-variant: #5D6D7E;
+
+  display: block;
+}
+
 .drives-page-container {
   max-width: 1320px;
   margin: 0 auto;
@@ -18,7 +41,7 @@
   margin: 0;
   font-size: 26px;
   font-weight: 850;
-  color: var(--color-primary, #003b5a);
+  color: var(--primary);
 }
 
 .page-subtitle {
@@ -31,7 +54,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--color-primary, #003b5a);
+  background: var(--color-primary, #1A5276);
   color: white;
   padding: 10px 18px;
   border-radius: 8px;
@@ -103,7 +126,7 @@
 }
 .filter-tab.active {
   background: var(--color-surface-low, #edf4ff);
-  color: var(--color-primary, #003b5a);
+  color: var(--color-primary, #1A5276);
   border-color: var(--color-secondary, #006497);
   font-weight: 750;
 }
@@ -168,7 +191,7 @@
   margin: 0 0 6px 0;
   font-size: 17px;
   font-weight: 800;
-  color: var(--color-primary, #003b5a);
+  color: var(--color-primary, #1A5276);
 }
 
 .drive-desc {
@@ -238,7 +261,7 @@
 }
 .btn-applicants {
   flex: 1;
-  background: var(--color-primary, #003b5a);
+  background: var(--color-primary, #1A5276);
   color: white;
 }
 .btn-applicants:hover {
@@ -246,7 +269,7 @@
 }
 .btn-resources {
   background: #f4f6f7;
-  color: var(--color-primary, #003b5a);
+  color: var(--color-primary, #1A5276);
   border-color: #e0e0e0;
 }
 .btn-resources:hover {
@@ -278,7 +301,7 @@
   width: 32px;
   height: 32px;
   border: 3px solid #e0e0e0;
-  border-top-color: var(--color-primary, #003b5a);
+  border-top-color: var(--color-primary, #1A5276);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 12px auto;

@@ -1,3 +1,26 @@
+:host {
+  --primary:   #1A5276;
+  --primary-hover: #14425E;
+  --secondary: #006497;
+  --success:   #27AE60;
+  --warning:   #F39C12;
+  --danger:    #E74C3C;
+  --bg-page:   #F8F9FA;
+  --surface:   #FFFFFF;
+  --text-dark: #1C2833;
+  --text-muted:#5D6D7E;
+  --border:    #E5E8E8;
+  --surface-low: #EBF5FB;
+
+  --color-primary: #1A5276;
+  --color-secondary: #006497;
+  --color-surface-low: #EBF5FB;
+  --color-outline: #E5E8E8;
+  --color-on-surface-variant: #5D6D7E;
+
+  display: block;
+}
+
 .offers-page-container {
   max-width: 1320px;
   margin: 0 auto;
@@ -16,7 +39,7 @@
   margin: 0;
   font-size: 26px;
   font-weight: 850;
-  color: var(--color-primary, #003b5a);
+  color: var(--primary);
 }
 
 .page-subtitle {
@@ -70,7 +93,7 @@
   margin: 2px 0 0 0;
   font-size: 24px;
   font-weight: 850;
-  color: var(--color-primary, #003b5a);
+  color: var(--color-primary, #1A5276);
 }
 .text-green { color: #2e7d32; }
 .text-amber { color: #f57f17; }
@@ -131,7 +154,7 @@
 }
 .filter-tab.active {
   background: var(--color-surface-low, #edf4ff);
-  color: var(--color-primary, #003b5a);
+  color: var(--color-primary, #1A5276);
   border-color: var(--color-secondary, #006497);
   font-weight: 750;
 }
@@ -158,7 +181,7 @@
 
 .offers-table th {
   background: #f8f9fa;
-  color: var(--color-primary, #003b5a);
+  color: var(--color-primary, #1A5276);
   font-weight: 800;
   padding: 14px 18px;
   border-bottom: 1px solid #e5e8e8;
@@ -246,7 +269,7 @@
   transition: all 0.15s;
 }
 .btn-pdf {
-  background: var(--color-primary, #003b5a);
+  background: var(--color-primary, #1A5276);
   color: white;
 }
 .btn-pdf:hover {
@@ -288,7 +311,7 @@
 .modal-header h3 {
   margin: 0;
   font-size: 18px;
-  color: var(--color-primary, #003b5a);
+  color: var(--color-primary, #1A5276);
 }
 .close-btn {
   background: none;
@@ -335,7 +358,7 @@
   width: 32px;
   height: 32px;
   border: 3px solid #e0e0e0;
-  border-top-color: var(--color-primary, #003b5a);
+  border-top-color: var(--color-primary, #1A5276);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 12px auto;

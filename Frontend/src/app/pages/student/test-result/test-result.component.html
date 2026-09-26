@@ -1,0 +1,203 @@
+<div class="result-page-root">
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-container">
+      <div class="spinner-large"></div>
+      <h3>Evaluating Assessment Results...</h3>
+      <p>Gathering performance data, section metrics, and proctoring logs.</p>
+    </div>
+  } @else if (errorMessage()) {
+    <!-- Error State -->
+    <div class="error-container">
+      <span class="material-symbols-outlined error-icon">error</span>
+      <h3>Assessment Result Unavailable</h3>
+      <p>{{ errorMessage() }}</p>
+      <a routerLink="/student/dashboard" class="btn-primary-action">Back to Dashboard</a>
+    </div>
+  } @else if (resultData()) {
+    <!-- Header Bar -->
+    <header class="result-header-card">
+      <div class="header-left">
+        <div class="header-icon-box" [class.passed]="resultData()!.result === 'Pass'" [class.failed]="resultData()!.result === 'Fail'">
+          <span class="material-symbols-outlined">
+            {{ resultData()!.result === 'Pass' ? 'verified' : 'cancel' }}
+          </span>
+        </div>
+        <div>
+          <div class="header-breadcrumb">
+            <a routerLink="/student/dashboard">Dashboard</a>
+            <span class="separator">/</span>
+            <span>Aptitude Test Result</span>
+          </div>
+          <h1 class="page-title">{{ resultData()!.testTitle }}</h1>
+          @if (resultData()!.driveTitle) {
+            <span class="drive-subtitle">Placement Drive: <strong>{{ resultData()!.driveTitle }}</strong></span>
+          }
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <a routerLink="/student/dashboard" class="btn-outline-back" id="btn-result-back-dash">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Back to Dashboard</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Results Grid -->
+    <div class="results-main-grid">
+      <!-- Left Column: Hero Score Card & Performance Overview -->
+      <div class="hero-score-column">
+        <!-- Main Score Hero Card -->
+        <div class="hero-score-card" [class.hero-pass]="resultData()!.result === 'Pass'" [class.hero-fail]="resultData()!.result === 'Fail'">
+          <div class="status-ribbon">
+            <span class="status-badge" [class.badge-pass]="resultData()!.result === 'Pass'" [class.badge-fail]="resultData()!.result === 'Fail'">
+              <span class="material-symbols-outlined">{{ resultData()!.result === 'Pass' ? 'check_circle' : 'error' }}</span>
+              <span>{{ resultData()!.result === 'Pass' ? 'PASSED' : 'NEEDS IMPROVEMENT' }}</span>
+            </span>
+          </div>
+
+          <div class="score-display-center">
+            <div class="score-circle">
+              <span class="score-percent">{{ resultData()!.percentage }}%</span>
+              <span class="score-fraction">{{ resultData()!.score }} / {{ resultData()!.totalQuestions }} Correct</span>
+            </div>
+            <p class="score-feedback-text">
+              @if (resultData()!.result === 'Pass') {
+                Congratulations! You met or exceeded the passing threshold of <strong>{{ resultData()!.passingScore }}%</strong>.
+              } @else {
+                You achieved {{ resultData()!.percentage }}%. The passing threshold for this assessment is <strong>{{ resultData()!.passingScore }}%</strong>.
+              }
+            </p>
+          </div>
+
+          <!-- Assessment Meta Stats -->
+          <div class="meta-stats-strip">
+            <div class="meta-stat-item">
+              <span class="meta-stat-label">Cutoff Score</span>
+              <strong class="meta-stat-val">{{ resultData()!.passingScore }}%</strong>
+            </div>
+            <div class="meta-stat-item">
+              <span class="meta-stat-label">Total Questions</span>
+              <strong class="meta-stat-val">{{ resultData()!.totalQuestions }}</strong>
+            </div>
+            <div class="meta-stat-item">
+              <span class="meta-stat-label">Submitted On</span>
+              <strong class="meta-stat-val">{{ resultData()!.submittedAt | date:'mediumDate' }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Proctoring & Integrity Summary Card -->
+        <div class="card proctoring-card">
+          <div class="card-header-row">
+            <span class="material-symbols-outlined icon-shield">shield</span>
+            <h3 class="card-title">Proctoring &amp; Integrity Summary</h3>
+          </div>
+          <div class="proctoring-body">
+            <div class="proctoring-item">
+              <span class="label">Violations Recorded:</span>
+              <span class="value" [class.text-danger]="resultData()!.violationCount > 0">
+                {{ resultData()!.violationCount }} / 3
+              </span>
+            </div>
+            <div class="proctoring-item">
+              <span class="label">Submission Mode:</span>
+              <span class="value">
+                {{ resultData()!.autoSubmitted ? 'Auto-Submitted (Disqualified or Expired)' : 'Standard Final Submit' }}
+              </span>
+            </div>
+            <div class="proctoring-item">
+              <span class="label">Candidate Security:</span>
+              <span class="value text-success">
+                <span class="material-symbols-outlined verified-icon">verified_user</span>
+                Verified Attempt
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Integrity Notice / Safety Rules Statement -->
+        <div class="security-notice-card">
+          <span class="material-symbols-outlined">info</span>
+          <div>
+            <strong>Institutional Assessment Security:</strong>
+            <p>
+              In accordance with campus placement policies, exact question keys and solutions are not disclosed to candidates to maintain test confidentiality and item bank integrity.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Section-Wise Accuracy Breakdown -->
+      <div class="sections-column">
+        <div class="card sections-breakdown-card">
+          <div class="card-header-row">
+            <span class="material-symbols-outlined icon-sections">bar_chart</span>
+            <div>
+              <h3 class="card-title">Section-Wise Accuracy Breakdown</h3>
+              <p class="card-subtitle">Performance distribution across assessment categories</p>
+            </div>
+          </div>
+
+          <div class="sections-list">
+            @if (resultData()!.sectionWiseBreakdown.length === 0) {
+              <div class="empty-sections-msg">
+                <span>No category breakdown available for this assessment.</span>
+              </div>
+            } @else {
+              @for (sec of resultData()!.sectionWiseBreakdown; track sec.category) {
+                <div class="section-item">
+                  <div class="section-item-header">
+                    <div class="section-title-wrap">
+                      <span class="material-symbols-outlined sec-icon">{{ getCategoryIcon(sec.category) }}</span>
+                      <strong class="sec-name">{{ sec.category }}</strong>
+                    </div>
+                    <div class="sec-score-wrap">
+                      <span class="sec-score-nums">{{ sec.correct }} / {{ sec.total }} correct</span>
+                      <span class="sec-percent-pill" [ngClass]="getAccuracyColorClass(sec.percentage)">
+                        {{ sec.percentage }}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="section-progress-track">
+                    <div
+                      class="section-progress-bar"
+                      [ngClass]="getAccuracyColorClass(sec.percentage)"
+                      [style.width.%]="sec.percentage"
+                    ></div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Next Steps & Recommendations Card -->
+        <div class="card next-steps-card">
+          <h3 class="card-title">Recommended Next Steps</h3>
+          <p class="next-steps-desc">
+            Your aptitude performance has been automatically posted to your application status. Track your placement stage in the dashboard.
+          </p>
+          <div class="actions-buttons-row">
+            <a routerLink="/student/applications" class="btn-action-tile" id="btn-next-apps">
+              <span class="material-symbols-outlined">assignment</span>
+              <div>
+                <strong>My Applications</strong>
+                <span>Track interview &amp; drive stages</span>
+              </div>
+            </a>
+            <a routerLink="/student/readiness" class="btn-action-tile" id="btn-next-readiness">
+              <span class="material-symbols-outlined">insights</span>
+              <div>
+                <strong>Placement Readiness</strong>
+                <span>View algorithmic PRA score</span>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
