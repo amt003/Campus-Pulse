@@ -17,6 +17,14 @@ const {
   getSeasonConfig,
   getMyReadiness,
 } = require("../controllers/studentController");
+const {
+  getUpcomingTests,
+  startTest,
+  saveAnswers,
+  submitTest,
+  getMyResult,
+  logViolation,
+} = require("../controllers/testAttemptController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 const { downloadDriveAttachment } = require("../controllers/recruiterController");
@@ -48,5 +56,13 @@ router.put("/offer/:applicationId/decline", declineOffer);
 
 // Preparation Resources Route
 router.get("/resources/:driveId", getPreparationResources);
+
+// Aptitude Test Delivery Routes (Phase 6)
+router.get("/test/upcoming", getUpcomingTests);
+router.get("/test/:id/start", startTest);
+router.post("/test/attempt/:attemptId/save", saveAnswers);
+router.post("/test/attempt/:attemptId/submit", submitTest);
+router.get("/test/attempt/:attemptId/result", getMyResult);
+router.post("/test/attempt/:attemptId/violation", logViolation);
 
 module.exports = router;

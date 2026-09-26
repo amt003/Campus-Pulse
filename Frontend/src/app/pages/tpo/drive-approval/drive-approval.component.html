@@ -68,9 +68,11 @@
                   <div class="drive-title-box">
                     <span class="drive-title clickable-title" (click)="openViewDetailsModal(drive)" title="Click to view full structured drive details">
                       {{ drive.title }}
-                      <span class="material-symbols-outlined view-icon">open_in_new</span>
                     </span>
-                    <p class="drive-desc">{{ drive.description }}</p>
+                    <button type="button" class="drive-info-link" (click)="openViewDetailsModal(drive)" title="Click to view full drive details & job description">
+                      <span class="material-symbols-outlined info-icon">info</span>
+                      <span>Drive Information</span>
+                    </button>
                     <div class="stage-pills">
                       @if (drive.hasAptitudeTest) { <span class="stage-pill">Aptitude</span> }
                       @if (drive.hasGD) { <span class="stage-pill">GD</span> }

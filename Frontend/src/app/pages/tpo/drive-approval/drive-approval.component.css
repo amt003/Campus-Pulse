@@ -155,11 +155,37 @@
   margin-bottom: 4px;
 }
 
-.drive-desc {
+.clickable-title {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.clickable-title:hover {
+  color: #0284c7;
+}
+
+.drive-info-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 2px 0 8px 0;
+  color: #0284c7;
   font-size: 12px;
-  color: #64748b;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.drive-info-link:hover {
+  color: #0369a1;
+  text-decoration: underline;
+}
+
+.drive-info-link .info-icon {
+  font-size: 15px;
 }
 
 .stage-pills {

@@ -795,12 +795,32 @@ const reverifyRecruiter = async (req, res) => {
 const getPendingDrives = async (req, res) => {
   try {
     const drives = await JobDrive.find({ status: "Pending" })
-      .populate("recruiterId", "name email companyName officialEmail website phone")
+      .populate("recruiterId", "name email phone")
       .sort({ createdAt: -1 });
+
+    const drivesWithDetails = await Promise.all(
+      drives.map(async (drive) => {
+        const driveObj = drive.toObject();
+        if (driveObj.recruiterId && driveObj.recruiterId._id) {
+          const recruiterProfile = await Recruiter.findOne({ userId: driveObj.recruiterId._id });
+          if (recruiterProfile) {
+            driveObj.recruiterId = {
+              ...driveObj.recruiterId,
+              companyName: recruiterProfile.companyName,
+              officialEmail: recruiterProfile.officialEmail || driveObj.recruiterId.email,
+              website: recruiterProfile.website,
+              companyLogo: recruiterProfile.companyLogo,
+              trustScore: recruiterProfile.trustScore,
+            };
+          }
+        }
+        return driveObj;
+      })
+    );
 
     return res.status(200).json({
       success: true,
-      drives,
+      drives: drivesWithDetails,
     });
   } catch (error) {
     return res.status(500).json({
