@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
@@ -237,6 +237,42 @@ export class RecruiterService {
 
   getSeasonConfig(): Observable<any> {
     return this.http.get(`${this.apiUrl}/season-config`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  // Question Bank API (Phase 7)
+  addQuestion(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/question`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  getQuestions(filter?: { category?: string; difficulty?: string; source?: string }): Observable<any> {
+    let params = new HttpParams();
+    if (filter?.category && filter.category !== 'all') {
+      params = params.set('category', filter.category);
+    }
+    if (filter?.difficulty && filter.difficulty !== 'all') {
+      params = params.set('difficulty', filter.difficulty);
+    }
+    if (filter?.source && filter.source !== 'all') {
+      params = params.set('source', filter.source);
+    }
+    return this.http.get(`${this.apiUrl}/questions`, {
+      headers: this.getAuthHeaders(),
+      params,
+    });
+  }
+
+  updateQuestion(id: string, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/question/${id}`, data, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  deleteQuestion(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/question/${id}`, {
       headers: this.getAuthHeaders(),
     });
   }

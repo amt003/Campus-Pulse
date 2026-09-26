@@ -1,0 +1,304 @@
+<div class="qb-page-container">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Question Bank</h1>
+      <p class="page-subtitle">Manage, curate, and review multiple choice questions for in-house aptitude tests</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="openAddModal()" id="btn-add-question">
+        <span class="material-symbols-outlined">add_circle</span>
+        <span>Add Question</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Controls Bar (Search & Filter Dropdowns) -->
+  <section class="controls-card">
+    <div class="search-wrap">
+      <span class="material-symbols-outlined search-icon">search</span>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search questions by keyword or topic..."
+        [(ngModel)]="searchTerm"
+        id="input-search-questions"
+      />
+    </div>
+
+    <div class="filters-wrap">
+      <!-- Category Filter -->
+      <div class="filter-group">
+        <label for="filter-category" class="filter-label">Category:</label>
+        <select
+          id="filter-category"
+          class="filter-select"
+          [(ngModel)]="selectedCategory"
+          (change)="onFilterChange()"
+        >
+          <option value="all">All Categories</option>
+          <option value="Quantitative">Quantitative</option>
+          <option value="Logical">Logical</option>
+          <option value="Verbal">Verbal</option>
+          <option value="Technical">Technical</option>
+        </select>
+      </div>
+
+      <!-- Difficulty Filter -->
+      <div class="filter-group">
+        <label for="filter-difficulty" class="filter-label">Difficulty:</label>
+        <select
+          id="filter-difficulty"
+          class="filter-select"
+          [(ngModel)]="selectedDifficulty"
+          (change)="onFilterChange()"
+        >
+          <option value="all">All Difficulties</option>
+          <option value="Easy">Easy</option>
+          <option value="Medium">Medium</option>
+          <option value="Hard">Hard</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- Questions Table Card -->
+  <div class="table-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading Question Bank...</p>
+      </div>
+    } @else if (filteredQuestions().length === 0) {
+      <div class="empty-state">
+        <span class="material-symbols-outlined empty-icon">quiz</span>
+        <h3>No Questions Found</h3>
+        <p>
+          @if (searchTerm() || selectedCategory() !== 'all' || selectedDifficulty() !== 'all') {
+            No questions match your current filters. Try resetting the search or category filters.
+          } @else {
+            Your question bank is currently empty. Click "Add Question" above to add your first question!
+          }
+        </p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="qb-table" id="table-question-bank">
+          <thead>
+            <tr>
+              <th style="width: 42%;">Question</th>
+              <th style="width: 14%;">Category</th>
+              <th style="width: 12%;">Difficulty</th>
+              <th style="width: 12%;">Source</th>
+              <th style="width: 10%; text-align: center;">Times Used</th>
+              <th style="width: 10%; text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (q of filteredQuestions(); track q._id || $index) {
+              <tr class="qb-row">
+                <!-- Question Statement -->
+                <td class="col-question">
+                  <div class="question-text-truncate" [title]="q.questionText">
+                    {{ q.questionText }}
+                  </div>
+                  <div class="options-preview">
+                    <span class="opt-count">{{ q.options.length }} options</span>
+                    <span class="preview-dot">•</span>
+                    <span class="correct-badge">Correct: Option {{ q.correctOption + 1 }}</span>
+                  </div>
+                </td>
+
+                <!-- Category -->
+                <td>
+                  <span class="badge badge-category" [attr.data-cat]="q.category">
+                    {{ q.category }}
+                  </span>
+                </td>
+
+                <!-- Difficulty -->
+                <td>
+                  <span class="badge badge-difficulty" [attr.data-diff]="q.difficulty">
+                    {{ q.difficulty }}
+                  </span>
+                </td>
+
+                <!-- Source -->
+                <td>
+                  <span class="badge badge-source" [attr.data-source]="q.source || 'manual'">
+                    {{ q.source || 'manual' }}
+                  </span>
+                </td>
+
+                <!-- Times Used -->
+                <td style="text-align: center;">
+                  <span class="times-used-badge">
+                    <span class="material-symbols-outlined times-icon">history</span>
+                    <span>{{ q.timesUsed || 0 }}</span>
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td style="text-align: right;">
+                  <div class="action-buttons">
+                    <button
+                      class="btn-icon btn-edit"
+                      (click)="openEditModal(q)"
+                      title="Edit Question"
+                      [id]="'btn-edit-q-' + q._id"
+                    >
+                      <span class="material-symbols-outlined">edit</span>
+                    </button>
+                    <button
+                      class="btn-icon btn-delete"
+                      (click)="deleteQuestion(q._id!)"
+                      [disabled]="deletingId() === q._id"
+                      title="Delete Question"
+                      [id]="'btn-delete-q-' + q._id"
+                    >
+                      <span class="material-symbols-outlined">
+                        {{ deletingId() === q._id ? 'hourglass_empty' : 'delete' }}
+                      </span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- Add / Edit Question Modal -->
+  @if (isModalOpen()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="material-symbols-outlined modal-icon">
+              {{ isEditing() ? 'edit_note' : 'add_task' }}
+            </span>
+            <h2 class="modal-title">
+              {{ isEditing() ? 'Edit Question' : 'Add New Question' }}
+            </h2>
+          </div>
+          <button class="btn-close" (click)="closeModal()" [disabled]="isSaving()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body">
+          <!-- Question Statement -->
+          <div class="form-group">
+            <label for="modal-question-text" class="form-label">
+              Question Statement <span class="required">*</span>
+            </label>
+            <textarea
+              id="modal-question-text"
+              class="form-textarea"
+              rows="3"
+              placeholder="Enter the question statement clearly..."
+              [ngModel]="formData().questionText"
+              (ngModelChange)="formData().questionText = $event"
+            ></textarea>
+          </div>
+
+          <!-- Category and Difficulty Row -->
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="modal-category" class="form-label">
+                Category <span class="required">*</span>
+              </label>
+              <select
+                id="modal-category"
+                class="form-select"
+                [ngModel]="formData().category"
+                (ngModelChange)="formData().category = $event"
+              >
+                <option value="Quantitative">Quantitative</option>
+                <option value="Logical">Logical</option>
+                <option value="Verbal">Verbal</option>
+                <option value="Technical">Technical</option>
+              </select>
+            </div>
+
+            <div class="form-group flex-1">
+              <label for="modal-difficulty" class="form-label">
+                Difficulty <span class="required">*</span>
+              </label>
+              <select
+                id="modal-difficulty"
+                class="form-select"
+                [ngModel]="formData().difficulty"
+                (ngModelChange)="formData().difficulty = $event"
+              >
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 4 Multiple Choice Options -->
+          <div class="options-section">
+            <div class="options-header">
+              <span class="form-label">Answer Choices &amp; Correct Key <span class="required">*</span></span>
+              <span class="options-hint">Select the radio button next to the correct answer</span>
+            </div>
+
+            <div class="options-list">
+              @for (opt of [0, 1, 2, 3]; track opt) {
+                <div class="option-row" [class.selected-correct]="formData().correctOption === opt">
+                  <label class="radio-label">
+                    <input
+                      type="radio"
+                      name="correctOptionRadio"
+                      [checked]="formData().correctOption === opt"
+                      (change)="setCorrectOption(opt)"
+                    />
+                    <span class="option-badge">
+                      {{ ['A', 'B', 'C', 'D'][opt] }}
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    class="form-input option-input"
+                    [placeholder]="'Option ' + ['A', 'B', 'C', 'D'][opt] + ' text...'"
+                    [value]="formData().options[opt]"
+                    (input)="updateOptionText(opt, $any($event.target).value)"
+                    [id]="'modal-option-' + opt"
+                  />
+                  @if (formData().correctOption === opt) {
+                    <span class="correct-indicator">
+                      <span class="material-symbols-outlined">check_circle</span>
+                      <span>Correct</span>
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModal()" [disabled]="isSaving()">
+            Cancel
+          </button>
+          <button class="btn-primary" (click)="saveQuestion()" [disabled]="isSaving()" id="btn-save-question">
+            @if (isSaving()) {
+              <div class="btn-spinner"></div>
+              <span>Saving...</span>
+            } @else {
+              <span class="material-symbols-outlined">save</span>
+              <span>{{ isEditing() ? 'Save Changes' : 'Add to Question Bank' }}</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
