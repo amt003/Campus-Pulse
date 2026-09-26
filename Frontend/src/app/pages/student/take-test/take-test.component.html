@@ -1,0 +1,369 @@
+<div class="test-container" [class.fullscreen-active]="isFullscreenActive()">
+  @if (isLoading()) {
+    <div class="test-loading-state">
+      <div class="spinner-large"></div>
+      <h2>Preparing Assessment Environment...</h2>
+      <p>Synchronizing with proctoring engine and loading assessment questions.</p>
+    </div>
+  } @else {
+    <!-- ===================================================================== -->
+    <!-- TOP HEADER BAR                                                        -->
+    <!-- ===================================================================== -->
+    <header class="test-header">
+      <div class="header-left">
+        <span class="exam-badge">
+          <span class="material-symbols-outlined">quiz</span>
+          <span>Aptitude Assessment</span>
+        </span>
+        <h1 class="test-title" [title]="testTitle()">{{ testTitle() }}</h1>
+      </div>
+
+      <!-- Center: Live Synchronized Countdown Timer -->
+      <div
+        class="header-center timer-pill"
+        [class.timer-urgent]="timeRemainingSeconds() <= 300"
+        [class.timer-critical]="timeRemainingSeconds() <= 60"
+        id="exam-timer-display"
+      >
+        <span class="material-symbols-outlined timer-icon">timer</span>
+        <div class="timer-text-wrap">
+          <span class="timer-label">Time Remaining</span>
+          <span class="timer-digits">{{ formattedTimer() }}</span>
+        </div>
+      </div>
+
+      <!-- Right: Proctored Status, Auto-Save & Actions -->
+      <div class="header-right">
+        <!-- Auto-save indicator -->
+        <div class="save-status-indicator" title="Auto-save runs every 30 seconds">
+          @if (isSaving()) {
+            <span class="save-dot saving"></span>
+            <span class="save-label">Saving answers...</span>
+          } @else if (lastSavedTime()) {
+            <span class="save-dot saved"></span>
+            <span class="save-label">Saved</span>
+          } @else {
+            <span class="save-dot"></span>
+            <span class="save-label">Auto-save on</span>
+          }
+        </div>
+
+        <!-- Anti-cheat violation pill -->
+        @if (antiCheatEnabled()) {
+          <div
+            class="violations-pill"
+            [class.has-violations]="violationCount() > 0"
+            [class.violations-critical]="violationCount() >= maxViolations() - 1"
+            id="violations-counter"
+          >
+            <span class="material-symbols-outlined">shield</span>
+            <span>Violations: {{ violationCount() }}/{{ maxViolations() }}</span>
+          </div>
+        }
+
+        <!-- Enforce / Enter Fullscreen Button -->
+        @if (!isFullscreenActive()) {
+          <button
+            class="btn-enter-fullscreen"
+            (click)="enterFullscreen()"
+            title="Enter Fullscreen"
+            id="btn-reenter-fullscreen"
+          >
+            <span class="material-symbols-outlined">fullscreen</span>
+            <span>Fullscreen</span>
+          </button>
+        }
+      </div>
+    </header>
+
+    <!-- ===================================================================== -->
+    <!-- MAIN TEST WORKSPACE                                                   -->
+    <!-- ===================================================================== -->
+    <div class="test-body-layout">
+      <!-- LEFT: QUESTION AREA -->
+      <main class="question-main-area">
+        @if (currentQuestion()) {
+          <!-- Question Top Bar -->
+          <div class="question-top-bar">
+            <div class="q-meta-left">
+              <span class="q-number-pill">Question {{ currentIndex() + 1 }} of {{ questions().length }}</span>
+              <span class="badge badge-category" [attr.data-cat]="currentQuestion()!.category">
+                {{ currentQuestion()!.category }}
+              </span>
+              <span class="badge badge-difficulty" [attr.data-diff]="currentQuestion()!.difficulty">
+                {{ currentQuestion()!.difficulty }}
+              </span>
+            </div>
+
+            <div class="q-meta-right">
+              <button
+                class="btn-mark-review"
+                [class.marked]="markedForReview()[currentIndex()]"
+                (click)="toggleMarkForReview()"
+                id="btn-toggle-mark-review"
+              >
+                <span class="material-symbols-outlined">
+                  {{ markedForReview()[currentIndex()] ? 'bookmark_added' : 'bookmark_add' }}
+                </span>
+                <span>{{ markedForReview()[currentIndex()] ? 'Marked for Review' : 'Mark for Review' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Question Statement Card -->
+          <div class="question-statement-card">
+            <p class="question-text">{{ currentQuestion()!.questionText }}</p>
+          </div>
+
+          <!-- Multiple Choice Options List -->
+          <div class="options-container" role="radiogroup" aria-label="Multiple choice options">
+            @for (optionText of currentQuestion()!.options; track $index) {
+              <label
+                class="option-choice-card"
+                [class.selected]="answers()[currentIndex()] === $index"
+                (click)="selectOption($index)"
+                [id]="'opt-card-' + $index"
+              >
+                <div class="option-radio-wrap">
+                  <input
+                    type="radio"
+                    [name]="'question_radio_' + currentIndex()"
+                    [value]="$index"
+                    [checked]="answers()[currentIndex()] === $index"
+                    (change)="selectOption($index)"
+                  />
+                  <span class="option-letter-badge">
+                    {{ ['A', 'B', 'C', 'D'][$index] }}
+                  </span>
+                </div>
+                <div class="option-text-content">
+                  {{ optionText }}
+                </div>
+              </label>
+            }
+          </div>
+
+          <!-- Bottom Navigation Controls -->
+          <footer class="question-footer-controls">
+            <div class="footer-left">
+              <button
+                class="btn-nav btn-prev"
+                (click)="previousQuestion()"
+                [disabled]="currentIndex() === 0"
+                id="btn-prev-question"
+              >
+                <span class="material-symbols-outlined">arrow_back</span>
+                <span>Previous</span>
+              </button>
+
+              @if (answers()[currentIndex()] !== null && answers()[currentIndex()] !== undefined) {
+                <button
+                  class="btn-clear-choice"
+                  (click)="clearAnswer()"
+                  id="btn-clear-answer"
+                >
+                  <span class="material-symbols-outlined">backspace</span>
+                  <span>Clear Answer</span>
+                </button>
+              }
+            </div>
+
+            <div class="footer-right">
+              @if (currentIndex() < questions().length - 1) {
+                <button
+                  class="btn-nav btn-next"
+                  (click)="nextQuestion()"
+                  id="btn-next-question"
+                >
+                  <span>Next</span>
+                  <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+              } @else {
+                <button
+                  class="btn-nav btn-finish"
+                  (click)="promptSubmit()"
+                  id="btn-prompt-finish"
+                >
+                  <span class="material-symbols-outlined">check_circle</span>
+                  <span>Review &amp; Submit</span>
+                </button>
+              }
+            </div>
+          </footer>
+        }
+      </main>
+
+      <!-- RIGHT: QUESTION PALETTE SIDEBAR -->
+      <aside class="palette-sidebar" data-lenis-prevent>
+        <div class="palette-card">
+          <div class="palette-header">
+            <h3 class="palette-title">Question Palette</h3>
+            <span class="palette-count">{{ questions().length }} Questions</span>
+          </div>
+
+          <!-- Legend -->
+          <div class="palette-legend">
+            <div class="legend-item">
+              <span class="legend-dot dot-answered"></span>
+              <span>Answered ({{ answeredCount() }})</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot dot-marked"></span>
+              <span>Review ({{ markedCount() }})</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot dot-unanswered"></span>
+              <span>Unanswered ({{ unansweredCount() }})</span>
+            </div>
+          </div>
+
+          <!-- Question Numbers Grid -->
+          <div class="palette-grid">
+            @for (q of questions(); track q._id; let idx = $index) {
+              <button
+                class="palette-btn"
+                [class.current]="currentIndex() === idx"
+                [class.answered]="answers()[idx] !== null && answers()[idx] !== undefined && !markedForReview()[idx]"
+                [class.marked]="markedForReview()[idx]"
+                [class.unanswered]="answers()[idx] === null || answers()[idx] === undefined"
+                (click)="goToQuestion(idx)"
+                [id]="'palette-btn-' + (idx + 1)"
+                [title]="'Go to Question ' + (idx + 1)"
+              >
+                <span>{{ idx + 1 }}</span>
+                @if (markedForReview()[idx]) {
+                  <span class="palette-mark-dot"></span>
+                }
+              </button>
+            }
+          </div>
+
+          <!-- Palette Summary Box -->
+          <div class="palette-summary-box">
+            <div class="summary-stat-row">
+              <span>Attempted</span>
+              <strong>{{ answeredCount() }} / {{ questions().length }}</strong>
+            </div>
+            <div class="summary-progress-bar">
+              <div
+                class="summary-progress-fill"
+                [style.width.%]="(answeredCount() / (questions().length || 1)) * 100"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Final Submit Button in Sidebar -->
+          <button
+            class="btn-sidebar-submit"
+            (click)="promptSubmit()"
+            [disabled]="isSubmitting()"
+            id="btn-sidebar-submit-test"
+          >
+            <span class="material-symbols-outlined">send</span>
+            <span>Submit Assessment</span>
+          </button>
+        </div>
+      </aside>
+    </div>
+  }
+
+  <!-- ===================================================================== -->
+  <!-- ANTI-CHEAT WARNING MODAL DIALOG                                       -->
+  <!-- ===================================================================== -->
+  @if (showWarningDialog()) {
+    <div class="modal-backdrop warning-backdrop">
+      <div class="modal-dialog warning-dialog" role="alertdialog">
+        <div class="warning-icon-circle">
+          <span class="material-symbols-outlined">warning</span>
+        </div>
+        <h2 class="warning-dialog-title">Proctoring Warning {{ violationCount() }} of {{ maxViolations() }}</h2>
+        <p class="warning-dialog-msg">
+          {{ warningMessage() || 'A window change, tab switch, or fullscreen exit was detected.' }}
+        </p>
+        <p class="warning-dialog-submsg">
+          Please remain in fullscreen and keep this window active at all times. Reaching
+          <strong>{{ maxViolations() }} violations</strong> will cause your assessment to be
+          <strong>automatically submitted and disqualified</strong>.
+        </p>
+        <button
+          class="btn-resume-test"
+          (click)="dismissWarningDialog()"
+          id="btn-dismiss-warning"
+        >
+          <span>I Understand &amp; Resume Test</span>
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ===================================================================== -->
+  <!-- SUBMIT CONFIRMATION MODAL                                             -->
+  <!-- ===================================================================== -->
+  @if (showSubmitConfirmModal()) {
+    <div class="modal-backdrop" (click)="closeSubmitConfirmModal()">
+      <div class="modal-dialog confirm-dialog" (click)="$event.stopPropagation()" role="dialog">
+        <div class="confirm-dialog-header">
+          <span class="material-symbols-outlined confirm-icon">check_circle</span>
+          <h2 class="confirm-dialog-title">Submit Assessment?</h2>
+        </div>
+
+        <div class="confirm-dialog-body">
+          <p class="confirm-lead-text">
+            Are you sure you want to finish and submit your aptitude assessment? Once submitted, you cannot modify your answers.
+          </p>
+
+          <div class="confirm-summary-grid">
+            <div class="confirm-stat-card">
+              <span class="stat-number">{{ questions().length }}</span>
+              <span class="stat-label">Total Questions</span>
+            </div>
+            <div class="confirm-stat-card stat-answered">
+              <span class="stat-number">{{ answeredCount() }}</span>
+              <span class="stat-label">Answered</span>
+            </div>
+            <div class="confirm-stat-card stat-unanswered">
+              <span class="stat-number">{{ unansweredCount() }}</span>
+              <span class="stat-label">Unanswered</span>
+            </div>
+            <div class="confirm-stat-card stat-marked">
+              <span class="stat-number">{{ markedCount() }}</span>
+              <span class="stat-label">Marked Review</span>
+            </div>
+          </div>
+
+          @if (unansweredCount() > 0) {
+            <div class="confirm-unanswered-warning">
+              <span class="material-symbols-outlined">info</span>
+              <span>You have <strong>{{ unansweredCount() }} unanswered questions</strong>. They will be marked as incorrect.</span>
+            </div>
+          }
+        </div>
+
+        <div class="confirm-dialog-footer">
+          <button
+            class="btn-secondary"
+            (click)="closeSubmitConfirmModal()"
+            [disabled]="isSubmitting()"
+          >
+            Return to Test
+          </button>
+          <button
+            class="btn-primary-submit"
+            (click)="submitAssessment(false)"
+            [disabled]="isSubmitting()"
+            id="btn-confirm-final-submit"
+          >
+            @if (isSubmitting()) {
+              <div class="btn-spinner"></div>
+              <span>Submitting...</span>
+            } @else {
+              <span class="material-symbols-outlined">send</span>
+              <span>Confirm &amp; Submit</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

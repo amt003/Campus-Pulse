@@ -32,6 +32,7 @@ import { StudentApplicationsComponent } from './pages/student/applications/appli
 import { StudentSchedulesComponent } from './pages/student/schedules/schedules';
 import { StudentOffersComponent } from './pages/student/offers/offers';
 import { StudentProfileComponent } from './pages/student/profile/profile';
+import { StudentTakeTestComponent } from './pages/student/take-test/take-test.component';
 import { TermsComponent } from './pages/terms/terms.component';
 import { ForgotPasswordComponent } from './pages/auth/forgot-password/forgot-password.component';
 import { roleAuthGuard } from './guards/auth.guard';
@@ -215,6 +216,10 @@ export const routes: Routes = [
       {
         path: 'readiness',
         component: StudentReadinessComponent,
+      },
+      {
+        path: 'take-test/:testId',
+        component: StudentTakeTestComponent,
       },
     ],
   },

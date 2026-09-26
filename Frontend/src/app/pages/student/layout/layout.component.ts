@@ -19,12 +19,18 @@ export class StudentLayoutComponent implements OnInit, OnDestroy {
   protected profile = signal<StudentProfile | null>(null);
   protected isSidebarCollapsed = signal<boolean>(false);
   protected isNotificationsOpen = signal<boolean>(false);
+  protected isTestsModalOpen = signal<boolean>(false);
+  protected upcomingTests = signal<any[]>([]);
+  protected isLoadingTests = signal<boolean>(false);
 
   // Expose notification signals
   protected readonly unreadCount = this.notificationService.unreadCount;
   protected readonly notifications = this.notificationService.notifications;
   protected readonly activeToasts = this.notificationService.activeToasts;
   protected readonly latestNotifications = computed(() => this.notifications().slice(0, 4));
+  protected readonly activeTestsCount = computed(() =>
+    this.upcomingTests().filter((t) => !t.hasAttempted && t.attemptStatus !== 'Submitted').length
+  );
 
   protected dismissToast(id: string): void {
     this.notificationService.dismissToast(id);
@@ -32,10 +38,38 @@ export class StudentLayoutComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadProfile();
+    this.loadUpcomingTests();
   }
 
   ngOnDestroy(): void {
     this.notificationService.disconnectSocket();
+  }
+
+  protected loadUpcomingTests(): void {
+    this.studentService.getUpcomingTests().subscribe({
+      next: (res) => {
+        if (res && res.success) {
+          this.upcomingTests.set(res.tests || res.data || []);
+        }
+      },
+      error: (err) => {
+        console.warn('Failed to load upcoming tests for layout:', err);
+      },
+    });
+  }
+
+  protected openAptitudeTestsModal(): void {
+    this.isTestsModalOpen.set(true);
+    this.loadUpcomingTests();
+  }
+
+  protected closeAptitudeTestsModal(): void {
+    this.isTestsModalOpen.set(false);
+  }
+
+  protected startTestNow(testId: string): void {
+    this.isTestsModalOpen.set(false);
+    this.router.navigate(['/student/take-test', testId]);
   }
 
   @HostListener('document:click', ['$event'])

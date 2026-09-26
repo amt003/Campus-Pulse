@@ -205,4 +205,47 @@ export class StudentService {
       headers: this.getAuthHeaders(),
     });
   }
+
+  // Aptitude Test Delivery (Phase 10)
+  getUpcomingTests(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/test/upcoming`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  startTest(id: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/test/${id}/start`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  saveAnswers(attemptId: string, answers: (number | null)[]): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/test/attempt/${attemptId}/save`,
+      { answers },
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  submitTest(attemptId: string, answers?: (number | null)[], autoSubmitted = false): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/test/attempt/${attemptId}/submit`,
+      { answers, autoSubmitted },
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  logViolation(attemptId: string, eventType: string, details?: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/test/attempt/${attemptId}/violation`,
+      { type: eventType, details: details || `Anti-cheat violation: ${eventType}` },
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getMyTestResult(attemptId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/test/attempt/${attemptId}/result`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
 }
