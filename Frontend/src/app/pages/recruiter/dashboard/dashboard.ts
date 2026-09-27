@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormControl } from '@angular/forms';
 import { RecruiterService, RecruiterProfile } from '../../../services/recruiter.service';
 import { meaningfulTextValidator } from '../../../validators/meaningful-text.validator';
@@ -33,7 +33,7 @@ export interface DriveItem {
 @Component({
   selector: 'app-recruiter-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ManageResourcesModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ManageResourcesModalComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })

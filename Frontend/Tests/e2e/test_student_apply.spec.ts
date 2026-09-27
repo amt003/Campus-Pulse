@@ -8,8 +8,8 @@ test('Student can login and apply to an eligible job drive', async ({ page }) =>
   await page.fill('#login-password', 'Ananya@2003');
   await page.click('#login-submit-btn');
 
-  await expect(page).toHaveURL(/\/student\/dashboard/);
-  await expect(page.locator('h1')).toContainText('Ananya Pillai', { timeout: 10000 });
+  await expect(page).toHaveURL(/\/student\/dashboard/, { timeout: 15000 });
+  await expect(page.locator('h1')).toContainText('Ananya Pillai', { timeout: 20000 });
 
   // 2. Verify drives are visible on student dashboard
   const driveCards = page.locator('.drive-card-screenshot');

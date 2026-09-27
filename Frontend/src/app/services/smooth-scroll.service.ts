@@ -16,6 +16,7 @@ export class SmoothScrollService {
 
   public init(): void {
     if (this.isInitialized) return;
+    if (typeof window === 'undefined' || typeof ResizeObserver === 'undefined') return;
     this.isInitialized = true;
 
     // Run Lenis outside Angular's zone for optimal performance (60/120fps smooth animation without change detection overhead)

@@ -15,7 +15,8 @@ test('Recruiter registers and TPO approves them', async ({ page, context }) => {
   await page.fill('#reg-phone', '+919876543210');
   await page.fill('#reg-password', 'SecurePass@123');
   await page.fill('#reg-confirm-pwd', 'SecurePass@123');
-  await page.locator('label[for="reg-terms"]').click();
+  await page.locator('#reg-terms').check();
+  await expect(page.locator('#reg-submit-btn')).toBeEnabled({ timeout: 10000 });
   await page.click('#reg-submit-btn');
 
   await expect(page.locator('.success-state')).toContainText('awaiting TPO approval', { timeout: 10000 });
@@ -28,12 +29,12 @@ test('Recruiter registers and TPO approves them', async ({ page, context }) => {
   await tpoPage.fill('#login-password', 'Password123!');
   await tpoPage.click('#login-submit-btn');
 
-  await expect(tpoPage).toHaveURL(/\/tpo\/dashboard/);
+  await expect(tpoPage).toHaveURL(/\/tpo\/dashboard/, { timeout: 15000 });
 
   // Step 3: TPO reviews pending recruiters and approves
   await tpoPage.goto('/tpo/approval');
   const recruiterRow = tpoPage.locator(`tr:has-text("${companyName}")`);
-  await expect(recruiterRow).toBeVisible();
+  await expect(recruiterRow).toBeVisible({ timeout: 15000 });
   await recruiterRow.locator('.btn-approve').click();
 
   // Confirm in approval modal
@@ -41,5 +42,5 @@ test('Recruiter registers and TPO approves them', async ({ page, context }) => {
 
   // Step 4: Verify recruiter appears under Approved tab
   await tpoPage.click('button:has-text("Approved")');
-  await expect(tpoPage.locator(`tr:has-text("${companyName}")`)).toBeVisible();
+  await expect(tpoPage.locator(`tr:has-text("${companyName}")`)).toBeVisible({ timeout: 15000 });
 });

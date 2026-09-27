@@ -23,7 +23,7 @@ export class InstallPromptComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
       if (window.matchMedia('(display-mode: standalone)').matches) {
         this.showBanner.set(false);
       }

@@ -7,15 +7,15 @@ import { ToastService } from '../../../services/toast.service';
 
 export interface CandidateAttempt {
   _id: string;
-  studentId: {
+  studentId?: {
     _id: string;
-    userId: {
+    userId?: {
       _id: string;
       name: string;
       email: string;
       rollNumber?: string;
-    };
-  };
+    } | null;
+  } | null;
   score: number;
   totalQuestions: number;
   percentage: number;
