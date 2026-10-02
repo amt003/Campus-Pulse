@@ -121,6 +121,7 @@
 
 .drive-table {
   width: 100%;
+  min-width: 1050px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -128,31 +129,43 @@
 .drive-table th {
   background: #f8fafc;
   color: #475569;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 750;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: 14px 18px;
+  padding: 14px 16px;
   border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
 }
 
 .drive-table td {
-  padding: 16px 18px;
+  padding: 16px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
-  font-size: 14px;
+  font-size: 13.5px;
   color: #1e293b;
 }
 
 .drive-title-box {
-  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 240px;
+  max-width: 320px;
+}
+
+.drive-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .drive-title {
-  font-weight: 700;
-  color: #0f172a;
-  display: block;
-  margin-bottom: 4px;
+  font-weight: 750;
+  color: #0284c7;
+  font-size: 14px;
+  line-height: 1.35;
 }
 
 .clickable-title {
@@ -161,122 +174,145 @@
 }
 
 .clickable-title:hover {
-  color: #0284c7;
+  color: #0369a1;
+  text-decoration: underline;
 }
 
 .drive-info-link {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: transparent;
-  border: none;
-  padding: 0;
-  margin: 2px 0 8px 0;
+  gap: 3px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 5px;
+  padding: 2px 7px;
   color: #0284c7;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
 .drive-info-link:hover {
-  color: #0369a1;
-  text-decoration: underline;
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+  text-decoration: none;
 }
 
 .drive-info-link .info-icon {
-  font-size: 15px;
+  font-size: 13.5px;
 }
 
 .stage-pills {
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .stage-pill {
   font-size: 10px;
   font-weight: 700;
-  background: #e2e8f0;
-  color: #334155;
-  padding: 2px 8px;
-  border-radius: 12px;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
 }
 
 .resubmitted-tag {
-  background: #dbeafe;
+  background: #eff6ff;
   color: #1d4ed8;
+  border-color: #bfdbfe;
 }
 
 .company-box {
   display: flex;
   flex-direction: column;
+  gap: 2px;
+  min-width: 170px;
 }
 
 .company-name {
-  font-weight: 700;
-  color: #003b5a;
+  font-weight: 750;
+  color: #0f172a;
+  font-size: 13.5px;
 }
 
 .company-email {
   font-size: 12px;
   color: #64748b;
+  word-break: break-all;
 }
 
 .ctc-tag {
-  font-weight: 700;
+  font-weight: 750;
   color: #15803d;
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
   padding: 4px 10px;
   border-radius: 6px;
+  white-space: nowrap;
+  font-size: 13px;
+  display: inline-block;
 }
 
 .deadline-date {
-  font-weight: 600;
+  font-weight: 700;
   color: #c2410c;
+  white-space: nowrap;
+  font-size: 13px;
 }
 
 .eligibility-box {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   font-size: 12px;
   color: #475569;
+  min-width: 160px;
 }
 
 .branches-text {
   font-size: 11px;
-  color: #64748b;
-  background: #f1f5f9;
-  padding: 2px 6px;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 3px 6px;
   border-radius: 4px;
   display: inline-block;
-  margin-top: 2px;
+  line-height: 1.3;
 }
 
 .submitted-date {
   font-size: 12px;
   color: #64748b;
+  white-space: nowrap;
 }
 
 .action-btn-group {
-  display: flex;
-  gap: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   justify-content: flex-end;
+  white-space: nowrap;
 }
 
 .btn-action {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 750;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid transparent;
+  border: none;
+  white-space: nowrap;
 }
 
 .btn-action .material-symbols-outlined {

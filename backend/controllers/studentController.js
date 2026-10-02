@@ -161,8 +161,38 @@ const uploadResume = async (req, res) => {
     profile.isProfileComplete = true;
     await profile.save();
 
+    // Automatically re-score active/pending applications for open drives in background
+    try {
+      const activeApplications = await Application.find({
+        studentId: profile._id,
+        status: { $in: ["Applied", "Under Review", "Aptitude Scheduled"] },
+      }).populate("driveId");
+
+      for (const app of activeApplications) {
+        if (app.driveId && app.driveId.status === "Open" && app.driveId.description) {
+          aiService
+            .scoreResume(profile.resumePath, app.driveId.description)
+            .then((scoreResult) => {
+              app.aiMatchScore = scoreResult.matchScore;
+              app.xai = {
+                matchScore: scoreResult.matchScore,
+                positiveSentences: scoreResult.positiveSentences || [],
+                negativeSentences: scoreResult.negativeSentences || [],
+                skillGaps: placementAnalyzerService.extractCleanSkills(scoreResult.skillGaps || []),
+                strongSkills: scoreResult.strongSkills || [],
+                isOfflineFallback: scoreResult.isOfflineFallback || false,
+              };
+              app.save().catch((err) => console.error("Error updating application score:", err.message));
+            })
+            .catch((err) => console.error("Error re-scoring application:", err.message));
+        }
+      }
+    } catch (reScoreErr) {
+      console.warn("Could not re-score existing applications:", reScoreErr.message);
+    }
+
     return res.status(200).json({
-      message: "Resume uploaded successfully",
+      message: "Resume uploaded successfully. Active applications have been updated with your new resume.",
       resumePath: profile.resumePath,
       profile,
     });
@@ -339,6 +369,61 @@ const applyToDrive = async (req, res) => {
         isOfflineFallback: scoreResult.isOfflineFallback || false
       }
     });
+
+    // Check if an active Aptitude Test is already published for this drive
+    const AptitudeTest = require("../models/AptitudeTest");
+    const Notification = require("../models/Notification");
+    const activeAptitudeTest = await AptitudeTest.findOne({
+      driveId: drive._id,
+      status: "Active",
+    });
+
+    if (activeAptitudeTest) {
+      application.status = "Aptitude Scheduled";
+      if (!application.aptitude) {
+        application.aptitude = {};
+      }
+      application.aptitude.status = "Scheduled";
+      application.aptitude.source = "in_house";
+      await application.save();
+
+      const scheduledDate = activeAptitudeTest.scheduledDate || new Date();
+      const timeSlot = activeAptitudeTest.timeSlot || "10:00 AM - 11:00 AM";
+
+      await Schedule.create({
+        studentId: profile._id,
+        recruiterId: activeAptitudeTest.recruiterId,
+        driveId: drive._id,
+        applicationId: application._id,
+        eventType: "Aptitude",
+        date: scheduledDate,
+        timeSlot,
+        location: "Online - CampusPulse",
+        status: "Scheduled",
+      });
+
+      const dateStr = new Date(scheduledDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+
+      const notifMsg = `You have been scheduled for the Aptitude Test for ${drive.title} on ${dateStr} at ${timeSlot}.`;
+
+      await Notification.create({
+        userId: req.user._id,
+        title: "Aptitude Test Scheduled",
+        message: notifMsg,
+        type: "info",
+        read: false,
+      });
+
+      socketService.sendRealTimeNotification(req.user._id, {
+        title: "Aptitude Test Scheduled",
+        message: notifMsg,
+        type: "info",
+      });
+    }
 
     return res.status(201).json({
       message: "Application submitted successfully",

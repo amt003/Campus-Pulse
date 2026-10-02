@@ -114,35 +114,100 @@
             </div>
 
             <div class="form-divider col-span-2">
-              <span>Security & Password (leave blank to keep current)</span>
+              <span>Security & Password</span>
             </div>
 
-            <div class="form-group">
-              <label for="password">New Password</label>
-              <div class="input-wrapper">
-                <span class="material-symbols-outlined input-icon">lock</span>
+            <!-- Current Password -->
+            <div class="form-group-profile col-span-2">
+              <label class="profile-field-label">Current Password</label>
+              <div class="password-field-wrapper" style="position: relative; width: 100%;">
                 <input 
-                  type="password" 
-                  id="password" 
-                  name="password" 
-                  [(ngModel)]="password" 
-                  placeholder="••••••••"
+                  [type]="showCurrentPassword() ? 'text' : 'password'" 
+                  [ngModel]="currentPassword()" 
+                  (ngModelChange)="currentPassword.set($event)"
+                  name="recruiterCurrentPassword" 
+                  class="profile-input" 
+                  placeholder="Enter current password" 
+                  style="padding-right: 56px;"
+                  [class.is-invalid]="isPasswordAttempted() && currentPasswordError()" 
+                  [class.is-valid]="isPasswordAttempted() && currentPassword().length > 0 && !currentPasswordError()" 
                 />
+                <button type="button" class="btn-password-toggle" (click)="showCurrentPassword.set(!showCurrentPassword())">
+                  <span class="material-symbols-outlined" style="font-size: 18px;">
+                    {{ showCurrentPassword() ? 'visibility' : 'visibility_off' }}
+                  </span>
+                </button>
               </div>
+              @if (isPasswordAttempted() && currentPasswordError()) {
+                <span class="field-error-text">Current password is required to change password</span>
+              }
             </div>
 
-            <div class="form-group">
-              <label for="confirmPassword">Confirm New Password</label>
-              <div class="input-wrapper">
-                <span class="material-symbols-outlined input-icon">lock_reset</span>
+            <!-- New Password -->
+            <div class="form-group-profile col-span-2">
+              <label class="profile-field-label">New Password</label>
+              <div class="password-field-wrapper" style="position: relative; width: 100%;">
                 <input 
-                  type="password" 
-                  id="confirmPassword" 
-                  name="confirmPassword" 
-                  [(ngModel)]="confirmPassword" 
-                  placeholder="••••••••"
+                  [type]="showNewPassword() ? 'text' : 'password'" 
+                  [ngModel]="newPassword()" 
+                  (ngModelChange)="newPassword.set($event)"
+                  name="recruiterNewPassword" 
+                  class="profile-input" 
+                  placeholder="Enter new password" 
+                  style="padding-right: 56px;"
+                  [class.is-invalid]="isPasswordAttempted() && newPasswordError()" 
+                  [class.is-valid]="isPasswordAttempted() && newPassword().length > 0 && !newPasswordError()" 
                 />
+                <button type="button" class="btn-password-toggle" (click)="showNewPassword.set(!showNewPassword())">
+                  <span class="material-symbols-outlined" style="font-size: 18px;">
+                    {{ showNewPassword() ? 'visibility' : 'visibility_off' }}
+                  </span>
+                </button>
               </div>
+              <!-- 4 Bar Password Strength Indicator -->
+              <div class="strength-bars-container" style="display: flex; gap: 4px; margin-top: 8px; height: 4px; width: 100%;">
+                <div class="strength-bar" [class.filled]="passwordStrength() >= 1" [class.red]="passwordStrength() >= 1 && passwordStrength() <= 2" [class.orange]="passwordStrength() === 3" [class.green]="passwordStrength() === 4" style="flex: 1; height: 100%; border-radius: 2px; background: #E5E8E8; transition: background-color 0.2s;"></div>
+                <div class="strength-bar" [class.filled]="passwordStrength() >= 2" [class.red]="passwordStrength() >= 2 && passwordStrength() <= 2" [class.orange]="passwordStrength() === 3" [class.green]="passwordStrength() === 4" style="flex: 1; height: 100%; border-radius: 2px; background: #E5E8E8; transition: background-color 0.2s;"></div>
+                <div class="strength-bar" [class.filled]="passwordStrength() >= 3" [class.orange]="passwordStrength() === 3" [class.green]="passwordStrength() === 4" style="flex: 1; height: 100%; border-radius: 2px; background: #E5E8E8; transition: background-color 0.2s;"></div>
+                <div class="strength-bar" [class.filled]="passwordStrength() >= 4" [class.green]="passwordStrength() === 4" style="flex: 1; height: 100%; border-radius: 2px; background: #E5E8E8; transition: background-color 0.2s;"></div>
+              </div>
+              <div class="strength-label-text" style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 12px; gap: 8px;">
+                <span style="color: #5D6D7E; line-height: 1.3;">
+                  Minimum 8 characters with at least one uppercase, one lowercase, and one number.
+                </span>
+                @if (newPassword() && passwordStrengthLabel()) {
+                  <strong class="strength-badge-text" [class]="'text-' + passwordStrengthColor()" style="font-weight: 750;">{{ passwordStrengthLabel() }}</strong>
+                }
+              </div>
+              @if (isPasswordAttempted() && newPasswordError()) {
+                <span class="field-error-text">Password does not meet the complexity requirements</span>
+              }
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="form-group-profile col-span-2">
+              <label class="profile-field-label">Confirm Password</label>
+              <div class="password-field-wrapper" style="position: relative; width: 100%;">
+                <input 
+                  [type]="showConfirmPassword() ? 'text' : 'password'" 
+                  [ngModel]="confirmPassword()" 
+                  (ngModelChange)="confirmPassword.set($event)"
+                  name="recruiterConfirmPassword" 
+                  class="profile-input" 
+                  placeholder="Repeat new password" 
+                  style="padding-right: 56px;"
+                  [class.is-invalid]="isPasswordAttempted() && confirmPasswordError()" 
+                  [class.is-valid]="isPasswordAttempted() && confirmPassword().length > 0 && !confirmPasswordError()" 
+                />
+                <button type="button" class="btn-password-toggle" (click)="showConfirmPassword.set(!showConfirmPassword())">
+                  <span class="material-symbols-outlined" style="font-size: 18px;">
+                    {{ showConfirmPassword() ? 'visibility' : 'visibility_off' }}
+                  </span>
+                </button>
+              </div>
+              @if (isPasswordAttempted() && confirmPasswordError()) {
+                <span class="field-error-text">Passwords do not match</span>
+              }
             </div>
 
           </div>

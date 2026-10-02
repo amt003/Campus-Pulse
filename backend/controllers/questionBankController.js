@@ -568,6 +568,170 @@ const generateFromBank = async (req, res) => {
   }
 };
 
+// @desc    Parse questions from an uploaded PDF file
+// @route   POST /api/recruiter/question/parse-pdf
+// @access  Private (Recruiter)
+const { parseQuestionsFromPdf } = require("../services/pdfQuestionExtractor");
+
+const parseQuestionsFromUploadedPdf = async (req, res) => {
+  try {
+    const recruiter = await getAuthenticatedRecruiter(req.user._id);
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No PDF file was uploaded",
+      });
+    }
+
+    const { defaultCategory = "Quantitative", defaultDifficulty = "Medium", apiKey } = req.body;
+    const fileBuffer = req.file.buffer || (req.file.path ? require("fs").readFileSync(req.file.path) : null);
+
+    if (!fileBuffer) {
+      return res.status(400).json({
+        success: false,
+        message: "Failed to read uploaded PDF data",
+      });
+    }
+
+    const questions = await parseQuestionsFromPdf({
+      buffer: fileBuffer,
+      defaultCategory,
+      defaultDifficulty,
+      apiKey,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully extracted ${questions.length} question(s) from PDF`,
+      count: questions.length,
+      questions,
+      data: questions,
+    });
+  } catch (error) {
+    console.error("[QuestionBankController] parseQuestionsFromUploadedPdf error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to parse questions from PDF",
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Bulk create questions in QuestionBank (e.g. from PDF import or review)
+// @route   POST /api/recruiter/question/bulk
+// @access  Private (Recruiter)
+const bulkAddQuestions = async (req, res) => {
+  try {
+    const recruiter = await getAuthenticatedRecruiter(req.user._id);
+    if (!recruiter) {
+      return res.status(404).json({
+        success: false,
+        message: "Recruiter profile not found",
+      });
+    }
+
+    const { questions } = req.body;
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "An array of questions is required",
+      });
+    }
+
+    const validCategories = ["Quantitative", "Logical", "Verbal", "Technical"];
+    const validDifficulties = ["Easy", "Medium", "Hard"];
+    const validSources = ["manual", "ai_generated", "curated", "pdf_upload"];
+    const validStatuses = ["draft", "approved", "rejected"];
+
+    const validatedDocs = [];
+
+    for (const q of questions) {
+      if (!q || !q.questionText || typeof q.questionText !== "string" || !q.questionText.trim()) {
+        continue;
+      }
+
+      let options = Array.isArray(q.options)
+        ? q.options.map((o) => (o !== null && o !== undefined ? String(o).trim() : ""))
+        : [];
+      
+      // Ensure exactly 4 non-empty options
+      while (options.length < 4) {
+        options.push(`Option ${String.fromCharCode(65 + options.length)}`);
+      }
+      if (options.length > 4) options = options.slice(0, 4);
+
+      // Replace any empty option string with default placeholder
+      options = options.map((opt, idx) => (opt && opt.trim() ? opt.trim() : `Option ${String.fromCharCode(65 + idx)}`));
+
+      let correctOption = 0;
+      if (typeof q.correctOption === "number" && q.correctOption >= 0 && q.correctOption <= 3) {
+        correctOption = Math.floor(q.correctOption);
+      }
+
+      const matchedCat = validCategories.find(
+        (c) => c.toLowerCase() === (q.category || "").trim().toLowerCase()
+      ) || "Quantitative";
+
+      const matchedDiff = validDifficulties.find(
+        (d) => d.toLowerCase() === (q.difficulty || "").trim().toLowerCase()
+      ) || "Medium";
+
+      const matchedSource = validSources.find(
+        (s) => s.toLowerCase() === (q.source || "").trim().toLowerCase()
+      ) || "pdf_upload";
+
+      const matchedStatus = validStatuses.find(
+        (st) => st.toLowerCase() === (q.status || "").trim().toLowerCase()
+      ) || "approved";
+
+      validatedDocs.push({
+        recruiterId: recruiter._id,
+        questionText: q.questionText.trim(),
+        options,
+        correctOption,
+        difficulty: matchedDiff,
+        category: matchedCat,
+        source: matchedSource,
+        status: matchedStatus,
+        timesUsed: 0,
+        createdAt: new Date(),
+      });
+    }
+
+    if (validatedDocs.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid questions were found in the provided payload",
+      });
+    }
+
+    const inserted = await QuestionBank.insertMany(validatedDocs);
+
+    return res.status(201).json({
+      success: true,
+      message: `Successfully imported ${inserted.length} question(s) into Question Bank`,
+      count: inserted.length,
+      questions: inserted,
+      data: inserted,
+    });
+  } catch (error) {
+    console.error("[QuestionBankController] bulkAddQuestions error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to bulk add questions",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   addQuestion,
   getQuestions,
@@ -578,4 +742,7 @@ module.exports = {
   approveDraftQuestion,
   rejectDraftQuestion,
   generateFromBank,
+  parseQuestionsFromUploadedPdf,
+  bulkAddQuestions,
 };
+

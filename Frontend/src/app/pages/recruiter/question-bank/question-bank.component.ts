@@ -64,6 +64,29 @@ export class RecruiterQuestionBankComponent implements OnInit {
   protected isModalOpen = signal<boolean>(false);
   protected isEditing = signal<boolean>(false);
   protected editingQuestionId = signal<string | null>(null);
+  protected addModalMode = signal<'manual' | 'pdf'>('manual');
+
+  // PDF Upload & Extraction State
+  protected selectedPdfFile = signal<File | null>(null);
+  protected isParsingPdf = signal<boolean>(false);
+  protected isImportingPdf = signal<boolean>(false);
+  protected pdfParseError = signal<string | null>(null);
+  protected pdfCategory = signal<'Mixed' | 'Quantitative' | 'Logical' | 'Verbal' | 'Technical'>('Mixed');
+  protected pdfDifficulty = signal<'Easy' | 'Medium' | 'Hard'>('Medium');
+  protected parsedQuestions = signal<
+    Array<{
+      selected: boolean;
+      questionText: string;
+      options: string[];
+      correctOption: number;
+      category: 'Quantitative' | 'Logical' | 'Verbal' | 'Technical';
+      difficulty: 'Easy' | 'Medium' | 'Hard';
+    }>
+  >([]);
+
+  protected selectedParsedCount = computed(
+    () => this.parsedQuestions().filter((q) => q.selected).length
+  );
 
   // Manual Form State
   protected formData = signal<{
@@ -304,10 +327,14 @@ export class RecruiterQuestionBankComponent implements OnInit {
     });
   }
 
-  // Manual Modal Openers
+  // Manual & PDF Modal Openers
   protected openAddModal(): void {
     this.isEditing.set(false);
     this.editingQuestionId.set(null);
+    this.addModalMode.set('manual');
+    this.selectedPdfFile.set(null);
+    this.parsedQuestions.set([]);
+    this.pdfParseError.set(null);
     this.formData.set({
       questionText: '',
       options: ['', '', '', ''],
@@ -318,9 +345,160 @@ export class RecruiterQuestionBankComponent implements OnInit {
     this.isModalOpen.set(true);
   }
 
+  protected setAddModalMode(mode: 'manual' | 'pdf'): void {
+    this.addModalMode.set(mode);
+    this.pdfParseError.set(null);
+  }
+
+  protected onPdfSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+        this.toastService.warning('Invalid File', 'Please select a valid PDF document.');
+        return;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        this.toastService.warning('File Too Large', 'PDF file size must be less than 20MB.');
+        return;
+      }
+      this.selectedPdfFile.set(file);
+      this.pdfParseError.set(null);
+    }
+  }
+
+  protected removeSelectedPdf(): void {
+    this.selectedPdfFile.set(null);
+    this.parsedQuestions.set([]);
+    this.pdfParseError.set(null);
+  }
+
+  protected extractQuestionsFromPdf(): void {
+    const file = this.selectedPdfFile();
+    if (!file) {
+      this.toastService.warning('No File', 'Please select a PDF document first.');
+      return;
+    }
+
+    this.isParsingPdf.set(true);
+    this.pdfParseError.set(null);
+
+    this.recruiterService
+      .parseQuestionsFromPdf(file, this.pdfCategory(), this.pdfDifficulty())
+      .subscribe({
+        next: (res) => {
+          this.isParsingPdf.set(false);
+          const rawList = res.questions || res.data || [];
+          if (rawList.length === 0) {
+            this.pdfParseError.set('No questions were detected in the uploaded PDF. Please verify your document structure.');
+            this.toastService.warning('No Questions Found', 'Could not detect MCQ questions in the PDF.');
+            return;
+          }
+
+          const formatted = rawList.map((q: any) => ({
+            selected: true,
+            questionText: q.questionText || '',
+            options: Array.isArray(q.options) && q.options.length === 4 ? q.options : ['A', 'B', 'C', 'D'],
+            correctOption: typeof q.correctOption === 'number' ? q.correctOption : 0,
+            category: (q.category || this.pdfCategory()) as 'Quantitative' | 'Logical' | 'Verbal' | 'Technical',
+            difficulty: (q.difficulty || this.pdfDifficulty()) as 'Easy' | 'Medium' | 'Hard',
+          }));
+
+          this.parsedQuestions.set(formatted);
+          this.toastService.success('Extraction Complete', `Extracted ${formatted.length} question(s) from PDF.`);
+        },
+        error: (err) => {
+          this.isParsingPdf.set(false);
+          const msg = err.error?.message || err.message || 'Failed to parse questions from PDF.';
+          this.pdfParseError.set(msg);
+          this.toastService.error('PDF Parse Failed', msg);
+        },
+      });
+  }
+
+  protected toggleAllParsed(select: boolean): void {
+    this.parsedQuestions.update((list) =>
+      list.map((q) => ({ ...q, selected: select }))
+    );
+  }
+
+  protected toggleParsedItem(index: number): void {
+    this.parsedQuestions.update((list) => {
+      const copy = [...list];
+      if (copy[index]) {
+        copy[index] = { ...copy[index], selected: !copy[index].selected };
+      }
+      return copy;
+    });
+  }
+
+  protected removeParsedItem(index: number): void {
+    this.parsedQuestions.update((list) => list.filter((_, i) => i !== index));
+  }
+
+  protected updateParsedOption(qIndex: number, optIndex: number, value: string): void {
+    this.parsedQuestions.update((list) => {
+      const copy = [...list];
+      if (copy[qIndex]) {
+        const opts = [...copy[qIndex].options];
+        opts[optIndex] = value;
+        copy[qIndex] = { ...copy[qIndex], options: opts };
+      }
+      return copy;
+    });
+  }
+
+  protected setParsedCorrectOption(qIndex: number, optIndex: number): void {
+    this.parsedQuestions.update((list) => {
+      const copy = [...list];
+      if (copy[qIndex]) {
+        copy[qIndex] = { ...copy[qIndex], correctOption: optIndex };
+      }
+      return copy;
+    });
+  }
+
+  protected importSelectedParsedQuestions(): void {
+    const selected = this.parsedQuestions().filter((q) => q.selected);
+    if (selected.length === 0) {
+      this.toastService.warning('No Questions Selected', 'Please select at least one question to import.');
+      return;
+    }
+
+    for (let i = 0; i < selected.length; i++) {
+      const q = selected[i];
+      if (!q.questionText.trim()) {
+        this.toastService.warning('Validation Error', `Question #${i + 1} has an empty question statement.`);
+        return;
+      }
+      for (let j = 0; j < 4; j++) {
+        if (!q.options[j] || !q.options[j].trim()) {
+          this.toastService.warning('Validation Error', `Question #${i + 1} is missing Option ${String.fromCharCode(65 + j)}.`);
+          return;
+        }
+      }
+    }
+
+    this.isImportingPdf.set(true);
+    this.recruiterService.bulkAddQuestions(selected).subscribe({
+      next: (res) => {
+        this.isImportingPdf.set(false);
+        const count = res.count || selected.length;
+        this.toastService.success('Questions Imported', `Successfully added ${count} question(s) to your Question Bank.`);
+        this.closeModal();
+        this.loadQuestions();
+      },
+      error: (err) => {
+        this.isImportingPdf.set(false);
+        this.toastService.error('Import Failed', err.error?.message || 'Failed to import questions to Question Bank.');
+      },
+    });
+  }
+
   protected openEditModal(question: QuestionItem): void {
     this.isEditing.set(true);
     this.editingQuestionId.set(question._id || null);
+    this.addModalMode.set('manual');
     this.formData.set({
       questionText: question.questionText,
       options: [...question.options],
@@ -332,7 +510,7 @@ export class RecruiterQuestionBankComponent implements OnInit {
   }
 
   protected closeModal(): void {
-    if (this.isSaving()) return;
+    if (this.isSaving() || this.isParsingPdf() || this.isImportingPdf()) return;
     this.isModalOpen.set(false);
   }
 

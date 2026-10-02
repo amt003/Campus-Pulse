@@ -1,0 +1,121 @@
+@if (loadingService.isVisible()) {
+  <aside
+    class="full-page-loader-overlay"
+    role="status"
+    aria-live="polite"
+    aria-label="Loading page"
+  >
+    <!-- Screen reader announcement -->
+    <span class="sr-only">Loading: {{ loadingService.currentStatusMessage() }}</span>
+
+    <!-- Top edge thin accent-colored progress bar -->
+    <div class="top-progress-track">
+      <div class="top-progress-indicator"></div>
+    </div>
+
+    <!-- Centered Loader Content -->
+    <div class="loader-content-box">
+      <!-- Graduation Cap and Building joined by line with traveling dot -->
+      <div class="icon-animation-wrapper" aria-hidden="true">
+        <svg
+          class="connection-svg"
+          viewBox="0 0 240 100"
+          width="240"
+          height="100"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <!-- Soft circle 1 (Cap) -->
+          <circle class="soft-circle circle-cap" cx="50" cy="50" r="32" />
+
+          <!-- Soft circle 2 (Building) -->
+          <circle class="soft-circle circle-building" cx="190" cy="50" r="32" />
+
+          <!-- Joining Line -->
+          <line
+            x1="82"
+            y1="50"
+            x2="158"
+            y2="50"
+            stroke="var(--color-outline, #c1c7cf)"
+            stroke-width="2.5"
+            stroke-linecap="round"
+          />
+
+          <!-- Small Traveling Dot -->
+          <circle class="traveling-dot" cx="82" cy="50" r="4.5" />
+
+          <!-- Graduation Cap Icon -->
+          <g class="cap-icon-group">
+            <!-- Cap Top Diamond -->
+            <polygon
+              points="50,37 68,45 50,53 32,45"
+              fill="var(--color-primary, #003b5a)"
+            />
+            <!-- Cap Skull Base -->
+            <path
+              d="M38 49 v7 c0 6 12 6 24 0 v-7"
+              fill="var(--color-primary, #003b5a)"
+            />
+            <!-- Tassel -->
+            <path
+              d="M63 46 v12"
+              stroke="var(--color-accent, #0080c0)"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </g>
+
+          <!-- Building Icon -->
+          <g class="building-icon-group">
+            <!-- Building Body -->
+            <rect
+              x="177"
+              y="35"
+              width="26"
+              height="30"
+              rx="2"
+              fill="var(--color-secondary, #006497)"
+            />
+            <!-- Building Windows -->
+            <rect x="182" y="40" width="4" height="4" fill="var(--color-surface, #ffffff)" />
+            <rect x="194" y="40" width="4" height="4" fill="var(--color-surface, #ffffff)" />
+            <rect x="182" y="48" width="4" height="4" fill="var(--color-surface, #ffffff)" />
+            <rect x="194" y="48" width="4" height="4" fill="var(--color-surface, #ffffff)" />
+            <!-- Door -->
+            <rect x="188" y="56" width="4" height="9" fill="var(--color-surface, #ffffff)" />
+          </g>
+        </svg>
+      </div>
+
+      <!-- State message / Timeout / Error -->
+      @if (loadingService.hasError()) {
+        <div class="error-container">
+          <p class="error-title">Unable to complete request</p>
+          <p class="error-desc">{{ loadingService.errorMessage() }}</p>
+          <button type="button" class="btn-retry" (click)="onRetry()">
+            <span class="material-symbols-outlined">refresh</span>
+            <span>Retry</span>
+          </button>
+        </div>
+      } @else if (loadingService.isTimeout()) {
+        <div class="timeout-container">
+          <p class="timeout-title">Taking longer than usual.</p>
+          <p class="timeout-desc">The server might be responding slowly.</p>
+          <button type="button" class="btn-retry" (click)="onRetry()">
+            <span class="material-symbols-outlined">refresh</span>
+            <span>Retry</span>
+          </button>
+        </div>
+      } @else {
+        <!-- Normal Rotating Status Message -->
+        <p class="status-message" key="status-text">
+          {{ loadingService.currentStatusMessage() }}
+        </p>
+
+        <!-- Small Muted Subtext -->
+        <p class="subtext-message">Connecting talent with opportunity</p>
+      }
+    </div>
+  </aside>
+}

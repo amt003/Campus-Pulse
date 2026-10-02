@@ -22,11 +22,13 @@
 }
 
 .applications-page-container {
-  max-width: 1320px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  box-sizing: border-box;
 }
 
 .page-header {
@@ -120,9 +122,12 @@
   border: 1px solid rgba(0, 59, 90, 0.1);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .table-responsive {
+  width: 100%;
   overflow-x: auto;
 }
 
@@ -130,35 +135,58 @@
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 13px;
+  font-size: 12.5px;
+  table-layout: fixed;
 }
 
 .app-table th {
   background: #f8f9fa;
   color: var(--color-primary, #1A5276);
   font-weight: 800;
-  padding: 14px 18px;
-  border-bottom: 1px solid #e5e8e8;
+  padding: 11px 10px;
+  border-bottom: 1.5px solid #e5e8e8;
   white-space: nowrap;
+  font-size: 11.5px;
+  box-sizing: border-box;
 }
 
+.app-table th:nth-child(1) { width: 20%; }
+.app-table th:nth-child(2) { width: 10%; }
+.app-table th:nth-child(3) { width: 13%; }
+.app-table th:nth-child(4) { width: 13%; }
+.app-table th:nth-child(5) { width: 8%; }
+.app-table th:nth-child(6) { width: 16%; }
+.app-table th:nth-child(7) { width: 9.5%; }
+.app-table th:nth-child(8) { width: 10.5%; text-align: right; }
+
 .app-table td {
-  padding: 14px 18px;
+  padding: 11px 10px;
   border-bottom: 1px solid #f1f4f6;
   vertical-align: middle;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .candidate-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 .candidate-name {
   font-weight: 750;
   color: var(--color-on-surface, #091d2e);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .candidate-email {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--color-on-surface-variant, #41474e);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .roll-code {
@@ -166,39 +194,52 @@
   padding: 3px 6px;
   border-radius: 4px;
   font-family: monospace;
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--color-primary, #1A5276);
+  white-space: nowrap;
 }
 
 .drive-title {
   font-weight: 700;
   color: var(--color-secondary, #006497);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 
 .academic-badge {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--color-on-surface-variant, #41474e);
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ai-score-pill {
   background: #fff8e1;
   color: #f57f17;
   font-weight: 800;
-  font-size: 11.5px;
-  padding: 3px 8px;
+  font-size: 11px;
+  padding: 3px 7px;
   border-radius: 6px;
   display: inline-block;
+  white-space: nowrap;
 }
 
 /* Badges */
 .status-badge {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 750;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 9999px;
   display: inline-block;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .badge-success {
   background: #e8f5e9;
@@ -220,21 +261,23 @@
 /* Actions */
 .action-btn-group {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   justify-content: flex-end;
+  flex-wrap: nowrap;
 }
 
 .btn-action {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
+  gap: 3px;
+  padding: 5px 8px;
   border-radius: 6px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   border: none;
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 .btn-manage {
   background: var(--color-primary, #1A5276);

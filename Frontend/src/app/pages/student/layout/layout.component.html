@@ -268,6 +268,21 @@
                         <span>Submitted</span>
                       </span>
                     }
+                  } @else if (test.isTimeLocked) {
+                    <button
+                      (click)="startTestNow(test._id)"
+                      style="background: #FFFBEB; color: #B45309; border: 1px solid #FCD34D; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;"
+                      [id]="'btn-start-test-' + test._id"
+                      [title]="'Test starts at ' + (test.timeSlot || 'scheduled time')"
+                    >
+                      <span class="material-symbols-outlined" style="font-size: 15px;">lock</span>
+                      <span>Starts @ {{ test.timeSlot || 'Scheduled Time' }}</span>
+                    </button>
+                  } @else if (test.isExpired) {
+                    <span style="background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+                      <span class="material-symbols-outlined" style="font-size: 15px;">timer_off</span>
+                      <span>Time Limit Passed</span>
+                    </span>
                   } @else {
                     <button
                       (click)="startTestNow(test._id)"

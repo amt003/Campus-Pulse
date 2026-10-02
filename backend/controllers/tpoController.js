@@ -847,6 +847,17 @@ const approveDrive = async (req, res) => {
       });
     }
 
+    const seasonConfig = await CollegeConfig.findOne().sort({ updatedAt: -1 });
+    if (seasonConfig && seasonConfig.seasonEnd) {
+      const deadlineDate = new Date(drive.applicationDeadline);
+      if (deadlineDate > new Date(seasonConfig.seasonEnd)) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot approve drive: application deadline (${deadlineDate.toLocaleDateString()}) exceeds placement season end date (${new Date(seasonConfig.seasonEnd).toLocaleDateString()}).`,
+        });
+      }
+    }
+
     drive.status = "Open";
     drive.tpoFeedback = null;
     await drive.save();

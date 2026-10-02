@@ -159,20 +159,26 @@
           <table class="qb-table" id="table-question-bank">
             <thead>
               <tr>
-                <th style="width: 42%;">Question</th>
-                <th style="width: 14%;">Category</th>
-                <th style="width: 12%;">Difficulty</th>
-                <th style="width: 12%;">Source</th>
-                <th style="width: 10%; text-align: center;">Times Used</th>
-                <th style="width: 10%; text-align: right;">Actions</th>
+                <th style="width: 5%; text-align: center;">#</th>
+                <th style="width: 45%;">Question</th>
+                <th style="width: 13%;">Category</th>
+                <th style="width: 11%;">Difficulty</th>
+                <th style="width: 11%;">Source</th>
+                <th style="width: 7%; text-align: center;">Times Used</th>
+                <th style="width: 8%; text-align: right;">Actions</th>
               </tr>
             </thead>
             <tbody>
-              @for (q of filteredQuestions(); track q._id || $index) {
+              @for (q of filteredQuestions(); track q._id || $index; let idx = $index) {
                 <tr class="qb-row">
+                  <!-- Numbering -->
+                  <td class="col-index" style="text-align: center;">
+                    <span class="qb-index-badge">{{ idx + 1 }}</span>
+                  </td>
+
                   <!-- Question Statement -->
                   <td class="col-question">
-                    <div class="question-text-truncate" [title]="q.questionText">
+                    <div class="question-text-full">
                       {{ q.questionText }}
                     </div>
                     <div class="options-preview">
@@ -250,10 +256,6 @@
       <!-- Main Generator Card -->
       <section class="generator-card">
         <div class="card-hero">
-          <div class="hero-badge">
-            <span class="material-symbols-outlined hero-sparkle">auto_awesome</span>
-            <span>Gemini 1.5 Flash AI Engine</span>
-          </div>
           <h2 class="card-hero-title">Auto-Generate Multiple Choice Questions</h2>
           <p class="card-hero-subtitle">
             Quickly generate verified, high-quality assessment questions tailored by category and difficulty.
@@ -483,19 +485,25 @@
             <table class="qb-table" id="table-drafts">
               <thead>
                 <tr>
+                  <th style="width: 5%; text-align: center;">#</th>
                   <th style="width: 44%;">Question &amp; Options</th>
-                  <th style="width: 14%;">Category</th>
-                  <th style="width: 12%;">Difficulty</th>
+                  <th style="width: 13%;">Category</th>
+                  <th style="width: 11%;">Difficulty</th>
                   <th style="width: 10%;">Source</th>
-                  <th style="width: 20%; text-align: right;">Review Decision</th>
+                  <th style="width: 17%; text-align: right;">Review Decision</th>
                 </tr>
               </thead>
               <tbody>
-                @for (q of draftQuestions(); track q._id || $index) {
+                @for (q of draftQuestions(); track q._id || $index; let dIdx = $index) {
                   <tr class="qb-row draft-row" [id]="'draft-row-' + q._id">
+                    <!-- Numbering -->
+                    <td class="col-index" style="text-align: center;">
+                      <span class="qb-index-badge">#{{ dIdx + 1 }}</span>
+                    </td>
+
                     <!-- Question & Option Details -->
                     <td class="col-question">
-                      <div class="question-text-truncate draft-question-text" [title]="q.questionText">
+                      <div class="question-text-full draft-question-text" [title]="q.questionText">
                         {{ q.questionText }}
                       </div>
                       <div class="draft-options-list">
@@ -575,133 +583,383 @@
     </div>
   }
 
-  <!-- Add / Edit Manual Question Modal (Existing from Phase 7) -->
+  <!-- Add / Edit Manual Question & PDF Upload Modal -->
   @if (isModalOpen()) {
     <div class="modal-backdrop" (click)="closeModal()">
-      <div class="modal-dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div
+        class="modal-dialog"
+        [class.modal-dialog-large]="addModalMode() === 'pdf' && !isEditing() && parsedQuestions().length > 0"
+        (click)="$event.stopPropagation()"
+        role="dialog"
+        aria-modal="true"
+      >
         <!-- Modal Header -->
         <div class="modal-header">
           <div class="modal-title-group">
             <span class="material-symbols-outlined modal-icon">
-              {{ isEditing() ? 'edit_note' : 'add_task' }}
+              {{ isEditing() ? 'edit_note' : (addModalMode() === 'pdf' ? 'picture_as_pdf' : 'add_task') }}
             </span>
             <h2 class="modal-title">
-              {{ isEditing() ? 'Edit Question' : 'Add New Question' }}
+              {{ isEditing() ? 'Edit Question' : (addModalMode() === 'pdf' ? 'Upload Questions PDF' : 'Add New Question') }}
             </h2>
           </div>
-          <button class="btn-close" (click)="closeModal()" [disabled]="isSaving()">
+          <button class="btn-close" (click)="closeModal()" [disabled]="isSaving() || isParsingPdf() || isImportingPdf()">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
 
+        <!-- Mode Switcher Tabs (Only when creating a new question) -->
+        @if (!isEditing()) {
+          <div class="modal-mode-tabs">
+            <button
+              type="button"
+              class="modal-mode-tab"
+              [class.active]="addModalMode() === 'manual'"
+              (click)="setAddModalMode('manual')"
+            >
+              <span class="material-symbols-outlined">edit_note</span>
+              <span>Single Question Form</span>
+            </button>
+            <button
+              type="button"
+              class="modal-mode-tab"
+              [class.active]="addModalMode() === 'pdf'"
+              (click)="setAddModalMode('pdf')"
+            >
+              <span class="material-symbols-outlined">picture_as_pdf</span>
+              <span>Upload PDF Document</span>
+            </button>
+          </div>
+        }
+
         <!-- Modal Body -->
         <div class="modal-body">
-          <!-- Question Statement -->
-          <div class="form-group">
-            <label for="modal-question-text" class="form-label">
-              Question Statement <span class="required">*</span>
-            </label>
-            <textarea
-              id="modal-question-text"
-              class="form-textarea"
-              rows="3"
-              placeholder="Enter the question statement clearly..."
-              [ngModel]="formData().questionText"
-              (ngModelChange)="formData().questionText = $event"
-            ></textarea>
-          </div>
-
-          <!-- Category and Difficulty Row -->
-          <div class="form-row">
-            <div class="form-group flex-1">
-              <label for="modal-category" class="form-label">
-                Category <span class="required">*</span>
+          <!-- MODE 1: SINGLE MANUAL QUESTION FORM -->
+          @if (addModalMode() === 'manual' || isEditing()) {
+            <!-- Question Statement -->
+            <div class="form-group">
+              <label for="modal-question-text" class="form-label">
+                Question Statement <span class="required">*</span>
               </label>
-              <select
-                id="modal-category"
-                class="form-select"
-                [ngModel]="formData().category"
-                (ngModelChange)="formData().category = $event"
-              >
-                <option value="Quantitative">Quantitative</option>
-                <option value="Logical">Logical</option>
-                <option value="Verbal">Verbal</option>
-                <option value="Technical">Technical</option>
-              </select>
+              <textarea
+                id="modal-question-text"
+                class="form-textarea"
+                rows="3"
+                placeholder="Enter the question statement clearly..."
+                [ngModel]="formData().questionText"
+                (ngModelChange)="formData().questionText = $event"
+              ></textarea>
             </div>
 
-            <div class="form-group flex-1">
-              <label for="modal-difficulty" class="form-label">
-                Difficulty <span class="required">*</span>
-              </label>
-              <select
-                id="modal-difficulty"
-                class="form-select"
-                [ngModel]="formData().difficulty"
-                (ngModelChange)="formData().difficulty = $event"
-              >
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-              </select>
-            </div>
-          </div>
+            <!-- Category and Difficulty Row -->
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label for="modal-category" class="form-label">
+                  Category <span class="required">*</span>
+                </label>
+                <select
+                  id="modal-category"
+                  class="form-select"
+                  [ngModel]="formData().category"
+                  (ngModelChange)="formData().category = $event"
+                >
+                  <option value="Quantitative">Quantitative</option>
+                  <option value="Logical">Logical</option>
+                  <option value="Verbal">Verbal</option>
+                  <option value="Technical">Technical</option>
+                </select>
+              </div>
 
-          <!-- 4 Multiple Choice Options -->
-          <div class="options-section">
-            <div class="options-header">
-              <span class="form-label">Answer Choices &amp; Correct Key <span class="required">*</span></span>
-              <span class="options-hint">Select the radio button next to the correct answer</span>
+              <div class="form-group flex-1">
+                <label for="modal-difficulty" class="form-label">
+                  Difficulty <span class="required">*</span>
+                </label>
+                <select
+                  id="modal-difficulty"
+                  class="form-select"
+                  [ngModel]="formData().difficulty"
+                  (ngModelChange)="formData().difficulty = $event"
+                >
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+              </div>
             </div>
 
-            <div class="options-list">
-              @for (opt of [0, 1, 2, 3]; track opt) {
-                <div class="option-row" [class.selected-correct]="formData().correctOption === opt">
-                  <label class="radio-label">
+            <!-- 4 Multiple Choice Options -->
+            <div class="options-section">
+              <div class="options-header">
+                <span class="form-label">Answer Choices &amp; Correct Key <span class="required">*</span></span>
+                <span class="options-hint">Select the radio button next to the correct answer</span>
+              </div>
+
+              <div class="options-list">
+                @for (opt of [0, 1, 2, 3]; track opt) {
+                  <div class="option-row" [class.selected-correct]="formData().correctOption === opt">
+                    <label class="radio-label">
+                      <input
+                        type="radio"
+                        name="correctOptionRadio"
+                        [checked]="formData().correctOption === opt"
+                        (change)="setCorrectOption(opt)"
+                      />
+                      <span class="option-badge">
+                        {{ ['A', 'B', 'C', 'D'][opt] }}
+                      </span>
+                    </label>
                     <input
-                      type="radio"
-                      name="correctOptionRadio"
-                      [checked]="formData().correctOption === opt"
-                      (change)="setCorrectOption(opt)"
+                      type="text"
+                      class="form-input option-input"
+                      [placeholder]="'Option ' + ['A', 'B', 'C', 'D'][opt] + ' text...'"
+                      [value]="formData().options[opt]"
+                      (input)="updateOptionText(opt, $any($event.target).value)"
+                      [id]="'modal-option-' + opt"
                     />
-                    <span class="option-badge">
-                      {{ ['A', 'B', 'C', 'D'][opt] }}
-                    </span>
+                    @if (formData().correctOption === opt) {
+                      <span class="correct-indicator">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        <span>Correct</span>
+                      </span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- MODE 2: PDF UPLOAD & PARSING FORM -->
+          @if (addModalMode() === 'pdf' && !isEditing()) {
+            <div class="pdf-upload-container">
+              <!-- Default Parameters Section -->
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label class="form-label">Category (or Auto-Detect)</label>
+                  <select
+                    class="form-select"
+                    [ngModel]="pdfCategory()"
+                    (ngModelChange)="pdfCategory.set($event)"
+                  >
+                    <option value="Mixed">Auto-Detect / Mixed Categories</option>
+                    <option value="Quantitative">Quantitative</option>
+                    <option value="Logical">Logical</option>
+                    <option value="Verbal">Verbal</option>
+                    <option value="Technical">Technical</option>
+                  </select>
+                </div>
+
+                <div class="form-group flex-1">
+                  <label class="form-label">Default Difficulty</label>
+                  <select
+                    class="form-select"
+                    [ngModel]="pdfDifficulty()"
+                    (ngModelChange)="pdfDifficulty.set($event)"
+                  >
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- File Dropzone -->
+              <div class="pdf-dropzone-card">
+                @if (!selectedPdfFile()) {
+                  <label class="pdf-dropzone-label">
+                    <input
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      (change)="onPdfSelected($event)"
+                      class="pdf-file-input"
+                      id="input-pdf-question-file"
+                    />
+                    <div class="dropzone-content">
+                      <span class="material-symbols-outlined dropzone-icon">upload_file</span>
+                      <p class="dropzone-title">Click to browse or drop test PDF here</p>
+                      <p class="dropzone-subtitle">Supported format: PDF containing MCQs with choices (Max 20MB)</p>
+                    </div>
                   </label>
-                  <input
-                    type="text"
-                    class="form-input option-input"
-                    [placeholder]="'Option ' + ['A', 'B', 'C', 'D'][opt] + ' text...'"
-                    [value]="formData().options[opt]"
-                    (input)="updateOptionText(opt, $any($event.target).value)"
-                    [id]="'modal-option-' + opt"
-                  />
-                  @if (formData().correctOption === opt) {
-                    <span class="correct-indicator">
-                      <span class="material-symbols-outlined">check_circle</span>
-                      <span>Correct</span>
-                    </span>
-                  }
+                } @else {
+                  <div class="selected-pdf-badge">
+                    <div class="pdf-file-info">
+                      <span class="material-symbols-outlined pdf-icon">description</span>
+                      <div class="pdf-file-meta">
+                        <span class="pdf-name">{{ selectedPdfFile()?.name }}</span>
+                        <span class="pdf-size">{{ ((selectedPdfFile()?.size || 0) / (1024 * 1024)).toFixed(2) }} MB</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      class="btn-remove-file"
+                      (click)="removeSelectedPdf()"
+                      [disabled]="isParsingPdf() || isImportingPdf()"
+                      title="Remove PDF"
+                    >
+                      <span class="material-symbols-outlined">delete</span>
+                    </button>
+                  </div>
+
+                  <!-- Parse / Extract Action Trigger -->
+                  <div class="extract-action-row">
+                    <button
+                      type="button"
+                      class="btn-extract-pdf"
+                      (click)="extractQuestionsFromPdf()"
+                      [disabled]="isParsingPdf() || isImportingPdf()"
+                      id="btn-extract-questions"
+                    >
+                      @if (isParsingPdf()) {
+                        <div class="btn-spinner"></div>
+                        <span>Extracting Questions from PDF...</span>
+                      } @else {
+                        <span class="material-symbols-outlined">auto_fix_high</span>
+                        <span>Extract &amp; Structure Questions</span>
+                      }
+                    </button>
+                  </div>
+                }
+              </div>
+
+              <!-- Error Banner -->
+              @if (pdfParseError()) {
+                <div class="pdf-error-banner">
+                  <span class="material-symbols-outlined error-icon">error</span>
+                  <span>{{ pdfParseError() }}</span>
+                </div>
+              }
+
+              <!-- Parsed Questions Interactive List -->
+              @if (parsedQuestions().length > 0) {
+                <div class="parsed-results-wrapper">
+                  <div class="parsed-header-bar">
+                    <div class="parsed-stats">
+                      <span class="badge-count">{{ parsedQuestions().length }} MCQs Detected</span>
+                      <span class="selected-count">{{ selectedParsedCount() }} selected for import</span>
+                    </div>
+                    <div class="parsed-batch-actions">
+                      <button type="button" class="btn-link" (click)="toggleAllParsed(true)">Select All</button>
+                      <span class="action-sep">•</span>
+                      <button type="button" class="btn-link" (click)="toggleAllParsed(false)">Deselect All</button>
+                    </div>
+                  </div>
+
+                  <div class="parsed-questions-scroll">
+                    @for (item of parsedQuestions(); track $index; let qIndex = $index) {
+                      <div class="parsed-q-card" [class.is-excluded]="!item.selected">
+                        <!-- Card Header -->
+                        <div class="parsed-q-top">
+                          <label class="parsed-q-check">
+                            <input
+                              type="checkbox"
+                              [checked]="item.selected"
+                              (change)="toggleParsedItem(qIndex)"
+                            />
+                            <span class="q-index-pill">Question #{{ qIndex + 1 }}</span>
+                          </label>
+
+                          <div class="parsed-q-tags">
+                            <span class="badge badge-category" [attr.data-cat]="item.category">{{ item.category }}</span>
+                            <span class="badge badge-difficulty" [attr.data-diff]="item.difficulty">{{ item.difficulty }}</span>
+                            <button
+                              type="button"
+                              class="btn-icon-del-parsed"
+                              (click)="removeParsedItem(qIndex)"
+                              title="Remove this question"
+                            >
+                              <span class="material-symbols-outlined">delete</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Editable Question Text -->
+                        <div class="parsed-q-body">
+                          <textarea
+                            class="form-textarea parsed-statement-input"
+                            rows="2"
+                            [(ngModel)]="item.questionText"
+                            placeholder="Question statement..."
+                          ></textarea>
+
+                          <!-- 4 Options Grid -->
+                          <div class="parsed-options-grid">
+                            @for (opt of [0, 1, 2, 3]; track opt) {
+                              <div
+                                class="parsed-opt-row"
+                                [class.is-correct-key]="item.correctOption === opt"
+                              >
+                                <label class="radio-label-small">
+                                  <input
+                                    type="radio"
+                                    [name]="'parsed-correct-' + qIndex"
+                                    [checked]="item.correctOption === opt"
+                                    (change)="setParsedCorrectOption(qIndex, opt)"
+                                  />
+                                  <span class="opt-label-letter">{{ ['A', 'B', 'C', 'D'][opt] }}</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  class="form-input parsed-opt-input"
+                                  [value]="item.options[opt]"
+                                  (input)="updateParsedOption(qIndex, opt, $any($event.target).value)"
+                                  [placeholder]="'Option ' + ['A', 'B', 'C', 'D'][opt]"
+                                />
+                                @if (item.correctOption === opt) {
+                                  <span class="correct-mini-badge">Key</span>
+                                }
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
                 </div>
               }
             </div>
-          </div>
+          }
         </div>
 
         <!-- Modal Footer -->
         <div class="modal-footer">
-          <button class="btn-secondary" (click)="closeModal()" [disabled]="isSaving()">
+          <button
+            class="btn-secondary"
+            (click)="closeModal()"
+            [disabled]="isSaving() || isParsingPdf() || isImportingPdf()"
+          >
             Cancel
           </button>
-          <button class="btn-primary" (click)="saveQuestion()" [disabled]="isSaving()" id="btn-save-question">
-            @if (isSaving()) {
-              <div class="btn-spinner"></div>
-              <span>Saving...</span>
-            } @else {
-              <span class="material-symbols-outlined">save</span>
-              <span>{{ isEditing() ? 'Save Changes' : 'Add to Question Bank' }}</span>
-            }
-          </button>
+
+          @if (addModalMode() === 'manual' || isEditing()) {
+            <button
+              class="btn-primary"
+              (click)="saveQuestion()"
+              [disabled]="isSaving()"
+              id="btn-save-question"
+            >
+              @if (isSaving()) {
+                <div class="btn-spinner"></div>
+                <span>Saving...</span>
+              } @else {
+                <span class="material-symbols-outlined">save</span>
+                <span>{{ isEditing() ? 'Save Changes' : 'Add to Question Bank' }}</span>
+              }
+            </button>
+          } @else if (addModalMode() === 'pdf' && !isEditing()) {
+            <button
+              class="btn-primary"
+              (click)="importSelectedParsedQuestions()"
+              [disabled]="isImportingPdf() || isParsingPdf() || selectedParsedCount() === 0"
+              id="btn-import-pdf-questions"
+            >
+              @if (isImportingPdf()) {
+                <div class="btn-spinner"></div>
+                <span>Importing Questions...</span>
+              } @else {
+                <span class="material-symbols-outlined">cloud_download</span>
+                <span>Import {{ selectedParsedCount() }} Question(s) to Bank</span>
+              }
+            </button>
+          }
         </div>
       </div>
     </div>

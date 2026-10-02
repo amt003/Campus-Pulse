@@ -382,3 +382,112 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Password Section Styling (Matching Student Side) */
+.form-group-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.profile-field-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1C2833;
+}
+
+.password-field-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.profile-input {
+  width: 100%;
+  height: 42px;
+  border: 1.5px solid #E5E8E8;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 14px;
+  color: #1C2833;
+  background: white;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.profile-input:focus {
+  border-color: #1A5276;
+  box-shadow: 0 0 0 3px rgba(26, 82, 118, 0.15);
+}
+
+.btn-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #7F8C8D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.profile-input.is-invalid {
+  border-color: #E74C3C !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23e74c3c'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23e74c3c' stroke='none'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 36px center;
+  background-size: 16px 16px;
+  padding-right: 56px !important;
+}
+
+.profile-input.is-valid {
+  border-color: #27AE60 !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2327ae60' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 36px center;
+  background-size: 16px 16px;
+  padding-right: 56px !important;
+}
+
+.field-error-text {
+  font-size: 11.5px;
+  color: #E74C3C;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.strength-bars-container {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  height: 4px;
+  width: 100%;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 100%;
+  border-radius: 2px;
+  background: #E5E8E8;
+  transition: background-color 0.2s;
+}
+
+.strength-bar.filled.red {
+  background-color: #E74C3C !important;
+}
+
+.strength-bar.filled.orange {
+  background-color: #F39C12 !important;
+}
+
+.strength-bar.filled.green {
+  background-color: #27AE60 !important;
+}
+
+.text-danger { color: #E74C3C !important; }
+.text-warning { color: #F39C12 !important; }
+.text-success { color: #27AE60 !important; }

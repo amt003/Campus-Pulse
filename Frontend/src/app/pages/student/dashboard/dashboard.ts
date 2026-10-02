@@ -425,17 +425,17 @@ export class StudentDashboardComponent implements OnInit {
       const isPassed = app.aptitude?.status === 'Passed' || app.aptitude?.status === 'Completed';
       const isFailed = app.aptitude?.status === 'Failed' || (status === 'Rejected' && app.aptitude?.status === 'Failed');
       const isScheduled = status === 'Aptitude Scheduled';
-      const isCompleted = isPassed || ['Aptitude Completed', 'GD Scheduled', 'GD Completed', 'Interview Scheduled', 'Interview Completed', 'Selected', 'Placed', 'Offer Sent', 'Offer Accepted'].includes(status);
+      const isCompleted = (isPassed || ['Aptitude Completed', 'GD Scheduled', 'GD Completed', 'Interview Scheduled', 'Interview Completed', 'Selected', 'Placed', 'Offer Sent', 'Offer Accepted'].includes(status)) && !isFailed;
 
       let statusText = 'Pending Schedule';
-      if (isCompleted || isPassed) {
-        statusText = app.aptitude?.score !== null && app.aptitude?.score !== undefined 
-          ? `Score: ${app.aptitude.score} pts (Passed Cutoff)` 
-          : 'Aptitude Test Passed';
-      } else if (isFailed) {
+      if (isFailed) {
         statusText = app.aptitude?.score !== null && app.aptitude?.score !== undefined 
           ? `Score: ${app.aptitude.score} pts (Below Cutoff)` 
           : 'Did Not Clear Aptitude';
+      } else if (isCompleted || isPassed) {
+        statusText = app.aptitude?.score !== null && app.aptitude?.score !== undefined 
+          ? `Score: ${app.aptitude.score} pts (Passed Cutoff)` 
+          : 'Aptitude Test Passed';
       } else if (isScheduled) {
         statusText = 'Aptitude Round Scheduled';
       }

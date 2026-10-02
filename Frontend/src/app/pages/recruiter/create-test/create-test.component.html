@@ -542,15 +542,16 @@
               <thead>
                 <tr>
                   <th style="width: 5%;">Select</th>
+                  <th style="width: 5%; text-align: center;">#</th>
                   <th style="width: 48%;">Question Statement</th>
-                  <th style="width: 15%;">Category</th>
-                  <th style="width: 12%;">Difficulty</th>
-                  <th style="width: 12%;">Source</th>
-                  <th style="width: 8%; text-align: center;">Times Used</th>
+                  <th style="width: 14%;">Category</th>
+                  <th style="width: 11%;">Difficulty</th>
+                  <th style="width: 10%;">Source</th>
+                  <th style="width: 7%; text-align: center;">Times Used</th>
                 </tr>
               </thead>
               <tbody>
-                @for (q of filteredModeQuestions(); track q._id) {
+                @for (q of filteredModeQuestions(); track q._id; let pIdx = $index) {
                   <tr
                     class="qb-row selectable-row"
                     [class.is-selected]="selectedQuestionIds().includes(q._id)"
@@ -567,9 +568,14 @@
                       />
                     </td>
 
+                    <!-- Numbering -->
+                    <td style="text-align: center;" (click)="$event.stopPropagation()">
+                      <span class="qb-index-badge">#{{ pIdx + 1 }}</span>
+                    </td>
+
                     <!-- Question Details -->
                     <td class="col-question">
-                      <div class="question-text-truncate" [title]="q.questionText">
+                      <div class="question-text-full">
                         {{ q.questionText }}
                       </div>
                       <div class="options-preview">

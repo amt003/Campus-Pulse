@@ -40,6 +40,62 @@
     </div>
   </header>
 
+  <!-- Drive Schedule & Requirements Meta Bar -->
+  <div class="drive-meta-bar">
+    <div class="meta-item">
+      <span class="material-symbols-outlined meta-icon">event</span>
+      <div class="meta-text">
+        <span class="meta-label">Application Deadline</span>
+        <strong class="meta-val">{{ formatDate(driveApplicationDeadline()) }}</strong>
+      </div>
+    </div>
+    
+    @if (driveCtc()) {
+      <div class="meta-item">
+        <span class="material-symbols-outlined meta-icon">payments</span>
+        <div class="meta-text">
+          <span class="meta-label">Offered CTC</span>
+          <strong class="meta-val">{{ driveCtc() }} LPA</strong>
+        </div>
+      </div>
+    }
+
+    @if (driveMinCGPA() !== null && driveMinCGPA() !== undefined) {
+      <div class="meta-item">
+        <span class="material-symbols-outlined meta-icon">school</span>
+        <div class="meta-text">
+          <span class="meta-label">Min CGPA</span>
+          <strong class="meta-val">{{ driveMinCGPA() }}</strong>
+        </div>
+      </div>
+    }
+
+    @if (driveHasAptitude()) {
+      <div class="meta-item highlight-aptitude">
+        <span class="material-symbols-outlined meta-icon">quiz</span>
+        <div class="meta-text">
+          <span class="meta-label">Aptitude Test</span>
+          <strong class="meta-val">
+            {{ driveAptitudeTest()?.title || 'Round Active' }}
+            @if (driveAptitudeTest()?.scheduledDate) {
+              <span class="meta-sub-pill">📅 {{ formatDate(driveAptitudeTest()?.scheduledDate) }} {{ driveAptitudeTest()?.timeSlot }}</span>
+            }
+          </strong>
+        </div>
+      </div>
+    }
+
+    @if (driveHasGD()) {
+      <div class="meta-item">
+        <span class="material-symbols-outlined meta-icon">groups</span>
+        <div class="meta-text">
+          <span class="meta-label">Group Discussion</span>
+          <strong class="meta-val">GD Round Enabled</strong>
+        </div>
+      </div>
+    }
+  </div>
+
   <!-- AI Summary Widgets -->
   <div class="ai-summary-grid">
     <div class="summary-card top-candidate-card">
@@ -260,13 +316,13 @@
               />
             </th>
             <th width="60" style="text-align: center;">#</th>
-            <th>Student Name</th>
+            <th>Candidate Details</th>
             <th>Roll Number</th>
-            <th>CGPA</th>
-            <th>AI Match Score</th>
-            <th>Stage Score & Feedback</th>
+            <th>CGPA & Profile</th>
+            <th>AI Match</th>
+            <th style="min-width: 260px;">Stage Schedule & Test Dates</th>
             <th>Status</th>
-            <th style="text-align: center; width: 100px;">Actions</th>
+            <th style="text-align: center; width: 110px;">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -302,12 +358,34 @@
                 }
               </td>
               <td>
-                <button class="btn-student-name" (click)="openXaiModal(app)">
-                  {{ app.student?.name || 'N/A' }}
-                </button>
+                <div class="candidate-name-cell">
+                  <button class="btn-student-name" (click)="openCandidateModal(app, 'timeline')" title="Click to view candidate dates & details">
+                    {{ app.student?.name || 'N/A' }}
+                  </button>
+                  @if (app.student; as student) {
+                    <div class="candidate-sub-info">
+                      @if (student.email && student.email !== 'N/A') {
+                        <span class="sub-email" [title]="student.email">
+                          <span class="material-symbols-outlined" style="font-size: 11px;">mail</span>
+                          {{ student.email }}
+                        </span>
+                      }
+                      @if (student.branch) {
+                        <span class="sub-branch-pill">{{ student.branch }}</span>
+                      }
+                    </div>
+                  }
+                </div>
               </td>
               <td class="font-code roll-number-col">{{ app.student?.rollNumber }}</td>
-              <td><strong>{{ app.student?.cgpa }}</strong></td>
+              <td>
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                  <strong>{{ app.student?.cgpa }}</strong>
+                  <span style="font-size: 10.5px; color: var(--text-muted);">
+                    {{ app.student ? (app.student.activeBacklogs ? app.student.activeBacklogs + ' backlogs' : 'No backlogs') : 'No backlogs' }}
+                  </span>
+                </div>
+              </td>
               <td>
                 @if (app.aiMatchScore !== null) {
                   <span class="ai-score-badge-pill" [class]="getScoreColorClass(app.aiMatchScore)">
@@ -319,33 +397,106 @@
                 }
               </td>
               <td>
-                <div style="display: flex; flex-direction: column; gap: 4px; font-size: 11.5px;">
-                  @if (app.aptitude && app.aptitude.score != null) {
-                    <div>
-                      <span style="font-weight: 750; color: var(--primary);">Aptitude:</span> {{ app.aptitude.score }} pts
-                      @if (app.aptitude.feedback) {
-                        <span [title]="app.aptitude.feedback" style="color: var(--text-muted); font-style: italic;"> ({{ app.aptitude.feedback }})</span>
-                      }
+                <div class="stage-schedule-col">
+                  <!-- Applied Date Pill -->
+                  <div class="schedule-applied-text">
+                    <span class="material-symbols-outlined" style="font-size: 12px; color: var(--text-muted);">calendar_month</span>
+                    <span>Applied: <strong>{{ formatDate(app.appliedDate) }}</strong></span>
+                  </div>
+
+                  <!-- Aptitude Test Schedule / Attempt -->
+                  @if (app.aptitudeSchedule || (app.aptitude && app.aptitude.status !== 'Not Applicable') || app.testAttempt || (driveHasAptitude() && driveAptitudeTest()?.scheduledDate)) {
+                    <div class="stage-schedule-item" [class.item-passed]="app.aptitude?.status === 'Passed' || app.testAttempt?.result === 'Pass'" [class.item-failed]="app.aptitude?.status === 'Failed' || app.testAttempt?.result === 'Fail'">
+                      <div class="stage-item-header">
+                        <span class="material-symbols-outlined" style="font-size: 13px; color: #8E44AD;">quiz</span>
+                        <strong style="color: #6C3483; font-size: 11.5px;">Aptitude:</strong>
+                        <span class="stage-item-date">
+                          📅 {{ formatDate(app.aptitudeSchedule?.date || driveAptitudeTest()?.scheduledDate) }}
+                          @if (app.aptitudeSchedule?.timeSlot || driveAptitudeTest()?.timeSlot; as timeSlot) {
+                            <span>({{ timeSlot }})</span>
+                          }
+                        </span>
+                      </div>
+                      <div class="stage-item-body">
+                        @if (app.aptitude?.score != null) {
+                          <span class="stage-score-tag">Score: {{ app.aptitude!.score }} pts</span>
+                        } @else if (app.testAttempt; as attempt) {
+                          @if (attempt.score != null) {
+                            <span class="stage-score-tag">Score: {{ attempt.score }}/{{ attempt.totalQuestions }} ({{ attempt.percentage }}%)</span>
+                          }
+                        }
+                        @if (app.testAttempt?.result; as attemptResult) {
+                          <span class="stage-result-tag" [class.tag-pass]="attemptResult === 'Pass'" [class.tag-fail]="attemptResult === 'Fail'">
+                            {{ attemptResult }}
+                          </span>
+                        }
+                        @if (app.aptitude?.feedback; as feedback) {
+                          <span class="stage-feedback-tag" [title]="feedback">"{{ feedback }}"</span>
+                        }
+                      </div>
                     </div>
                   }
-                  @if (app.gd && app.gd.score != null) {
-                    <div>
-                      <span style="font-weight: 750; color: var(--primary);">GD:</span> {{ app.gd.score }} pts
-                      @if (app.gd.feedback) {
-                        <span [title]="app.gd.feedback" style="color: var(--text-muted); font-style: italic;"> ({{ app.gd.feedback }})</span>
-                      }
+
+                  <!-- GD Stage Schedule -->
+                  @if (app.gdSchedule || (app.gd && app.gd.status !== 'Not Applicable')) {
+                    <div class="stage-schedule-item" [class.item-passed]="app.gd?.status === 'Shortlisted'" [class.item-failed]="app.gd?.status === 'Rejected'">
+                      <div class="stage-item-header">
+                        <span class="material-symbols-outlined" style="font-size: 13px; color: #D35400;">groups</span>
+                        <strong style="color: #BA4A00; font-size: 11.5px;">GD:</strong>
+                        <span class="stage-item-date">
+                          📅 {{ formatDate(app.gdSchedule?.date) }}
+                          @if (app.gdSchedule?.timeSlot; as timeSlot) {
+                            <span>({{ timeSlot }})</span>
+                          }
+                        </span>
+                      </div>
+                      <div class="stage-item-body">
+                        @if (app.gd?.score != null) {
+                          <span class="stage-score-tag">Score: {{ app.gd!.score }} pts</span>
+                        }
+                        @if (app.gd?.feedback; as feedback) {
+                          <span class="stage-feedback-tag" [title]="feedback">"{{ feedback }}"</span>
+                        }
+                      </div>
                     </div>
                   }
-                  @if (app.interview && app.interview.score != null) {
-                    <div>
-                      <span style="font-weight: 750; color: var(--primary);">Interview:</span> {{ app.interview.score }} pts
-                      @if (app.interview.feedback) {
-                        <span [title]="app.interview.feedback" style="color: var(--text-muted); font-style: italic;"> ({{ app.interview.feedback }})</span>
-                      }
+
+                  <!-- Interview Stage Schedule -->
+                  @if (app.interviewSchedule || (app.interview && app.interview.status !== 'Pending')) {
+                    <div class="stage-schedule-item" [class.item-passed]="app.interview?.result === 'Selected'" [class.item-failed]="app.interview?.result === 'Rejected'">
+                      <div class="stage-item-header">
+                        <span class="material-symbols-outlined" style="font-size: 13px; color: #1E8449;">chat</span>
+                        <strong style="color: #196F3D; font-size: 11.5px;">Interview:</strong>
+                        <span class="stage-item-date">
+                          📅 {{ formatDate(app.interviewSchedule?.date) }}
+                          @if (app.interviewSchedule?.timeSlot; as timeSlot) {
+                            <span>({{ timeSlot }})</span>
+                          }
+                        </span>
+                      </div>
+                      <div class="stage-item-body">
+                        @if (app.interview?.score != null) {
+                          <span class="stage-score-tag">Score: {{ app.interview!.score }} pts</span>
+                        }
+                        @if (app.interview?.result; as interviewResult) {
+                          @if (interviewResult !== 'Pending') {
+                            <span class="stage-result-tag" [class.tag-pass]="interviewResult === 'Selected'" [class.tag-fail]="interviewResult === 'Rejected'">
+                              {{ interviewResult }}
+                            </span>
+                          }
+                        }
+                        @if (app.interviewSchedule?.meetingUrl; as meetingUrl) {
+                          <a [href]="meetingUrl" target="_blank" class="link-interview-meeting" title="Join Video Interview">
+                            <span class="material-symbols-outlined" style="font-size: 12px;">videocam</span>
+                            <span>Join</span>
+                          </a>
+                        }
+                      </div>
                     </div>
                   }
-                  @if (!app.aptitude?.score && !app.gd?.score && !app.interview?.score) {
-                    <span style="color: var(--text-muted); font-style: italic;">—</span>
+
+                  @if (!app.aptitudeSchedule && !app.gdSchedule && !app.interviewSchedule && !app.aptitude?.score && !app.gd?.score && !app.interview?.score && !driveAptitudeTest()?.scheduledDate) {
+                    <span class="stage-pending-label">No Rounds Scheduled Yet</span>
                   }
                 </div>
               </td>
@@ -367,7 +518,7 @@
               </td>
               <td style="text-align: center;">
                 <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
-                  <button class="btn-row-view-applicants" (click)="openXaiModal(app)" title="View XAI Details">
+                  <button class="btn-row-view-applicants" (click)="openCandidateModal(app, 'timeline')" title="View Candidate Schedule, Test Dates & AI Analysis">
                     <span class="material-symbols-outlined">visibility</span>
                   </button>
 
@@ -564,249 +715,722 @@
     </div>
   }
 
-  <!-- XAI Details Modal -->
-  @if (isXaiModalOpen() && selectedXaiApp()) {
+  <!-- Candidate Details & XAI Modal -->
+  @if (isXaiModalOpen() && selectedXaiApp(); as app) {
     <div class="modal-overlay" (click)="closeXaiModal()">
-      <div class="modal-card" (click)="$event.stopPropagation()" style="max-width: 1050px; width: 95vw;">
-        <div class="modal-header">
-          <div>
-            <h3 style="margin: 0 0 4px 0;">AI Match Analysis</h3>
-            <span style="font-size: 13px; color: var(--text-muted); font-weight: 600;">
-              Candidate: <strong>{{ selectedXaiApp()?.student?.name }}</strong> ({{ selectedXaiApp()?.student?.rollNumber }})
-            </span>
+      <div class="modal-card" (click)="$event.stopPropagation()" style="max-width: 1100px; width: 95vw; max-height: 90vh; display: flex; flex-direction: column;">
+        <div class="modal-header" style="padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: white;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: var(--surface-low); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; border: 1.5px solid rgba(26,82,118,0.15);">
+              {{ (app.student?.name || 'C').charAt(0).toUpperCase() }}
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <h3 style="margin: 0; font-size: 17px; font-weight: 850; color: var(--text-dark);">
+                  {{ app.student?.name }}
+                </h3>
+                <span class="font-code" style="background: #FEF9E7; color: #B7950B; font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 4px; border: 1px solid #F9E79F;">
+                  {{ app.student?.rollNumber }}
+                </span>
+                @if (app.aiMatchScore !== null) {
+                  <span class="ai-score-badge-pill" [class]="getScoreColorClass(app.aiMatchScore)" style="font-size: 12px; padding: 3px 8px;">
+                    <span>{{ formatMatchScore(app.aiMatchScore) }}% Fit</span>
+                    <span class="material-symbols-outlined" style="font-size: 12px;">auto_awesome</span>
+                  </span>
+                }
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-muted); font-weight: 600; margin-top: 3px;">
+                <span>{{ app.student?.branch || 'Department N/A' }}</span>
+                <span>•</span>
+                <span>CGPA: <strong>{{ app.student?.cgpa }}</strong></span>
+                <span>•</span>
+                <span>Applied: <strong>{{ formatDate(app.appliedDate) }}</strong></span>
+              </div>
+            </div>
           </div>
           <button class="btn-close" (click)="closeXaiModal()">&times;</button>
         </div>
-        <div class="modal-body" style="padding: 24px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; max-height: 75vh; overflow-y: auto;">
+
+        <!-- Navigation Tabs -->
+        <div class="candidate-modal-nav-tabs">
+          <button type="button" 
+                  class="candidate-tab-btn" 
+                  [class.active]="activeCandidateModalTab() === 'timeline'"
+                  (click)="activeCandidateModalTab.set('timeline')">
+            <span class="material-symbols-outlined" style="font-size: 18px;">calendar_month</span>
+            <span>Drive Dates & Round Schedules</span>
+          </button>
           
-          <!-- Left Column: Resume PDF Preview / AI Highlights Tab View -->
-          <div style="display: flex; flex-direction: column; gap: 12px; height: 100%;">
-            
-            <!-- Header Row with Tabs Switcher -->
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--border); padding-bottom: 8px; margin-bottom: 4px;">
-              <h4 style="margin: 0; font-size: 14px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 6px;">
-                <span class="material-symbols-outlined" style="font-size: 18px; color: var(--primary);">description</span>
-                <span>Candidate Resume</span>
-              </h4>
+          <button type="button" 
+                  class="candidate-tab-btn" 
+                  [class.active]="activeCandidateModalTab() === 'analysis'"
+                  (click)="activeCandidateModalTab.set('analysis')">
+            <span class="material-symbols-outlined" style="font-size: 18px;">psychology</span>
+            <span>AI Match & Resume Analysis</span>
+          </button>
+          
+          <button type="button" 
+                  class="candidate-tab-btn" 
+                  [class.active]="activeCandidateModalTab() === 'profile'"
+                  (click)="activeCandidateModalTab.set('profile')">
+            <span class="material-symbols-outlined" style="font-size: 18px;">person</span>
+            <span>Candidate Profile & Contact</span>
+          </button>
+        </div>
+
+        <div class="modal-body" style="padding: 24px; max-height: calc(88vh - 160px); overflow-y: auto; background: #FAFBFB;">
+          
+          <!-- TAB 1: Drive Dates & Test Timeline -->
+          @if (activeCandidateModalTab() === 'timeline') {
+            <div class="timeline-tab-container">
               
-              <div style="display: flex; background: #F2F4F4; border-radius: 6px; padding: 3px;">
-                <button type="button" 
-                        (click)="activeResumeTab.set('pdf')"
-                        [style.background]="activeResumeTab() === 'pdf' ? 'white' : 'transparent'"
-                        [style.color]="activeResumeTab() === 'pdf' ? 'var(--primary)' : 'var(--text-muted)'"
-                        [style.box-shadow]="activeResumeTab() === 'pdf' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'"
-                        style="border: none; padding: 4px 10px; font-size: 11.5px; font-weight: 750; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
-                  PDF Original
-                </button>
-                <button type="button" 
-                        (click)="activeResumeTab.set('highlights')"
-                        [style.background]="activeResumeTab() === 'highlights' ? 'white' : 'transparent'"
-                        [style.color]="activeResumeTab() === 'highlights' ? 'var(--primary)' : 'var(--text-muted)'"
-                        [style.box-shadow]="activeResumeTab() === 'highlights' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'"
-                        style="border: none; padding: 4px 10px; font-size: 11.5px; font-weight: 750; border-radius: 4px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
-                  <span>AI Highlights</span>
-                  <span class="material-symbols-outlined" style="font-size: 13px; color: var(--secondary);">auto_awesome</span>
-                </button>
+              <!-- Quick Overview Header Banner -->
+              <div class="timeline-overview-card">
+                <div class="overview-item">
+                  <span class="overview-label">Application Date</span>
+                  <strong class="overview-val">{{ formatDateTime(app.appliedDate) }}</strong>
+                </div>
+                <div class="overview-item">
+                  <span class="overview-label">Current Stage Status</span>
+                  <span class="status-cell-style" [class]="'status-' + getStatusClass(app).toLowerCase()" style="font-size: 12px; margin-top: 2px;">
+                    {{ getStatusLabel(app) }}
+                  </span>
+                </div>
+                <div class="overview-item">
+                  <span class="overview-label">Placement Status</span>
+                  @if (app.isPlacedGlobally || app.isPlaced) {
+                    <strong style="color: #27AE60; font-size: 13px;">Placed at {{ app.placementCompany || 'another company' }}</strong>
+                  } @else {
+                    <strong style="color: #2980B9; font-size: 13px;">In Process</strong>
+                  }
+                </div>
               </div>
-            </div>
 
-            <!-- Tab 1: PDF Viewer -->
-            @if (activeResumeTab() === 'pdf') {
-              @if (selectedXaiApp()?.student?.resumePath) {
-                <div style="flex-grow: 1; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; background: #F8F9FA; min-height: 480px; height: 100%;">
-                  <iframe [src]="getResumeUrl(selectedXaiApp()?.student?.resumePath)" 
-                          style="width: 100%; height: 100%; min-height: 480px; border: none;"></iframe>
-                </div>
-              } @else {
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px dashed var(--border); border-radius: 8px; padding: 48px; background: #F8F9FA; text-align: center; min-height: 480px; height: 100%;">
-                  <span class="material-symbols-outlined" style="font-size: 36px; color: var(--text-muted); margin-bottom: 8px;">description</span>
-                  <p style="font-size: 13px; font-weight: 650; color: var(--text-dark); margin: 0 0 4px;">No Resume Uploaded</p>
-                  <p style="font-size: 11px; color: var(--text-muted); margin: 0;">Candidate has not uploaded a PDF resume to their profile.</p>
-                </div>
-              }
-            }
-
-            <!-- Tab 2: AI Highlights Document View -->
-            @if (activeResumeTab() === 'highlights') {
-              @if (isResumeTextLoading()) {
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px solid var(--border); border-radius: 8px; padding: 48px; background: white; min-height: 480px; height: 100%; gap: 12px;">
-                  <div class="spinner" style="width: 32px; height: 32px; border: 3px solid rgba(0,0,0,0.1); border-top-color: var(--secondary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                  <p style="font-size: 12.5px; font-weight: 650; color: var(--text-secondary); margin: 0;">Extracting & Analyzing Resume Text...</p>
-                </div>
-              } @else if (!highlightedHtml()) {
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px dashed var(--border); border-radius: 8px; padding: 48px; background: #F8F9FA; text-align: center; min-height: 480px; height: 100%;">
-                  <span class="material-symbols-outlined" style="font-size: 36px; color: var(--text-muted); margin-bottom: 8px;">description</span>
-                  <p style="font-size: 13px; font-weight: 650; color: var(--text-dark); margin: 0 0 4px;">Resume Text Unavailable</p>
-                  <p style="font-size: 11px; color: var(--text-muted); margin: 0;">{{ resumeTextError() || 'Could not parse text representation of the candidate resume.' }} You can still view the document in the PDF View tab.</p>
-                </div>
-              } @else {
-                <div style="flex-grow: 1; border: 1.5px solid var(--border); border-radius: 8px; background: #FAFBFB; padding: 18px; min-height: 480px; height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
-                  
-                  <!-- Highlight Key Info Banner -->
-                  <div style="background: white; border-radius: 8px; border: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.01);">
-                    <div style="display: flex; gap: 8px; align-items: center; font-size: 11.5px; font-weight: 800;">
-                      <span style="display: inline-block; width: 12px; height: 12px; background: #D4EFDF; border: 1px solid #27AE60; border-radius: 3px;"></span>
-                      <span style="color: #27AE60;">Green Highlights = Matching Technologies Detected</span>
+              <!-- Detailed Stage Cards -->
+              <div class="timeline-stages-flow">
+                
+                <!-- Stage 1: Application -->
+                <div class="timeline-stage-card completed">
+                  <div class="timeline-stage-marker">
+                    <span class="material-symbols-outlined">description</span>
+                  </div>
+                  <div class="timeline-stage-content">
+                    <div class="stage-header-row">
+                      <h4 class="stage-heading">1. Job Application Submission</h4>
+                      <span class="stage-status-badge badge-done">Completed</span>
                     </div>
-                    @if (selectedXaiApp()?.xai?.skillGaps && selectedXaiApp()!.xai!.skillGaps!.length > 0) {
-                      <div style="display: flex; gap: 8px; align-items: center; font-size: 11.5px; font-weight: 800; border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 2px;">
-                        <span style="color: #C0392B;">Missing Required Technologies:</span>
-                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                          @for (skill of selectedXaiApp()?.xai?.skillGaps; track skill) {
-                            <span style="background: #FDEDEC; border: 1px solid #E74C3C; color: #C0392B; font-size: 9.5px; padding: 2px 6px; border-radius: 4px; font-weight: 750;">{{ skill }}</span>
+                    <div class="stage-details-grid">
+                      <div>
+                        <span class="detail-label">Submitted On:</span>
+                        <strong class="detail-val">{{ formatDateTime(app.appliedDate) }}</strong>
+                      </div>
+                      <div>
+                        <span class="detail-label">AI Match Fit:</span>
+                        <strong class="detail-val" style="color: #27AE60;">{{ formatMatchScore(app.aiMatchScore) }}%</strong>
+                      </div>
+                      <div>
+                        <span class="detail-label">Status:</span>
+                        <strong class="detail-val">{{ app.status }}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Stage 2: Aptitude Test -->
+                @if (driveHasAptitude()) {
+                  <div class="timeline-stage-card" [class.completed]="app.aptitude?.status === 'Passed' || app.testAttempt?.result === 'Pass'" [class.active-stage]="app.status === 'Aptitude Scheduled'" [class.rejected-stage]="app.aptitude?.status === 'Failed' || app.testAttempt?.result === 'Fail'">
+                    <div class="timeline-stage-marker">
+                      <span class="material-symbols-outlined">quiz</span>
+                    </div>
+                    <div class="timeline-stage-content">
+                      <div class="stage-header-row">
+                        <h4 class="stage-heading">2. Aptitude Test Round</h4>
+                        @if (app.aptitude?.status === 'Passed' || app.testAttempt?.result === 'Pass') {
+                          <span class="stage-status-badge badge-done">Passed</span>
+                        } @else if (app.aptitude?.status === 'Failed' || app.testAttempt?.result === 'Fail') {
+                          <span class="stage-status-badge badge-failed">Failed</span>
+                        } @else if (app.aptitudeSchedule || app.status === 'Aptitude Scheduled') {
+                          <span class="stage-status-badge badge-scheduled">Scheduled</span>
+                        } @else {
+                          <span class="stage-status-badge badge-pending">Pending Scheduling</span>
+                        }
+                      </div>
+
+                      <!-- Schedule Details -->
+                      <div class="stage-info-box">
+                        <div class="stage-details-grid">
+                          <div>
+                            <span class="detail-label">Scheduled Date:</span>
+                            <strong class="detail-val">
+                              📅 {{ formatDate(app.aptitudeSchedule?.date || driveAptitudeTest()?.scheduledDate) }}
+                            </strong>
+                          </div>
+                          <div>
+                            <span class="detail-label">Time Slot:</span>
+                            <strong class="detail-val">
+                              ⏰ {{ app.aptitudeSchedule?.timeSlot || driveAptitudeTest()?.timeSlot || 'Not fixed' }}
+                            </strong>
+                          </div>
+                          <div>
+                            <span class="detail-label">Platform / Venue:</span>
+                            <strong class="detail-val">{{ app.aptitudeSchedule?.location || 'Online Automated Exam' }}</strong>
+                          </div>
+                          @if (driveAptitudeTest()) {
+                            <div>
+                              <span class="detail-label">Test Specifications:</span>
+                              <strong class="detail-val">
+                                {{ driveAptitudeTest()?.title }} (Passing: {{ driveAptitudeTest()?.passingScore }} pts, {{ driveAptitudeTest()?.durationMinutes }} min)
+                              </strong>
+                            </div>
                           }
                         </div>
                       </div>
+
+                      <!-- Candidate Attempt Report -->
+                      @if (app.testAttempt) {
+                        <div class="stage-attempt-box">
+                          <h5 style="margin: 0 0 8px 0; font-size: 12px; font-weight: 800; color: var(--primary); text-transform: uppercase;">
+                            Candidate Test Attempt Results & Integrity
+                          </h5>
+                          <div class="stage-details-grid">
+                            <div>
+                              <span class="detail-label">Started At:</span>
+                              <strong class="detail-val">{{ formatDateTime(app.testAttempt.startedAt) }}</strong>
+                            </div>
+                            <div>
+                              <span class="detail-label">Submitted At:</span>
+                              <strong class="detail-val">{{ formatDateTime(app.testAttempt.submittedAt) }}</strong>
+                            </div>
+                            <div>
+                              <span class="detail-label">Attempt Score:</span>
+                              <strong class="detail-val" [style.color]="app.testAttempt.result === 'Pass' ? '#27AE60' : '#E74C3C'">
+                                {{ app.testAttempt.score }} / {{ app.testAttempt.totalQuestions }} ({{ app.testAttempt.percentage }}%)
+                              </strong>
+                            </div>
+                            <div>
+                              <span class="detail-label">Anti-Cheat Violations:</span>
+                              <strong class="detail-val" [style.color]="(app.testAttempt.violationCount || 0) > 0 ? '#E74C3C' : '#27AE60'">
+                                {{ app.testAttempt.violationCount || 0 }} violations logged
+                              </strong>
+                            </div>
+                          </div>
+                        </div>
+                      }
+
+                      <!-- Recruiter Marks & Feedback -->
+                      @if (app.aptitude && (app.aptitude.score != null || app.aptitude.feedback)) {
+                        <div class="stage-feedback-box">
+                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span class="detail-label">Recruiter Stage Marks:</span>
+                            <strong style="color: var(--primary); font-size: 13px;">{{ app.aptitude.score != null ? app.aptitude.score + ' pts' : 'N/A' }}</strong>
+                          </div>
+                          @if (app.aptitude.feedback) {
+                            <p style="margin: 4px 0 0; font-size: 12px; color: var(--text-dark); font-style: italic;">
+                              "{{ app.aptitude.feedback }}"
+                            </p>
+                          }
+                          @if (app.aptitude.markedAt) {
+                            <span style="font-size: 10.5px; color: var(--text-muted); display: block; margin-top: 4px;">
+                              Evaluated on {{ formatDateTime(app.aptitude.markedAt) }}
+                            </span>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- Stage 3: Group Discussion -->
+                @if (driveHasGD()) {
+                  <div class="timeline-stage-card" [class.completed]="app.gd?.status === 'Shortlisted'" [class.active-stage]="app.status === 'GD Scheduled'" [class.rejected-stage]="app.gd?.status === 'Rejected'">
+                    <div class="timeline-stage-marker">
+                      <span class="material-symbols-outlined">groups</span>
+                    </div>
+                    <div class="timeline-stage-content">
+                      <div class="stage-header-row">
+                        <h4 class="stage-heading">3. Group Discussion (GD) Round</h4>
+                        @if (app.gd?.status === 'Shortlisted') {
+                          <span class="stage-status-badge badge-done">Shortlisted</span>
+                        } @else if (app.gd?.status === 'Rejected') {
+                          <span class="stage-status-badge badge-failed">Rejected</span>
+                        } @else if (app.gdSchedule || app.status === 'GD Scheduled') {
+                          <span class="stage-status-badge badge-scheduled">Scheduled</span>
+                        } @else {
+                          <span class="stage-status-badge badge-pending">Pending Scheduling</span>
+                        }
+                      </div>
+
+                      <div class="stage-info-box">
+                        <div class="stage-details-grid">
+                          <div>
+                            <span class="detail-label">Scheduled Date:</span>
+                            <strong class="detail-val">
+                              📅 {{ formatDate(app.gdSchedule?.date) }}
+                            </strong>
+                          </div>
+                          <div>
+                            <span class="detail-label">Time Slot:</span>
+                            <strong class="detail-val">⏰ {{ app.gdSchedule?.timeSlot || 'Not fixed' }}</strong>
+                          </div>
+                          <div>
+                            <span class="detail-label">Venue / Location:</span>
+                            <strong class="detail-val">{{ app.gdSchedule?.location || 'Online' }}</strong>
+                          </div>
+                          @if (app.gdSchedule?.meetingUrl; as meetingUrl) {
+                            <div>
+                              <span class="detail-label">Meeting URL:</span>
+                              <a [href]="meetingUrl" target="_blank" style="font-size: 12px; color: var(--primary); font-weight: 700; word-break: break-all;">
+                                {{ meetingUrl }}
+                              </a>
+                            </div>
+                          }
+                        </div>
+                      </div>
+
+                      @if (app.gd && (app.gd.score != null || app.gd.feedback)) {
+                        <div class="stage-feedback-box">
+                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span class="detail-label">GD Score:</span>
+                            <strong style="color: var(--primary); font-size: 13px;">{{ app.gd.score != null ? app.gd.score + ' pts' : 'N/A' }}</strong>
+                          </div>
+                          @if (app.gd.feedback) {
+                            <p style="margin: 4px 0 0; font-size: 12px; color: var(--text-dark); font-style: italic;">
+                              "{{ app.gd.feedback }}"
+                            </p>
+                          }
+                          @if (app.gd.markedAt) {
+                            <span style="font-size: 10.5px; color: var(--text-muted); display: block; margin-top: 4px;">
+                              Evaluated on {{ formatDateTime(app.gd.markedAt) }}
+                            </span>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- Stage 4: Interview -->
+                <div class="timeline-stage-card" [class.completed]="app.interview?.result === 'Selected'" [class.active-stage]="app.status === 'Interview Scheduled'" [class.rejected-stage]="app.interview?.result === 'Rejected'">
+                  <div class="timeline-stage-marker">
+                    <span class="material-symbols-outlined">forum</span>
+                  </div>
+                  <div class="timeline-stage-content">
+                    <div class="stage-header-row">
+                      <h4 class="stage-heading">4. Personal Interview Round</h4>
+                      @if (app.interview?.result === 'Selected') {
+                        <span class="stage-status-badge badge-done">Selected</span>
+                      } @else if (app.interview?.result === 'Waitlisted') {
+                        <span class="stage-status-badge badge-waitlisted">Waitlisted</span>
+                      } @else if (app.interview?.result === 'Rejected') {
+                        <span class="stage-status-badge badge-failed">Rejected</span>
+                      } @else if (app.interviewSchedule || app.status === 'Interview Scheduled') {
+                        <span class="stage-status-badge badge-scheduled">Scheduled</span>
+                      } @else {
+                        <span class="stage-status-badge badge-pending">Pending Scheduling</span>
+                      }
+                    </div>
+
+                    <div class="stage-info-box">
+                      <div class="stage-details-grid">
+                        <div>
+                          <span class="detail-label">Scheduled Date:</span>
+                          <strong class="detail-val">
+                            📅 {{ formatDate(app.interviewSchedule?.date) }}
+                          </strong>
+                        </div>
+                        <div>
+                          <span class="detail-label">Time Slot:</span>
+                          <strong class="detail-val">⏰ {{ app.interviewSchedule?.timeSlot || 'Not fixed' }}</strong>
+                        </div>
+                        <div>
+                          <span class="detail-label">Location / Mode:</span>
+                          <strong class="detail-val">{{ app.interviewSchedule?.location || 'Online Video Interview' }}</strong>
+                        </div>
+                        @if (app.interviewSchedule?.meetingUrl; as meetingUrl) {
+                          <div>
+                            <span class="detail-label">Meeting URL:</span>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+                              <a [href]="meetingUrl" target="_blank" class="btn-bulk-schedule" style="padding: 4px 10px; font-size: 11.5px; background: #EBF5FB; color: #1B4F72; border: 1px solid #AED6F1; text-decoration: none;">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">videocam</span>
+                                <span>Join Interview</span>
+                              </a>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+
+                    @if (app.interview && (app.interview.score != null || app.interview.feedback || app.interview.result)) {
+                      <div class="stage-feedback-box">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                          <span class="detail-label">Interview Result & Score:</span>
+                          <strong style="color: var(--primary); font-size: 13px;">
+                            {{ app.interview.result || 'Pending' }} • {{ app.interview.score != null ? app.interview.score + ' pts' : 'N/A' }}
+                          </strong>
+                        </div>
+                        @if (app.interview.feedback) {
+                          <p style="margin: 4px 0 0; font-size: 12px; color: var(--text-dark); font-style: italic;">
+                            "{{ app.interview.feedback }}"
+                          </p>
+                        }
+                        @if (app.interview.markedAt) {
+                          <span style="font-size: 10.5px; color: var(--text-muted); display: block; margin-top: 4px;">
+                            Evaluated on {{ formatDateTime(app.interview.markedAt) }}
+                          </span>
+                        }
+                      </div>
                     }
                   </div>
+                </div>
 
-                  <!-- Parsed Document text body -->
-                  <div [innerHTML]="highlightedHtml()" 
-                       style="font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.6; color: #2C3E50; background: white; border: 1px solid var(--border); border-radius: 6px; padding: 16px; min-height: 380px; max-height: 500px; overflow-y: auto; white-space: normal; word-break: break-word;">
+                <!-- Stage 5: Offer Letter & Placement -->
+                @if (app.status === 'Selected' || app.status === 'Offer Sent' || app.status === 'Offer Accepted' || app.status === 'Offer Declined' || app.status === 'Placed' || (app.offer && app.offer.status !== 'Not Sent')) {
+                  <div class="timeline-stage-card" [class.completed]="app.offer?.status === 'Accepted' || app.status === 'Offer Accepted' || app.status === 'Placed'" [class.rejected-stage]="app.offer?.status === 'Declined' || app.status === 'Offer Declined'">
+                    <div class="timeline-stage-marker">
+                      <span class="material-symbols-outlined">workspace_premium</span>
+                    </div>
+                    <div class="timeline-stage-content">
+                      <div class="stage-header-row">
+                        <h4 class="stage-heading">5. Job Offer & Acceptance</h4>
+                        <span class="stage-status-badge" [class.badge-done]="app.offer?.status === 'Accepted' || app.status === 'Offer Accepted' || app.status === 'Placed'" [class.badge-failed]="app.offer?.status === 'Declined'" [class.badge-scheduled]="app.offer?.status === 'Sent'">
+                          {{ app.offer?.status || app.status }}
+                        </span>
+                      </div>
+
+                      <div class="stage-info-box">
+                        <div class="stage-details-grid">
+                          <div>
+                            <span class="detail-label">Offer Sent Date:</span>
+                            <strong class="detail-val">📅 {{ formatDate(app.offer?.uploadedDate) }}</strong>
+                          </div>
+                          <div>
+                            <span class="detail-label">Expiry Date:</span>
+                            <strong class="detail-val">📅 {{ formatDate(app.offer?.expiryDate) }}</strong>
+                          </div>
+                          <div>
+                            <span class="detail-label">Offered Package:</span>
+                            <strong class="detail-val" style="color: #27AE60;">{{ app.offer?.ctc || driveCtc() }} LPA</strong>
+                          </div>
+                          @if (app.offer && (app.offer.acceptedAt || app.offer.declinedAt)) {
+                            <div>
+                              <span class="detail-label">Candidate Responded At:</span>
+                              <strong class="detail-val">{{ formatDateTime(app.offer.acceptedAt || app.offer.declinedAt) }}</strong>
+                            </div>
+                          }
+                        </div>
+                      </div>
+
+                      @if (app.offer && app.offer.declineReason) {
+                        <div class="stage-feedback-box" style="border-left-color: #E74C3C;">
+                          <span class="detail-label" style="color: #C0392B;">Candidate Decline Reason:</span>
+                          <p style="margin: 4px 0 0; font-size: 12px; color: var(--text-dark);">
+                            "{{ app.offer.declineReason }}"
+                          </p>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+              </div>
+            </div>
+          }
+
+          <!-- TAB 2: AI Match & Resume Analysis -->
+          @if (activeCandidateModalTab() === 'analysis') {
+            <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px;">
+              <!-- Left Column: Resume PDF Preview / AI Highlights Tab View -->
+              <div style="display: flex; flex-direction: column; gap: 12px; height: 100%;">
+                
+                <!-- Header Row with Tabs Switcher -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--border); padding-bottom: 8px; margin-bottom: 4px;">
+                  <h4 style="margin: 0; font-size: 14px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+                    <span class="material-symbols-outlined" style="font-size: 18px; color: var(--primary);">description</span>
+                    <span>Candidate Resume</span>
+                  </h4>
+                  
+                  <div style="display: flex; background: #F2F4F4; border-radius: 6px; padding: 3px;">
+                    <button type="button" 
+                            (click)="activeResumeTab.set('pdf')"
+                            [style.background]="activeResumeTab() === 'pdf' ? 'white' : 'transparent'"
+                            [style.color]="activeResumeTab() === 'pdf' ? 'var(--primary)' : 'var(--text-muted)'"
+                            [style.box-shadow]="activeResumeTab() === 'pdf' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'"
+                            style="border: none; padding: 4px 10px; font-size: 11.5px; font-weight: 750; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+                      PDF Original
+                    </button>
+                    <button type="button" 
+                            (click)="activeResumeTab.set('highlights')"
+                            [style.background]="activeResumeTab() === 'highlights' ? 'white' : 'transparent'"
+                            [style.color]="activeResumeTab() === 'highlights' ? 'var(--primary)' : 'var(--text-muted)'"
+                            [style.box-shadow]="activeResumeTab() === 'highlights' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'"
+                            style="border: none; padding: 4px 10px; font-size: 11.5px; font-weight: 750; border-radius: 4px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
+                      <span>AI Highlights</span>
+                      <span class="material-symbols-outlined" style="font-size: 13px; color: var(--secondary);">auto_awesome</span>
+                    </button>
                   </div>
                 </div>
-              }
-            }
-          </div>
 
-          <!-- Right Column: AI Analysis Match & Highlighted Cards -->
-          <div style="display: flex; flex-direction: column; gap: 20px;">
-
-            @if (selectedXaiApp()?.xai?.isOfflineFallback) {
-              <div style="background: #FEF9E7; border: 1.5px solid #F1C40F; border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; color: #7D6608; font-size: 12px; font-weight: 650;">
-                <span class="material-symbols-outlined" style="color: #F39C12; font-size: 20px; flex-shrink: 0;">info</span>
-                <span>Notice: Real-time Sentence-BERT AI Service (Port 5001) was offline during scoring. A baseline score was assigned automatically.</span>
-              </div>
-            }
-            
-            <!-- AI Score Badge -->
-            <div style="background: var(--surface-low); border: 1.5px solid rgba(26,82,118,0.1); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
-              <span style="font-weight: 700; color: var(--text-dark); font-size: 14px;">Overall Match Score</span>
-              <span class="ai-score-pill-large" [class]="getScoreColorClass(selectedXaiApp()?.aiMatchScore)" style="font-weight: 800; font-size: 13.5px; border-radius: 8px; padding: 6px 14px;">
-                {{ formatMatchScore(selectedXaiApp()?.aiMatchScore) }}% Match
-              </span>
-            </div>
-
-            <!-- What Helped -->
-            <div style="background: rgba(46, 204, 113, 0.05); border: 1.5px solid rgba(46, 204, 113, 0.2); border-radius: 12px; padding: 18px;">
-              <h4 class="modal-section-title text-green" style="margin: 0 0 12px 0; color: #27AE60; font-size: 13.5px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
-                <span class="material-symbols-outlined" style="font-size: 18px;">add_circle</span>
-                <span>Positive Highlights</span>
-              </h4>
-              <ul class="feedback-list" style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
-                @if (selectedXaiApp()?.xai?.positiveSentences && selectedXaiApp()!.xai!.positiveSentences!.length > 0) {
-                  @for (sent of selectedXaiApp()?.xai?.positiveSentences; track sent) {
-                    <li style="font-size: 12.5px; line-height: 1.45; color: var(--text-dark); font-weight: 600;">{{ sent }}</li>
+                <!-- Tab 1: PDF Viewer -->
+                @if (activeResumeTab() === 'pdf') {
+                  @if (app.student?.resumePath; as resumePath) {
+                    <div style="flex-grow: 1; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; background: #F8F9FA; min-height: 480px; height: 100%;">
+                      <iframe [src]="getResumeUrl(resumePath)" 
+                              style="width: 100%; height: 100%; min-height: 480px; border: none;"></iframe>
+                    </div>
+                  } @else {
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px dashed var(--border); border-radius: 8px; padding: 48px; background: #F8F9FA; text-align: center; min-height: 480px; height: 100%;">
+                      <span class="material-symbols-outlined" style="font-size: 36px; color: var(--text-muted); margin-bottom: 8px;">description</span>
+                      <p style="font-size: 13px; font-weight: 650; color: var(--text-dark); margin: 0 0 4px;">No Resume Uploaded</p>
+                      <p style="font-size: 11px; color: var(--text-muted); margin: 0;">Candidate has not uploaded a PDF resume to their profile.</p>
+                    </div>
                   }
-                } @else {
-                  <li style="font-size: 12px; font-style: italic; color: var(--text-muted); list-style: none;">No positive match points detected.</li>
                 }
-              </ul>
-            </div>
 
-            <!-- What Hurt -->
-            <div style="background: rgba(231, 76, 60, 0.05); border: 1.5px solid rgba(231, 76, 60, 0.2); border-radius: 12px; padding: 18px;">
-              <h4 class="modal-section-title text-red" style="margin: 0 0 12px 0; color: #C0392B; font-size: 13.5px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
-                <span class="material-symbols-outlined" style="font-size: 18px;">remove_circle</span>
-                <span>Areas of Improvement</span>
-              </h4>
-              <ul class="feedback-list" style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
-                @if (selectedXaiApp()?.xai?.negativeSentences && selectedXaiApp()!.xai!.negativeSentences!.length > 0) {
-                  @for (sent of selectedXaiApp()?.xai?.negativeSentences; track sent) {
-                    <li style="font-size: 12.5px; line-height: 1.45; color: var(--text-dark); font-weight: 600;">{{ sent }}</li>
-                  }
-                } @else {
-                  <li style="font-size: 12px; font-style: italic; color: var(--text-muted); list-style: none;">No areas for improvement detected.</li>
-                }
-              </ul>
-            </div>
+                <!-- Tab 2: AI Highlights Document View -->
+                @if (activeResumeTab() === 'highlights') {
+                  @if (isResumeTextLoading()) {
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px solid var(--border); border-radius: 8px; padding: 48px; background: white; min-height: 480px; height: 100%; gap: 12px;">
+                      <div class="spinner" style="width: 32px; height: 32px; border: 3px solid rgba(0,0,0,0.1); border-top-color: var(--secondary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                      <p style="font-size: 12.5px; font-weight: 650; color: var(--text-secondary); margin: 0;">Extracting & Analyzing Resume Text...</p>
+                    </div>
+                  } @else if (!highlightedHtml()) {
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1.5px dashed var(--border); border-radius: 8px; padding: 48px; background: #F8F9FA; text-align: center; min-height: 480px; height: 100%;">
+                      <span class="material-symbols-outlined" style="font-size: 36px; color: var(--text-muted); margin-bottom: 8px;">description</span>
+                      <p style="font-size: 13px; font-weight: 650; color: var(--text-dark); margin: 0 0 4px;">Resume Text Unavailable</p>
+                      <p style="font-size: 11px; color: var(--text-muted); margin: 0;">{{ resumeTextError() || 'Could not parse text representation of the candidate resume.' }} You can still view the document in the PDF View tab.</p>
+                    </div>
+                  } @else {
+                    <div style="flex-grow: 1; border: 1.5px solid var(--border); border-radius: 8px; background: #FAFBFB; padding: 18px; min-height: 480px; height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
+                      
+                      <!-- Highlight Key Info Banner -->
+                      <div style="background: white; border-radius: 8px; border: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.01);">
+                        <div style="display: flex; gap: 8px; align-items: center; font-size: 11.5px; font-weight: 800;">
+                          <span style="display: inline-block; width: 12px; height: 12px; background: #D4EFDF; border: 1px solid #27AE60; border-radius: 3px;"></span>
+                          <span style="color: #27AE60;">Green Highlights = Matching Technologies Detected</span>
+                        </div>
+                        @if (app.xai?.skillGaps; as skillGaps) {
+                          @if (skillGaps.length > 0) {
+                            <div style="display: flex; gap: 8px; align-items: center; font-size: 11.5px; font-weight: 800; border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 2px;">
+                              <span style="color: #C0392B;">Missing Required Technologies:</span>
+                              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                @for (skill of skillGaps; track skill) {
+                                  <span style="background: #FDEDEC; border: 1px solid #E74C3C; color: #C0392B; font-size: 9.5px; padding: 2px 6px; border-radius: 4px; font-weight: 750;">{{ skill }}</span>
+                                }
+                              </div>
+                            </div>
+                          }
+                        }
+                      </div>
 
-            <!-- Skill Gaps -->
-            <div style="background: rgba(243, 156, 18, 0.05); border: 1.5px solid rgba(243, 156, 18, 0.2); border-radius: 12px; padding: 18px;">
-              <h4 class="modal-section-title text-warning" style="margin: 0 0 12px 0; color: #D35400; font-size: 13.5px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
-                <span class="material-symbols-outlined" style="font-size: 18px;">school</span>
-                <span>Detected Skill Gaps</span>
-              </h4>
-              <div class="skills-container-xai" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
-                @if (selectedXaiApp()?.xai?.skillGaps && selectedXaiApp()!.xai!.skillGaps!.length > 0) {
-                  @for (skill of selectedXaiApp()?.xai?.skillGaps; track skill) {
-                    <span class="skill-gap-chip" style="background: #FADBD8; color: var(--danger); font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 700; text-transform: uppercase; display: inline-block;">
-                      {{ skill }}
-                    </span>
+                      <!-- Parsed Document text body -->
+                      <div [innerHTML]="highlightedHtml()" 
+                           style="font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.6; color: #2C3E50; background: white; border: 1px solid var(--border); border-radius: 6px; padding: 16px; min-height: 380px; max-height: 500px; overflow-y: auto; white-space: normal; word-break: break-word;">
+                      </div>
+                    </div>
                   }
-                } @else {
-                  <span style="font-size: 12.5px; color: var(--text-muted); font-style: italic;">No skill gaps detected. Candidate fits all core technologies.</span>
                 }
               </div>
-            </div>
 
-            <!-- Evaluated Stage Scores & Feedback -->
-            @let app = selectedXaiApp();
-            @if (app && (app.aptitude?.score != null || app.gd?.score != null || app.interview?.score != null || app.aptitude?.feedback || app.gd?.feedback || app.interview?.feedback)) {
-              <div style="background: white; border: 1.5px solid var(--border); border-radius: 12px; padding: 18px;">
-                <h4 class="modal-section-title" style="margin: 0 0 12px 0; color: var(--primary); font-size: 13.5px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
-                  <span class="material-symbols-outlined" style="font-size: 18px;">fact_check</span>
-                  <span>Evaluated Stage Scores & Feedback</span>
+              <!-- Right Column: AI Analysis Match & Highlighted Cards -->
+              <div style="display: flex; flex-direction: column; gap: 20px;">
+
+                @if (app.xai?.isOfflineFallback) {
+                  <div style="background: #FEF9E7; border: 1.5px solid #F1C40F; border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; color: #7D6608; font-size: 12px; font-weight: 650;">
+                    <span class="material-symbols-outlined" style="color: #F39C12; font-size: 20px; flex-shrink: 0;">info</span>
+                    <span>Notice: Real-time Sentence-BERT AI Service was offline during scoring. A baseline score was assigned.</span>
+                  </div>
+                }
+                
+                <!-- AI Score Badge -->
+                <div style="background: var(--surface-low); border: 1.5px solid rgba(26,82,118,0.1); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
+                  <span style="font-weight: 700; color: var(--text-dark); font-size: 14px;">Overall Match Score</span>
+                  <span class="ai-score-pill-large" [class]="getScoreColorClass(app.aiMatchScore)" style="font-weight: 800; font-size: 13.5px; border-radius: 8px; padding: 6px 14px;">
+                    {{ formatMatchScore(app.aiMatchScore) }}% Match
+                  </span>
+                </div>
+
+                <!-- What Helped -->
+                <div style="background: rgba(46, 204, 113, 0.05); border: 1.5px solid rgba(46, 204, 113, 0.2); border-radius: 12px; padding: 18px;">
+                  <h4 class="modal-section-title text-green" style="margin: 0 0 12px 0; color: #27AE60; font-size: 13.5px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">add_circle</span>
+                    <span>Positive Highlights</span>
+                  </h4>
+                  <ul class="feedback-list" style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+                    @if (app.xai?.positiveSentences; as posSentences) {
+                      @if (posSentences.length > 0) {
+                        @for (sent of posSentences; track sent) {
+                          <li style="font-size: 12.5px; line-height: 1.45; color: var(--text-dark); font-weight: 600;">{{ sent }}</li>
+                        }
+                      } @else {
+                        <li style="font-size: 12px; font-style: italic; color: var(--text-muted); list-style: none;">No positive match points detected.</li>
+                      }
+                    } @else {
+                      <li style="font-size: 12px; font-style: italic; color: var(--text-muted); list-style: none;">No positive match points detected.</li>
+                    }
+                  </ul>
+                </div>
+
+                <!-- What Hurt -->
+                <div style="background: rgba(231, 76, 60, 0.05); border: 1.5px solid rgba(231, 76, 60, 0.2); border-radius: 12px; padding: 18px;">
+                  <h4 class="modal-section-title text-red" style="margin: 0 0 12px 0; color: #C0392B; font-size: 13.5px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">remove_circle</span>
+                    <span>Areas of Improvement</span>
+                  </h4>
+                  <ul class="feedback-list" style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+                    @if (app.xai?.negativeSentences; as negSentences) {
+                      @if (negSentences.length > 0) {
+                        @for (sent of negSentences; track sent) {
+                          <li style="font-size: 12.5px; line-height: 1.45; color: var(--text-dark); font-weight: 600;">{{ sent }}</li>
+                        }
+                      } @else {
+                        <li style="font-size: 12px; font-style: italic; color: var(--text-muted); list-style: none;">No areas for improvement detected.</li>
+                      }
+                    } @else {
+                      <li style="font-size: 12px; font-style: italic; color: var(--text-muted); list-style: none;">No areas for improvement detected.</li>
+                    }
+                  </ul>
+                </div>
+
+                <!-- Skill Gaps -->
+                <div style="background: rgba(243, 156, 18, 0.05); border: 1.5px solid rgba(243, 156, 18, 0.2); border-radius: 12px; padding: 18px;">
+                  <h4 class="modal-section-title text-warning" style="margin: 0 0 12px 0; color: #D35400; font-size: 13.5px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">school</span>
+                    <span>Detected Skill Gaps</span>
+                  </h4>
+                  <div class="skills-container-xai" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                    @if (app.xai?.skillGaps; as skillGaps) {
+                      @if (skillGaps.length > 0) {
+                        @for (skill of skillGaps; track skill) {
+                          <span class="skill-gap-chip" style="background: #FADBD8; color: var(--danger); font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 700; text-transform: uppercase; display: inline-block;">
+                            {{ skill }}
+                          </span>
+                        }
+                      } @else {
+                        <span style="font-size: 12.5px; color: var(--text-muted); font-style: italic;">No skill gaps detected. Candidate fits all core technologies.</span>
+                      }
+                    } @else {
+                      <span style="font-size: 12.5px; color: var(--text-muted); font-style: italic;">No skill gaps detected. Candidate fits all core technologies.</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Job Description -->
+                <div style="background: rgba(52, 152, 219, 0.05); border: 1.5px solid rgba(52, 152, 219, 0.2); border-radius: 12px; padding: 18px;">
+                  <h4 class="modal-section-title text-blue" style="margin: 0 0 12px 0; color: #2980B9; font-size: 13.5px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">description</span>
+                    <span>Job Description</span>
+                  </h4>
+                  <p style="font-size: 12.5px; line-height: 1.5; color: var(--text-dark); white-space: pre-line; margin: 0; max-height: 150px; overflow-y: auto; font-weight: 600; padding-right: 8px;">
+                    {{ driveDescription() || 'No job description provided.' }}
+                  </p>
+                </div>
+
+              </div>
+            </div>
+          }
+
+          <!-- TAB 3: Candidate Academic Profile & Contact Info -->
+          @if (activeCandidateModalTab() === 'profile') {
+            @let student = app.student;
+            <div class="candidate-profile-tab-grid">
+              
+              <!-- Personal & Contact Card -->
+              <div class="profile-section-card">
+                <h4 class="profile-card-title">
+                  <span class="material-symbols-outlined" style="color: var(--primary);">contact_page</span>
+                  <span>Contact Information</span>
                 </h4>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                  @if (app.aptitude && app.aptitude.status !== 'Not Applicable' && (app.aptitude.score != null || app.aptitude.feedback)) {
-                    <div style="background: var(--surface-low); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
-                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                        <strong style="font-size: 13px; color: var(--primary);">Aptitude Test: {{ app.aptitude.status }}</strong>
-                        <span style="font-size: 13px; font-weight: 800; color: var(--secondary);">Score: {{ app.aptitude.score != null ? app.aptitude.score : '—' }}</span>
-                      </div>
-                      @if (app.aptitude.feedback) {
-                        <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-dark); font-style: italic;">
-                          "{{ app.aptitude.feedback }}"
-                        </p>
-                      }
+                <div class="profile-info-list">
+                  <div class="profile-info-row">
+                    <span class="info-label">Full Name:</span>
+                    <strong class="info-val">{{ student?.name || 'N/A' }}</strong>
+                  </div>
+                  <div class="profile-info-row">
+                    <span class="info-label">Official Email:</span>
+                    <a [href]="'mailto:' + student?.email" class="info-val link-styled">
+                      <span class="material-symbols-outlined" style="font-size: 14px;">mail</span>
+                      {{ student?.email || 'N/A' }}
+                    </a>
+                  </div>
+                  <div class="profile-info-row">
+                    <span class="info-label">Phone Number:</span>
+                    <a [href]="'tel:' + student?.phone" class="info-val link-styled">
+                      <span class="material-symbols-outlined" style="font-size: 14px;">call</span>
+                      {{ student?.phone || 'N/A' }}
+                    </a>
+                  </div>
+                  <div class="profile-info-row">
+                    <span class="info-label">Roll Number:</span>
+                    <strong class="info-val font-code">{{ student?.rollNumber }}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Academic Qualifications Card -->
+              <div class="profile-section-card">
+                <h4 class="profile-card-title">
+                  <span class="material-symbols-outlined" style="color: #27AE60;">school</span>
+                  <span>Academic Qualifications</span>
+                </h4>
+                <div class="profile-info-list">
+                  <div class="profile-info-row">
+                    <span class="info-label">Branch / Department:</span>
+                    <strong class="info-val">{{ student?.branch || 'N/A' }}</strong>
+                  </div>
+                  <div class="profile-info-row">
+                    <span class="info-label">Graduation Year:</span>
+                    <strong class="info-val">{{ student?.passoutYear || 'N/A' }}</strong>
+                  </div>
+                  <div class="profile-info-row">
+                    <span class="info-label">Cumulative CGPA:</span>
+                    <strong class="info-val" style="color: #27AE60; font-size: 14px;">{{ student?.cgpa }} / 10.0</strong>
+                  </div>
+                  <div class="profile-info-row">
+                    <span class="info-label">Active Backlogs:</span>
+                    <strong class="info-val" [style.color]="(student?.activeBacklogs || 0) > 0 ? '#E74C3C' : '#27AE60'">
+                      {{ student?.activeBacklogs || 0 }} Backlogs
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Documents & Resume Card -->
+              <div class="profile-section-card" style="grid-column: 1 / -1;">
+                <h4 class="profile-card-title">
+                  <span class="material-symbols-outlined" style="color: #8E44AD;">folder_shared</span>
+                  <span>Candidate Documents</span>
+                </h4>
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #F8F9FA; border-radius: 8px; border: 1px solid var(--border);">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <span class="material-symbols-outlined" style="font-size: 28px; color: #E74C3C;">picture_as_pdf</span>
+                    <div>
+                      <strong style="font-size: 13px; color: var(--text-dark); display: block;">Resume / CV Document</strong>
+                      <span style="font-size: 11px; color: var(--text-muted);">
+                        {{ student?.resumePath ? 'PDF Document on file' : 'No resume uploaded' }}
+                      </span>
                     </div>
-                  }
-                  @if (app.gd && app.gd.status !== 'Not Applicable' && (app.gd.score != null || app.gd.feedback)) {
-                    <div style="background: var(--surface-low); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
-                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                        <strong style="font-size: 13px; color: var(--primary);">Group Discussion: {{ app.gd.status }}</strong>
-                        <span style="font-size: 13px; font-weight: 800; color: var(--secondary);">Score: {{ app.gd.score != null ? app.gd.score : '—' }}</span>
-                      </div>
-                      @if (app.gd.feedback) {
-                        <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-dark); font-style: italic;">
-                          "{{ app.gd.feedback }}"
-                        </p>
-                      }
-                    </div>
-                  }
-                  @if (app.interview && app.interview.status !== 'Pending' && (app.interview.score != null || app.interview.feedback)) {
-                    <div style="background: var(--surface-low); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);">
-                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                        <strong style="font-size: 13px; color: var(--primary);">Interview: {{ app.interview.result || app.interview.status }}</strong>
-                        <span style="font-size: 13px; font-weight: 800; color: var(--secondary);">Score: {{ app.interview.score != null ? app.interview.score : '—' }}</span>
-                      </div>
-                      @if (app.interview.feedback) {
-                        <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-dark); font-style: italic;">
-                          "{{ app.interview.feedback }}"
-                        </p>
-                      }
+                  </div>
+                  @if (student?.resumePath) {
+                    <div style="display: flex; gap: 8px;">
+                      <button class="btn-bulk-schedule" style="background: white; border-color: var(--primary); color: var(--primary);" (click)="activeCandidateModalTab.set('analysis'); activeResumeTab.set('pdf')">
+                        <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span>
+                        <span>View Document</span>
+                      </button>
+                      <a [href]="'http://localhost:5000' + student?.resumePath" target="_blank" download class="btn-bulk-schedule" style="background: var(--primary); color: white; border: none; text-decoration: none;">
+                        <span class="material-symbols-outlined" style="font-size: 15px;">download</span>
+                        <span>Download PDF</span>
+                      </a>
                     </div>
                   }
                 </div>
               </div>
-            }
 
-            <!-- Job Description -->
-            <div style="background: rgba(52, 152, 219, 0.05); border: 1.5px solid rgba(52, 152, 219, 0.2); border-radius: 12px; padding: 18px;">
-              <h4 class="modal-section-title text-blue" style="margin: 0 0 12px 0; color: #2980B9; font-size: 13.5px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
-                <span class="material-symbols-outlined" style="font-size: 18px;">description</span>
-                <span>Job Description</span>
-              </h4>
-              <p style="font-size: 12.5px; line-height: 1.5; color: var(--text-dark); white-space: pre-line; margin: 0; max-height: 150px; overflow-y: auto; font-weight: 600; padding-right: 8px;">
-                {{ driveDescription() || 'No job description provided.' }}
-              </p>
             </div>
-
-          </div>
+          }
 
         </div>
-        <div class="modal-footer" style="padding: 16px 24px; background: #F8F9FA;">
+        
+        <div class="modal-footer" style="padding: 14px 24px; background: white; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px;">
           <button class="btn-cancel" style="width: 100px; height: 38px; border-radius: 8px;" (click)="closeXaiModal()">Close</button>
         </div>
       </div>

@@ -1,6 +1,8 @@
 const JobDrive = require("../models/JobDrive");
 const Application = require("../models/Application");
 const Schedule = require("../models/Schedule");
+const AptitudeTest = require("../models/AptitudeTest");
+const TestAttempt = require("../models/TestAttempt");
 const Recruiter = require("../models/Recruiter");
 const User = require("../models/User");
 const Student = require("../models/Student");
@@ -96,13 +98,62 @@ const getDriveApplications = async (req, res) => {
         path: "studentId",
         populate: {
           path: "userId",
-          select: "name",
+          select: "name email phone",
         },
       })
       .sort({ aiMatchScore: -1 }); // Highest score first
 
-    // Batch check placed students elsewhere with company name
+    const appIds = applications.map(a => a._id);
     const studentIds = applications.map(app => app.studentId?._id).filter(Boolean);
+
+    // Fetch all schedules for this drive
+    const schedules = await Schedule.find({ driveId });
+
+    // Fetch all test attempts for these applications
+    const testAttempts = await TestAttempt.find({ applicationId: { $in: appIds } });
+
+    // Fetch aptitude test details for this drive if any
+    const aptitudeTests = await AptitudeTest.find({ driveId }).select("-questionIds");
+    const activeAptitudeTest = aptitudeTests.find(t => t.status === "Active") || aptitudeTests[0] || null;
+
+    // Build schedule map by applicationId
+    const scheduleMap = new Map();
+    schedules.forEach(s => {
+      const key = s.applicationId.toString();
+      if (!scheduleMap.has(key)) {
+        scheduleMap.set(key, []);
+      }
+      scheduleMap.get(key).push({
+        _id: s._id,
+        eventType: s.eventType,
+        date: s.date,
+        timeSlot: s.timeSlot,
+        location: s.location,
+        meetingUrl: s.meetingUrl,
+        status: s.status,
+        createdAt: s.createdAt,
+      });
+    });
+
+    // Build testAttempt map by applicationId
+    const testAttemptMap = new Map();
+    testAttempts.forEach(t => {
+      testAttemptMap.set(t.applicationId.toString(), {
+        _id: t._id,
+        testId: t.testId,
+        score: t.score,
+        totalQuestions: t.totalQuestions,
+        percentage: t.percentage,
+        result: t.result,
+        startedAt: t.startedAt,
+        submittedAt: t.submittedAt,
+        autoSubmitted: t.autoSubmitted,
+        violationCount: t.violationCount,
+        flagged: t.flagged,
+      });
+    });
+
+    // Batch check placed students elsewhere with company name
     const placedAppsElsewhere = await Application.find({
       studentId: { $in: studentIds },
       driveId: { $ne: driveId },
@@ -129,15 +180,38 @@ const getDriveApplications = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
+        driveId: drive._id,
         driveTitle: drive.title,
         driveDescription: drive.description,
+        ctc: drive.ctc,
+        minCGPA: drive.minCGPA,
+        eligibleBranches: drive.eligibleBranches,
+        maxBacklogs: drive.maxBacklogs,
+        applicationDeadline: drive.applicationDeadline,
+        driveStatus: drive.status,
         hasAptitudeTest: drive.hasAptitudeTest,
         hasGD: drive.hasGD,
         companyName: recruiter.companyName,
+        aptitudeTest: activeAptitudeTest ? {
+          _id: activeAptitudeTest._id,
+          title: activeAptitudeTest.title,
+          durationMinutes: activeAptitudeTest.durationMinutes,
+          passingScore: activeAptitudeTest.passingScore,
+          scheduledDate: activeAptitudeTest.scheduledDate,
+          timeSlot: activeAptitudeTest.timeSlot,
+          status: activeAptitudeTest.status,
+        } : null,
         applications: applications.map(app => {
           const studentObj = app.studentId;
           const placementCompany = studentObj ? placedCompanyMap.get(studentObj._id.toString()) || null : null;
           const isPlaced = !!placementCompany;
+
+          const appSchedules = scheduleMap.get(app._id.toString()) || [];
+          // Sort schedules by event type or date
+          const aptitudeSchedule = appSchedules.find(s => s.eventType === "Aptitude") || null;
+          const gdSchedule = appSchedules.find(s => s.eventType === "GD") || null;
+          const interviewSchedule = appSchedules.find(s => s.eventType === "Interview") || null;
+          const testAttempt = testAttemptMap.get(app._id.toString()) || null;
 
           return {
             applicationId: app._id,
@@ -147,13 +221,23 @@ const getDriveApplications = async (req, res) => {
             isPlacedGlobally: isPlaced,
             isPlaced,
             placementCompany,
+            schedules: appSchedules,
+            aptitudeSchedule,
+            gdSchedule,
+            interviewSchedule,
+            testAttempt,
             student: studentObj ? {
               _id: studentObj._id,
               rollNumber: studentObj.rollNumber,
               cgpa: studentObj.cgpa,
               branch: studentObj.branch,
+              passoutYear: studentObj.passoutYear,
+              activeBacklogs: studentObj.activeBacklogs,
               resumePath: studentObj.resumePath,
+              profilePicPath: studentObj.profilePicPath,
               name: studentObj.userId ? studentObj.userId.name : "N/A",
+              email: studentObj.userId ? studentObj.userId.email : "N/A",
+              phone: studentObj.userId ? studentObj.userId.phone : "N/A",
               isPlacedGlobally: isPlaced,
               isPlaced,
               placementCompany,
@@ -165,7 +249,9 @@ const getDriveApplications = async (req, res) => {
             aptitude: app.aptitude,
             gd: app.gd,
             interview: app.interview,
-            offer: app.offer
+            offer: app.offer,
+            createdAt: app.createdAt,
+            updatedAt: app.updatedAt,
           };
         })
       }

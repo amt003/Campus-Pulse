@@ -40,7 +40,7 @@ const questionBankSchema = new mongoose.Schema(
     },
     source: {
       type: String,
-      enum: ["manual", "ai_generated", "curated"],
+      enum: ["manual", "ai_generated", "curated", "pdf_upload"],
       default: "manual",
     },
     status: {

@@ -3,6 +3,7 @@ const AptitudeTest = require("../models/AptitudeTest");
 const QuestionBank = require("../models/QuestionBank");
 const Application = require("../models/Application");
 const Student = require("../models/Student");
+const Schedule = require("../models/Schedule");
 
 // Helper to get authenticated student profile
 const getAuthenticatedStudent = async (userId) => {
@@ -17,6 +18,86 @@ const shuffleArray = (array) => {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+};
+
+// Helper to parse scheduled date and timeSlot string into { startTime, endTime } Date objects
+const parseTimeSlotWindow = (scheduledDate, timeSlotStr, durationMinutes = 60) => {
+  if (!scheduledDate) return { startTime: null, endTime: null };
+  const baseDate = new Date(scheduledDate);
+  if (isNaN(baseDate.getTime())) return { startTime: null, endTime: null };
+  const year = baseDate.getFullYear();
+  const month = baseDate.getMonth();
+  const day = baseDate.getDate();
+
+  if (!timeSlotStr || typeof timeSlotStr !== "string" || !timeSlotStr.trim()) {
+    return {
+      startTime: new Date(year, month, day, 0, 0, 0, 0),
+      endTime: new Date(year, month, day, 23, 59, 59, 999),
+    };
+  }
+
+  const cleanSlot = timeSlotStr.trim();
+  const parts = cleanSlot.split(/\s*(?:-|–|—|to)\s*/i);
+
+  const parseTimePart = (str, defaultAmPm = null) => {
+    if (!str) return null;
+    const s = str.trim().toUpperCase();
+    const isPM = s.includes("PM");
+    const isAM = s.includes("AM");
+    const cleanStr = s.replace(/AM|PM/gi, "").trim();
+
+    const colonParts = cleanStr.split(":");
+    let hour = parseInt(colonParts[0], 10);
+    let minute = colonParts.length > 1 ? parseInt(colonParts[1], 10) : 0;
+
+    if (isNaN(hour)) return null;
+    if (isNaN(minute)) minute = 0;
+
+    if (isPM) {
+      if (hour < 12) hour += 12;
+    } else if (isAM) {
+      if (hour === 12) hour = 0;
+    } else if (defaultAmPm) {
+      if (defaultAmPm === "PM" && hour < 12) hour += 12;
+      if (defaultAmPm === "AM" && hour === 12) hour = 0;
+    }
+
+    return { hour, minute };
+  };
+
+  let startParsed = null;
+  let endParsed = null;
+
+  if (parts.length >= 2) {
+    const endHasAM = parts[1].toUpperCase().includes("AM");
+    const endHasPM = parts[1].toUpperCase().includes("PM");
+    const defaultAmPm = endHasPM ? "PM" : endHasAM ? "AM" : null;
+    startParsed = parseTimePart(parts[0], defaultAmPm);
+    endParsed = parseTimePart(parts[1], null);
+  } else {
+    startParsed = parseTimePart(parts[0], null);
+  }
+
+  if (!startParsed) {
+    return {
+      startTime: new Date(year, month, day, 0, 0, 0, 0),
+      endTime: new Date(year, month, day, 23, 59, 59, 999),
+    };
+  }
+
+  const startTime = new Date(year, month, day, startParsed.hour, startParsed.minute, 0, 0);
+  let endTime;
+
+  if (endParsed) {
+    endTime = new Date(year, month, day, endParsed.hour, endParsed.minute, 0, 0);
+    if (endTime <= startTime) {
+      endTime = new Date(startTime.getTime() + (durationMinutes || 60) * 60 * 1000);
+    }
+  } else {
+    endTime = new Date(startTime.getTime() + (durationMinutes || 60) * 60 * 1000);
+  }
+
+  return { startTime, endTime };
 };
 
 // Helper to compute evaluation & update application
@@ -70,14 +151,24 @@ const evaluateAndFinalizeAttempt = async (attempt, test, submittedAnswers = null
   // Update Application's aptitude sub-document and overall status
   const application = await Application.findById(attempt.applicationId);
   if (application) {
-    application.status = "Aptitude Completed";
+    const isPass = result === "Pass";
+    application.status = isPass ? "Aptitude Completed" : "Rejected";
     if (!application.aptitude) {
       application.aptitude = {};
     }
-    application.aptitude.status = result === "Pass" ? "Passed" : "Failed";
-    application.aptitude.score = score;
+    application.aptitude.status = isPass ? "Passed" : "Failed";
+    application.aptitude.score = percentage;
     application.aptitude.source = "in_house";
     application.aptitude.markedAt = new Date();
+
+    if (attempt.autoSubmitted && attempt.violationCount > 0) {
+      application.aptitude.feedback = `Auto-submitted due to ${attempt.violationCount} proctoring violation(s) (Score: ${percentage}%, Passing Cutoff: ${test.passingScore || 0}%)`;
+    } else {
+      application.aptitude.feedback = isPass
+        ? `Passed In-House Aptitude Test (Score: ${percentage}%, Passing Cutoff: ${test.passingScore || 0}%)`
+        : `Below Cutoff Score in In-House Aptitude Test (Score: ${percentage}%, Passing Cutoff: ${test.passingScore || 0}%)`;
+    }
+
     await application.save();
   }
 
@@ -142,13 +233,30 @@ const getUpcomingTests = async (req, res) => {
           (a) => a.driveId.toString() === (test.driveId._id || test.driveId).toString()
         );
 
+        const candidateSchedule = await Schedule.findOne({
+          studentId: student._id,
+          driveId: test.driveId._id || test.driveId,
+          eventType: "Aptitude",
+          status: "Scheduled",
+        });
+
+        const targetDate = candidateSchedule?.date || test.scheduledDate;
+        const targetTimeSlot = candidateSchedule?.timeSlot || test.timeSlot;
+        const { startTime, endTime } = parseTimeSlotWindow(targetDate, targetTimeSlot, test.durationMinutes);
+
+        const now = new Date();
+        const isTimeLocked = Boolean(startTime && now < startTime);
+        const isExpired = Boolean(endTime && now > endTime && attemptStatus !== "In Progress");
+
         return {
           _id: test._id,
           title: test.title,
           durationMinutes: test.durationMinutes,
           passingScore: test.passingScore,
-          scheduledDate: test.scheduledDate,
-          timeSlot: test.timeSlot,
+          scheduledDate: targetDate || test.scheduledDate,
+          timeSlot: targetTimeSlot || test.timeSlot,
+          isTimeLocked,
+          isExpired,
           antiCheatEnabled: test.antiCheatEnabled,
           maxViolations: test.maxViolations,
           drive: test.driveId,
@@ -217,7 +325,53 @@ const startTest = async (req, res) => {
       });
     }
 
-    // 2. Check existing attempt (Resume or reject if already submitted)
+    // 2. Enforce scheduled date & timeSlot entry window
+    const candidateSchedule = await Schedule.findOne({
+      studentId: student._id,
+      driveId: test.driveId,
+      eventType: "Aptitude",
+      status: "Scheduled",
+    });
+
+    const targetDate = candidateSchedule?.date || test.scheduledDate;
+    const targetTimeSlot = candidateSchedule?.timeSlot || test.timeSlot;
+
+    if (targetDate) {
+      const { startTime, endTime } = parseTimeSlotWindow(targetDate, targetTimeSlot, test.durationMinutes);
+      const now = new Date();
+
+      if (startTime && now < startTime) {
+        const timeStr = targetTimeSlot || new Date(startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        const dateStr = new Date(startTime).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+        return res.status(403).json({
+          success: false,
+          isTimeLocked: true,
+          message: `This test has not opened yet. It is scheduled for ${dateStr} at ${timeStr}. Candidate can only enter at the scheduled test time.`,
+        });
+      }
+
+      // Check existing attempt to allow resuming in-progress attempts
+      let attempt = await TestAttempt.findOne({
+        testId: test._id,
+        studentId: student._id,
+      });
+
+      const isAttemptInProgress = attempt && !attempt.submittedAt;
+
+      if (endTime && now > endTime && !isAttemptInProgress) {
+        return res.status(403).json({
+          success: false,
+          isExpired: true,
+          message: `The time window for this test has expired (${targetTimeSlot || "Expired"}). Candidate cannot enter after the scheduled time limit.`,
+        });
+      }
+    }
+
+    // 3. Check existing attempt (Resume or reject if already submitted)
     let attempt = await TestAttempt.findOne({
       testId: test._id,
       studentId: student._id,

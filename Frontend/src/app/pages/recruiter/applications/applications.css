@@ -241,29 +241,33 @@
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0,0,0,0.015);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .applications-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  table-layout: auto;
 }
 
 .applications-table th {
   background: #FAFBFB;
   border-bottom: 1px solid var(--border);
-  padding: 16px 20px;
+  padding: 12px 12px;
   font-size: 11px;
   font-weight: 800;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .applications-table td {
-  padding: 16px 20px;
+  padding: 12px 12px;
   border-bottom: 1px solid var(--border);
-  font-size: 13.5px;
+  font-size: 13px;
   vertical-align: middle;
 }
 
@@ -797,4 +801,530 @@
 .rank-col {
   width: 70px;
   font-weight: 700;
+}
+
+/* Drive Meta Info Bar */
+.drive-meta-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 16px;
+  border-right: 1px solid var(--border);
+}
+
+.meta-item:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
+.meta-icon {
+  font-size: 22px;
+  color: var(--primary);
+  background: var(--surface-low);
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.meta-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+}
+
+.meta-val {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.meta-sub-pill {
+  font-size: 11px;
+  font-weight: 700;
+  background: #EBF5FB;
+  color: #1B4F72;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid #AED6F1;
+}
+
+/* Candidate Table Cells & Sub Info */
+.candidate-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.candidate-sub-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sub-email {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sub-branch-pill {
+  font-size: 10px;
+  font-weight: 800;
+  background: #F4F6F6;
+  color: #5D6D7E;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid #D5D8DC;
+  text-transform: uppercase;
+}
+
+/* Stage Schedule Column */
+.stage-schedule-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 240px;
+}
+
+.schedule-applied-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.stage-schedule-item {
+  background: #F8F9FA;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: all 0.2s;
+}
+
+.stage-schedule-item.item-passed {
+  border-color: #A9DFBF;
+  background: #F4FCF7;
+}
+
+.stage-schedule-item.item-failed {
+  border-color: #F5B7B1;
+  background: #FDF2E9;
+}
+
+.stage-item-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.stage-item-date {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--text-dark);
+}
+
+.stage-item-body {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11px;
+}
+
+.stage-score-tag {
+  font-weight: 750;
+  color: var(--primary);
+}
+
+.stage-result-tag {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.stage-result-tag.tag-pass {
+  background: #D4EFDF;
+  color: #1E8449;
+  border: 1px solid #27AE60;
+}
+
+.stage-result-tag.tag-fail {
+  background: #FADBD8;
+  color: #C0392B;
+  border: 1px solid #E74C3C;
+}
+
+.stage-feedback-tag {
+  font-style: italic;
+  color: var(--text-muted);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-interview-meeting {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  font-weight: 800;
+  background: #EBF5FB;
+  color: #1B4F72;
+  border: 1px solid #AED6F1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.link-interview-meeting:hover {
+  background: #1B4F72;
+  color: white;
+}
+
+.stage-pending-label {
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+/* Candidate Modal Navigation Tabs */
+.candidate-modal-nav-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 10px 24px;
+  background: #F8F9FA;
+  border-bottom: 1.5px solid var(--border);
+  overflow-x: auto;
+}
+
+.candidate-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.candidate-tab-btn:hover {
+  color: var(--primary);
+  background: rgba(26, 82, 118, 0.05);
+}
+
+.candidate-tab-btn.active {
+  background: white;
+  color: var(--primary);
+  border-color: var(--border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+/* Timeline Tab Styles */
+.timeline-tab-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.timeline-overview-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.015);
+}
+
+.overview-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.overview-label {
+  font-size: 11px;
+  font-weight: 750;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.overview-val {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.timeline-stages-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timeline-stage-card {
+  display: flex;
+  gap: 16px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.015);
+  position: relative;
+  transition: all 0.2s;
+}
+
+.timeline-stage-card.completed {
+  border-color: rgba(39, 174, 96, 0.3);
+  background: #FCFDFD;
+}
+
+.timeline-stage-card.active-stage {
+  border-color: rgba(41, 128, 185, 0.4);
+  box-shadow: 0 4px 14px rgba(41, 128, 185, 0.08);
+}
+
+.timeline-stage-card.rejected-stage {
+  border-color: rgba(231, 76, 60, 0.3);
+  background: #FEF9F9;
+}
+
+.timeline-stage-marker {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--surface-low);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(26, 82, 118, 0.15);
+}
+
+.timeline-stage-card.completed .timeline-stage-marker {
+  background: #E8F8F5;
+  color: #27AE60;
+  border-color: #A9DFBF;
+}
+
+.timeline-stage-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+}
+
+.stage-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stage-heading {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.stage-status-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.stage-status-badge.badge-done {
+  background: #D4EFDF;
+  color: #1E8449;
+  border: 1px solid #27AE60;
+}
+
+.stage-status-badge.badge-scheduled {
+  background: #EBF5FB;
+  color: #1B4F72;
+  border: 1px solid #AED6F1;
+}
+
+.stage-status-badge.badge-failed {
+  background: #FDEDEC;
+  color: #C0392B;
+  border: 1px solid #E74C3C;
+}
+
+.stage-status-badge.badge-waitlisted {
+  background: #FEF9E7;
+  color: #7D6608;
+  border: 1px solid #F1C40F;
+}
+
+.stage-status-badge.badge-pending {
+  background: #F4F6F6;
+  color: #5D6D7E;
+  border: 1px solid #D5D8DC;
+}
+
+.stage-info-box {
+  background: #F8F9FA;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.stage-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.detail-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.detail-val {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--text-dark);
+}
+
+.stage-attempt-box {
+  background: #FAF5FF;
+  border: 1.5px solid #E8DAEF;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.stage-feedback-box {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+/* Profile Tab Grid */
+.candidate-profile-tab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.profile-section-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.015);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.profile-card-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.profile-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #F2F4F4;
+}
+
+.profile-info-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.info-label {
+  font-weight: 650;
+  color: var(--text-muted);
+}
+
+.info-val {
+  font-weight: 750;
+  color: var(--text-dark);
+}
+
+.link-styled {
+  color: var(--primary);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.link-styled:hover {
+  text-decoration: underline;
 }

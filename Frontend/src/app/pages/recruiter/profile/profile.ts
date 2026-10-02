@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -25,8 +25,73 @@ export class RecruiterProfileComponent implements OnInit {
   protected companyName = signal<string>('');
   protected officialEmail = signal<string>('');
   protected website = signal<string>('');
-  protected password = signal<string>('');
+
+  // Security / Password state
+  protected currentPassword = signal<string>('');
+  protected newPassword = signal<string>('');
   protected confirmPassword = signal<string>('');
+
+  protected showCurrentPassword = signal<boolean>(false);
+  protected showNewPassword = signal<boolean>(false);
+  protected showConfirmPassword = signal<boolean>(false);
+
+  // Live password attempt check
+  protected isPasswordAttempted = computed(() => {
+    return (
+      this.currentPassword().length > 0 ||
+      this.newPassword().length > 0 ||
+      this.confirmPassword().length > 0
+    );
+  });
+
+  // Password Strength Computations
+  protected passwordStrength = computed(() => {
+    const pw = this.newPassword().trim();
+    if (!pw) return 0;
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[a-z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    return score;
+  });
+
+  protected passwordStrengthLabel = computed(() => {
+    const score = this.passwordStrength();
+    if (score === 0) return '';
+    if (score <= 2) return 'Weak';
+    if (score === 3) return 'Medium';
+    return 'Strong';
+  });
+
+  protected passwordStrengthColor = computed(() => {
+    const score = this.passwordStrength();
+    if (score === 0) return '';
+    if (score <= 2) return 'danger';
+    if (score === 3) return 'warning';
+    return 'success';
+  });
+
+  // Live password error validation signals
+  protected currentPasswordError = computed(() => {
+    if (!this.isPasswordAttempted()) return false;
+    return !this.currentPassword().trim();
+  });
+
+  protected newPasswordError = computed(() => {
+    if (!this.isPasswordAttempted()) return false;
+    const pw = this.newPassword().trim();
+    if (!pw) return true;
+    return pw.length < 8 || !/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/[0-9]/.test(pw);
+  });
+
+  protected confirmPasswordError = computed(() => {
+    if (!this.isPasswordAttempted()) return false;
+    const conf = this.confirmPassword().trim();
+    const newPw = this.newPassword().trim();
+    if (!conf) return true;
+    return conf !== newPw || this.newPasswordError();
+  });
 
   protected currentLogoUrl = signal<string | null>(null);
   protected logoPreviewUrl = signal<string | null>(null);
@@ -106,13 +171,9 @@ export class RecruiterProfileComponent implements OnInit {
     }
 
     // Validate passwords if user attempts to change it
-    if (this.password()) {
-      if (this.password() !== this.confirmPassword()) {
-        this.errorMessage.set('Passwords do not match.');
-        return;
-      }
-      if (this.password().length < 6) {
-        this.errorMessage.set('Password must be at least 6 characters long.');
+    if (this.isPasswordAttempted()) {
+      if (this.currentPasswordError() || this.newPasswordError() || this.confirmPasswordError()) {
+        this.errorMessage.set('Validation failed. Please correct the password fields.');
         return;
       }
     }
@@ -122,8 +183,8 @@ export class RecruiterProfileComponent implements OnInit {
     formData.append('officialEmail', this.officialEmail());
     formData.append('website', this.website());
     
-    if (this.password()) {
-      formData.append('password', this.password());
+    if (this.isPasswordAttempted()) {
+      formData.append('password', this.newPassword().trim());
     }
     if (this.selectedLogoFile) {
       formData.append('logo', this.selectedLogoFile);
@@ -133,7 +194,8 @@ export class RecruiterProfileComponent implements OnInit {
       next: (res) => {
         this.isSaving.set(false);
         this.successMessage.set('Company profile updated successfully!');
-        this.password.set('');
+        this.currentPassword.set('');
+        this.newPassword.set('');
         this.confirmPassword.set('');
         if (res.recruiter && res.recruiter.companyLogo) {
           this.currentLogoUrl.set(`http://localhost:5000${res.recruiter.companyLogo}`);
@@ -160,8 +222,6 @@ export class RecruiterProfileComponent implements OnInit {
           } catch (e) {}
         }
 
-        // Trigger a window reload or broadcast state if necessary, or just wait.
-        // Let's redirect to dashboard or let them stay
         setTimeout(() => {
           this.successMessage.set(null);
         }, 10000);

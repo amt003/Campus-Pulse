@@ -66,13 +66,15 @@
               <tr>
                 <td>
                   <div class="drive-title-box">
-                    <span class="drive-title clickable-title" (click)="openViewDetailsModal(drive)" title="Click to view full structured drive details">
-                      {{ drive.title }}
-                    </span>
-                    <button type="button" class="drive-info-link" (click)="openViewDetailsModal(drive)" title="Click to view full drive details & job description">
-                      <span class="material-symbols-outlined info-icon">info</span>
-                      <span>Drive Information</span>
-                    </button>
+                    <div class="drive-title-row">
+                      <span class="drive-title clickable-title" (click)="openViewDetailsModal(drive)" title="Click to view full structured drive details">
+                        {{ drive.title }}
+                      </span>
+                      <button type="button" class="drive-info-link" (click)="openViewDetailsModal(drive)" title="Click to view full drive details & job description">
+                        <span class="material-symbols-outlined info-icon">info</span>
+                        <span>Drive Information</span>
+                      </button>
+                    </div>
                     <div class="stage-pills">
                       @if (drive.hasAptitudeTest) { <span class="stage-pill">Aptitude</span> }
                       @if (drive.hasGD) { <span class="stage-pill">GD</span> }

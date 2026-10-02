@@ -32,6 +32,15 @@ export class StudentProfileComponent implements OnInit {
   protected showNewPassword = signal<boolean>(false);
   protected showConfirmPassword = signal<boolean>(false);
 
+  // Live password attempt check
+  protected isPasswordAttempted = computed(() => {
+    return (
+      this.currentPassword().length > 0 ||
+      this.newPassword().length > 0 ||
+      this.confirmPassword().length > 0
+    );
+  });
+
   // Validation States
   protected isSaveTriggered = signal<boolean>(false);
   protected isSaveSuccess = signal<boolean>(false);
@@ -39,9 +48,28 @@ export class StudentProfileComponent implements OnInit {
   protected branchError = signal<boolean>(false);
   protected passoutYearError = signal<boolean>(false);
   protected backlogsError = signal<boolean>(false);
-  protected currentPasswordError = signal<boolean>(false);
-  protected newPasswordError = signal<boolean>(false);
-  protected confirmPasswordError = signal<boolean>(false);
+
+  // Live password error validation signals
+  protected currentPasswordError = computed(() => {
+    if (!this.isPasswordAttempted()) return false;
+    return !this.currentPassword().trim();
+  });
+
+  protected newPasswordError = computed(() => {
+    if (!this.isPasswordAttempted()) return false;
+    const pw = this.newPassword().trim();
+    if (!pw) return true;
+    return pw.length < 8 || !/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/[0-9]/.test(pw);
+  });
+
+  protected confirmPasswordError = computed(() => {
+    if (!this.isPasswordAttempted()) return false;
+    const conf = this.confirmPassword().trim();
+    const newPw = this.newPassword().trim();
+    if (!conf) return true;
+    return conf !== newPw || this.newPasswordError();
+  });
+
   protected globalSaveError = signal<string | null>(null);
   protected globalSaveSuccess = signal<string | null>(null);
 
@@ -210,9 +238,6 @@ export class StudentProfileComponent implements OnInit {
     this.branchError.set(false);
     this.passoutYearError.set(false);
     this.backlogsError.set(false);
-    this.currentPasswordError.set(false);
-    this.newPasswordError.set(false);
-    this.confirmPasswordError.set(false);
 
     const p = this.profile();
     if (!p) return;
@@ -241,21 +266,9 @@ export class StudentProfileComponent implements OnInit {
 
     const curPw = this.currentPassword().trim();
     const newPw = this.newPassword().trim();
-    const confPw = this.confirmPassword().trim();
 
-    const isPasswordAttempted = curPw.length > 0 || newPw.length > 0 || confPw.length > 0;
-
-    if (isPasswordAttempted) {
-      if (!curPw) {
-        this.currentPasswordError.set(true);
-        hasError = true;
-      }
-      if (newPw.length < 8 || !/[A-Z]/.test(newPw) || !/[a-z]/.test(newPw) || !/[0-9]/.test(newPw)) {
-        this.newPasswordError.set(true);
-        hasError = true;
-      }
-      if (newPw !== confPw) {
-        this.confirmPasswordError.set(true);
+    if (this.isPasswordAttempted()) {
+      if (this.currentPasswordError() || this.newPasswordError() || this.confirmPasswordError()) {
         hasError = true;
       }
     }
@@ -278,7 +291,7 @@ export class StudentProfileComponent implements OnInit {
       formData.append('profilePic', this.selectedPhotoFile);
     }
 
-    if (isPasswordAttempted) {
+    if (this.isPasswordAttempted()) {
       formData.append('password', newPw);
     }
 

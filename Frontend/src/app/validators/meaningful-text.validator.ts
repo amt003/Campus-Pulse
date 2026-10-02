@@ -15,30 +15,45 @@ export const meaningfulTextValidator: ValidatorFn = (control: AbstractControl): 
     return { tooFewLetters: true };
   }
 
-  // Split words by whitespace, dashes, slashes, and common punctuation
-  const words = s.split(/[\s\-\/\,\:\;\(\)\[\]\.\!\?\"\']+/);
+  // Split words by whitespace, dashes, slashes, bullets, and common punctuation
+  const words = s.split(/[\s\-\/\,\:\;\(\)\[\]\.\!\?\"\'\•\–\—\*\#\@\$\%\^\&\+\=\<\>\|\~\`]+/);
 
   // 2. Block single words of 4+ letters with 0 vowels
-  // Note: Skip ALL-CAPS acronyms (e.g., 'HTML', 'HTTPS', 'DBMS', 'SMTP', 'WSDL', 'SCSS', 'FCFS', 'SJF', 'TCS')
+  // Note: Skip ALL-CAPS acronyms (e.g., 'HTML', 'HTTPS', 'DBMS', 'SMTP', 'WSDL', 'SCSS', 'FCFS', 'SJF', 'TCS', 'RDBMS', 'TCP/IP', 'DNS')
   for (const w of words) {
     const cleanWord = w.replace(/[^a-zA-Z]/g, '');
-    const isAllCapsAcronym = cleanWord.length >= 2 && cleanWord.length <= 6 && cleanWord === cleanWord.toUpperCase();
+    const isAllCapsAcronym = cleanWord.length >= 2 && cleanWord.length <= 8 && cleanWord === cleanWord.toUpperCase();
     if (cleanWord.length >= 4 && !isAllCapsAcronym && !/[aeiouyAEIOUY]/.test(cleanWord)) {
       return { noVowel: true };
     }
   }
 
-  // 3. Block 5+ consecutive consonants in any word (keyboard mash like 'asdfghjkl' -> 'sdfghjkl')
-  // Note: 'y'/'Y' is treated as vowel-like, and valid English words like 'Abstract' or 'Analyst' have up to 4 consecutive consonants/sounds (b-s-t-r, l-y-s-t)
+  // 3. Block 6+ consecutive consonants in non-acronym words (keyboard mash like 'asdfghjkl' -> 'sdfghjkl')
+  // Note: Skip ALL-CAPS acronyms (e.g., 'HTTPS', 'RDBMS') and legitimate technical words (e.g., 'PostgreSQL', 'GraphQL', 'TypeScript', 'Catchphrase', 'Strengths')
   for (const w of words) {
     const cleanWord = w.replace(/[^a-zA-Z]/g, '');
-    if (/[bcdfghjklmnpqrstvwxzBCDFGHJKLMNPQRSTVWXZ]{5,}/.test(cleanWord)) {
+    const isAllCapsAcronym = cleanWord.length >= 2 && cleanWord.length <= 8 && cleanWord === cleanWord.toUpperCase();
+    if (!isAllCapsAcronym && /[bcdfghjklmnpqrstvwxzBCDFGHJKLMNPQRSTVWXZ]{6,}/.test(cleanWord)) {
       return { keyboardMash: true };
     }
   }
 
-  // 4. Block QWERTY keyboard mash patterns
-  const mashPatterns = [/qwerty/i, /asdf/i, /dfgh/i, /fghj/i, /hjkl/i, /zxcv/i, /xcvb/i, /cvbn/i, /vbnm/i, /wery/i, /sdfg/i];
+  // 4. Block QWERTY keyboard mash patterns within words (using word boundaries to avoid false positives on legitimate terms)
+  const mashPatterns = [
+    /\b[a-zA-Z]*qwerty[a-zA-Z]*\b/i,
+    /\b[a-zA-Z]*asdfgh[a-zA-Z]*\b/i,
+    /\b[a-zA-Z]*dfghjk[a-zA-Z]*\b/i,
+    /\b[a-zA-Z]*zxcvbn[a-zA-Z]*\b/i,
+    /\b[a-zA-Z]*hjkl[a-zA-Z]*\b/i,
+    /\basdf\b/i,
+    /\bsdfg\b/i,
+    /\bdfgh\b/i,
+    /\bfghj\b/i,
+    /\bzxcv\b/i,
+    /\bxcvb\b/i,
+    /\bcvbn\b/i,
+    /\bvbnm\b/i
+  ];
   for (const pat of mashPatterns) {
     if (pat.test(s)) {
       return { keyboardMash: true };
@@ -46,10 +61,11 @@ export const meaningfulTextValidator: ValidatorFn = (control: AbstractControl): 
   }
 
   // 5. Block repeating letter characters or patterns within words (e.g. 'aaaa', 'hkhkhk', 'abcabcabc')
-  // Note: Ignore non-letters like spaces, newlines (\n\n\n), dashes (---), dots (...), and valid words like 'IEEE'
   for (const w of words) {
     const cleanWord = w.replace(/[^a-zA-Z]/g, '');
     if (!cleanWord) continue;
+    const isAllCapsAcronym = cleanWord.length >= 2 && cleanWord.length <= 8 && cleanWord === cleanWord.toUpperCase();
+    if (isAllCapsAcronym) continue;
     const has4LetterRepeat = /([a-zA-Z])\1{3,}/i.test(cleanWord);
     const has2CharSeqRepeat = /([a-zA-Z]{2})\1{2,}/i.test(cleanWord);
     const has3CharSeqRepeat = /([a-zA-Z]{3})\1{2,}/i.test(cleanWord);
@@ -61,7 +77,7 @@ export const meaningfulTextValidator: ValidatorFn = (control: AbstractControl): 
   // 6. Overall Vowel Density check for words 6+ letters (less than 15% vowels is mash, skip ALL-CAPS acronyms)
   for (const w of words) {
     const cleanWord = w.replace(/[^a-zA-Z]/g, '');
-    const isAllCapsAcronym = cleanWord.length <= 6 && cleanWord === cleanWord.toUpperCase();
+    const isAllCapsAcronym = cleanWord.length <= 8 && cleanWord === cleanWord.toUpperCase();
     if (cleanWord.length >= 6 && !isAllCapsAcronym) {
       const vowels = (cleanWord.match(/[aeiouyAEIOUY]/g) || []).length;
       if (vowels / cleanWord.length < 0.15) {

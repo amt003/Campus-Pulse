@@ -44,6 +44,8 @@ const {
   approveDraftQuestion,
   rejectDraftQuestion,
   generateFromBank,
+  parseQuestionsFromUploadedPdf,
+  bulkAddQuestions,
 } = require("../controllers/questionBankController");
 const {
   createTest,
@@ -109,8 +111,10 @@ router.put("/test/:id/publish", publishTest);
 router.get("/test/:id/results", getTestResults);
 router.get("/test/:id", getTestDetails);
 
-// Question Bank Routes (Phase 2 & Phase 3 & Phase 4)
+// Question Bank Routes (Phase 2 & Phase 3 & Phase 4 & PDF Upload)
 router.post("/question/generate", generateDraftQuestions);
+router.post("/question/parse-pdf", memoryUpload.single("pdf"), parseQuestionsFromUploadedPdf);
+router.post("/question/bulk", bulkAddQuestions);
 router.get("/question/drafts", getDraftQuestions);
 router.put("/question/:id/approve", approveDraftQuestion);
 router.put("/question/:id/reject", rejectDraftQuestion);

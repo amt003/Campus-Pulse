@@ -9,10 +9,53 @@ import { RecruiterService } from '../../../services/recruiter.service';
 export interface StudentInfo {
   _id: string;
   name: string;
+  email?: string;
+  phone?: string;
   rollNumber: string;
   cgpa: number;
   branch: string;
+  passoutYear?: number;
+  activeBacklogs?: number;
   resumePath?: string;
+  profilePicPath?: string;
+  isPlacedGlobally?: boolean;
+  isPlaced?: boolean;
+  placementCompany?: string | null;
+}
+
+export interface ScheduleInfo {
+  _id: string;
+  eventType: 'Aptitude' | 'GD' | 'Interview';
+  date: string;
+  timeSlot: string;
+  location?: string;
+  meetingUrl?: string;
+  status?: string;
+  createdAt?: string;
+}
+
+export interface TestAttemptInfo {
+  _id: string;
+  testId?: string;
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  result: 'Pass' | 'Fail' | 'Pending';
+  startedAt?: string;
+  submittedAt?: string;
+  autoSubmitted?: boolean;
+  violationCount?: number;
+  flagged?: boolean;
+}
+
+export interface DriveAptitudeTestInfo {
+  _id: string;
+  title: string;
+  durationMinutes: number;
+  passingScore: number;
+  scheduledDate?: string;
+  timeSlot?: string;
+  status: string;
 }
 
 export interface ApplicationInfo {
@@ -21,11 +64,17 @@ export interface ApplicationInfo {
   status: string;
   aiMatchScore: number | null;
   student: StudentInfo | null;
+  schedules?: ScheduleInfo[];
+  aptitudeSchedule?: ScheduleInfo | null;
+  gdSchedule?: ScheduleInfo | null;
+  interviewSchedule?: ScheduleInfo | null;
+  testAttempt?: TestAttemptInfo | null;
   aptitude?: {
     status?: string;
     score?: number | null;
     feedback?: string | null;
     markedAt?: string;
+    source?: string;
   };
   gd?: {
     status?: string;
@@ -55,12 +104,18 @@ export interface ApplicationInfo {
     fileName?: string;
     uploadedDate?: string;
     expiryDate?: string;
+    viewedAt?: string;
+    downloadedAt?: string;
+    acceptedAt?: string;
+    declinedAt?: string;
     declineReason?: string;
     ctc?: number;
   };
   isPlacedGlobally?: boolean;
   isPlaced?: boolean;
   placementCompany?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 @Component({
@@ -84,6 +139,12 @@ export class RecruiterApplicationsComponent implements OnInit {
   protected companyName = signal<string>('Loading Company...');
   protected driveHasAptitude = signal<boolean>(true);
   protected driveHasGD = signal<boolean>(true);
+  protected driveApplicationDeadline = signal<string | null>(null);
+  protected driveCtc = signal<number | null>(null);
+  protected driveMinCGPA = signal<number | null>(null);
+  protected driveEligibleBranches = signal<string[]>([]);
+  protected driveMaxBacklogs = signal<number>(0);
+  protected driveAptitudeTest = signal<DriveAptitudeTestInfo | null>(null);
   protected applications = signal<ApplicationInfo[]>([]);
   protected isLoading = signal<boolean>(true);
   protected errorMessage = signal<string | null>(null);
@@ -96,9 +157,10 @@ export class RecruiterApplicationsComponent implements OnInit {
   // Checkbox multi-select selection state
   protected selectedIds = signal<Set<string>>(new Set<string>());
 
-  // XAI Modal state
+  // Candidate Details / XAI Modal state
   protected selectedXaiApp = signal<ApplicationInfo | null>(null);
   protected isXaiModalOpen = signal<boolean>(false);
+  protected activeCandidateModalTab = signal<'timeline' | 'analysis' | 'profile'>('timeline');
   protected activeResumeTab = signal<'pdf' | 'highlights'>('pdf');
   protected resumeText = signal<string>('');
   protected highlightedHtml = signal<SafeHtml>('');
@@ -276,6 +338,12 @@ export class RecruiterApplicationsComponent implements OnInit {
           this.companyName.set(res.data.companyName);
           this.driveHasAptitude.set(res.data.hasAptitudeTest !== false);
           this.driveHasGD.set(res.data.hasGD !== false);
+          this.driveApplicationDeadline.set(res.data.applicationDeadline || null);
+          this.driveCtc.set(res.data.ctc != null ? res.data.ctc : null);
+          this.driveMinCGPA.set(res.data.minCGPA != null ? res.data.minCGPA : null);
+          this.driveEligibleBranches.set(res.data.eligibleBranches || []);
+          this.driveMaxBacklogs.set(res.data.maxBacklogs || 0);
+          this.driveAptitudeTest.set(res.data.aptitudeTest || null);
           
           const rawApps = res.data.applications || [];
           const sortedApps = [...rawApps].sort((a: any, b: any) => (b.aiMatchScore || 0) - (a.aiMatchScore || 0));
@@ -288,6 +356,38 @@ export class RecruiterApplicationsComponent implements OnInit {
         console.error('Fetch applications error:', err);
       }
     });
+  }
+
+  protected formatDate(dateStr: string | null | undefined): string {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch {
+      return dateStr;
+    }
+  }
+
+  protected formatDateTime(dateStr: string | null | undefined): string {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return dateStr;
+    }
   }
 
   protected getFriendlyStatus(dbStatus: string): 'Applied' | 'Shortlisted' | 'Rejected' {
@@ -721,9 +821,17 @@ export class RecruiterApplicationsComponent implements OnInit {
     });
   }
 
-  // --- XAI Modal Control ---
-  protected openXaiModal(app: ApplicationInfo): void {
+  // --- Candidate Details & XAI Modal Control ---
+  protected openCandidateModal(app: ApplicationInfo, tab: 'timeline' | 'analysis' | 'profile' = 'timeline'): void {
+    this.activeCandidateModalTab.set(tab);
+    this.openXaiModal(app);
+  }
+
+  protected openXaiModal(app: ApplicationInfo, tab?: 'timeline' | 'analysis' | 'profile'): void {
     this.selectedXaiApp.set(app);
+    if (tab) {
+      this.activeCandidateModalTab.set(tab);
+    }
     this.activeResumeTab.set('pdf');
     this.resumeText.set('');
     this.highlightedHtml.set('');

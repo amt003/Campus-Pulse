@@ -241,11 +241,30 @@ export class RecruiterService {
     });
   }
 
-  // Question Bank API (Phase 7)
+  // Question Bank API (Phase 7 & PDF Upload)
   addQuestion(data: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/question`, data, {
       headers: this.getAuthHeaders(),
     });
+  }
+
+  parseQuestionsFromPdf(file: File, defaultCategory?: string, defaultDifficulty?: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('pdf', file);
+    if (defaultCategory) formData.append('defaultCategory', defaultCategory);
+    if (defaultDifficulty) formData.append('defaultDifficulty', defaultDifficulty);
+
+    return this.http.post(`${this.apiUrl}/question/parse-pdf`, formData, {
+      headers: this.getMultipartHeaders(),
+    });
+  }
+
+  bulkAddQuestions(questions: any[]): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/question/bulk`,
+      { questions },
+      { headers: this.getAuthHeaders() }
+    );
   }
 
   getQuestions(filter?: { category?: string; difficulty?: string; source?: string }): Observable<any> {
