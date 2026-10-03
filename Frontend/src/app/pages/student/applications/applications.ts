@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StudentService, Application } from '../../../services/student.service';
+import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../services/toast.service';
 
 @Component({
@@ -170,7 +171,7 @@ export class StudentApplicationsComponent implements OnInit {
 
   protected downloadAttachment(fileId: string, fileName: string): void {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-    const downloadUrl = `http://localhost:5000/api/student/drive/attachment/download/${fileId}?token=${token}`;
+    const downloadUrl = `${environment.apiUrl}/api/student/drive/attachment/download/${fileId}?token=${token}`;
     window.open(downloadUrl, '_blank');
   }
 

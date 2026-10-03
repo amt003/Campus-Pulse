@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { RecruiterService } from '../../../services/recruiter.service';
+import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../services/toast.service';
 
 @Component({
@@ -106,7 +107,7 @@ export class RecruiterOffersComponent implements OnInit {
 
   protected downloadOfferLetter(appId: string): void {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-    const downloadUrl = `http://localhost:5000/api/recruiter/offer/${appId}/pdf?token=${token}`;
+    const downloadUrl = `${environment.apiUrl}/api/recruiter/offer/${appId}/pdf?token=${token}`;
     window.open(downloadUrl, '_blank');
   }
 

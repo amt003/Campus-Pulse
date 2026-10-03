@@ -11,6 +11,7 @@ import { TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 type UserRole = 'student' | 'recruiter' | 'tpo';
 
@@ -116,7 +117,7 @@ export class LoginPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private fetchGoogleClientId(): void {
-    this.http.get<any>('http://localhost:5000/api/auth/google/client-id').subscribe({
+    this.http.get<any>(`${environment.apiUrl}/api/auth/google/client-id`).subscribe({
       next: (res) => {
         if (res.clientId) {
           this.googleClientId.set(res.clientId);
@@ -163,7 +164,7 @@ export class LoginPage implements OnInit, AfterViewInit, OnDestroy {
     this.isGoogleLoggingIn = true;
     this.errorMessage.set(null);
 
-    this.http.post<any>('http://localhost:5000/api/auth/google', {
+    this.http.post<any>(`${environment.apiUrl}/api/auth/google`, {
       token: response.credential,
     }).subscribe({
       next: (res) => {
@@ -299,7 +300,7 @@ export class LoginPage implements OnInit, AfterViewInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage.set(null);
 
-    this.http.post<any>('http://localhost:5000/api/auth/login', {
+    this.http.post<any>(`${environment.apiUrl}/api/auth/login`, {
       email: this.email,
       password: this.password,
     }).subscribe({
@@ -400,7 +401,7 @@ export class LoginPage implements OnInit, AfterViewInit, OnDestroy {
     this.forgotError.set(null);
     this.forgotSuccess.set(null);
 
-    this.http.post<any>('http://localhost:5000/api/auth/forgot-password', {
+    this.http.post<any>(`${environment.apiUrl}/api/auth/forgot-password`, {
       email: this.forgotEmail.trim()
     }).subscribe({
       next: (res) => {
@@ -425,7 +426,7 @@ export class LoginPage implements OnInit, AfterViewInit, OnDestroy {
     this.forgotError.set(null);
     this.forgotSuccess.set(null);
 
-    this.http.post<any>('http://localhost:5000/api/auth/reset-password', {
+    this.http.post<any>(`${environment.apiUrl}/api/auth/reset-password`, {
       email: this.forgotEmail.trim(),
       code: this.resetCode.trim(),
       newPassword: this.resetNewPassword.trim()

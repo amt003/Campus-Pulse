@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 import { FormControl } from '@angular/forms';
 import { meaningfulTextValidator } from '../../validators/meaningful-text.validator';
@@ -268,7 +269,7 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
       officialEmail: this.officialEmail.trim().toLowerCase(),
     };
 
-    this.http.post<any>('http://localhost:5000/api/auth/register', payload).subscribe({
+    this.http.post<any>(`${environment.apiUrl}/api/auth/register`, payload).subscribe({
       next: (res) => {
         this.isLoading = false;
         this.submitSuccess = true;

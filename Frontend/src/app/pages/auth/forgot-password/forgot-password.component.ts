@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-forgot-password',
@@ -92,7 +93,7 @@ export class ForgotPasswordComponent {
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
-    this.http.post<any>('http://localhost:5000/api/auth/forgot-password', { email: emailVal }).subscribe({
+    this.http.post<any>(`${environment.apiUrl}/api/auth/forgot-password`, { email: emailVal }).subscribe({
       next: (res) => {
         this.isLoading.set(false);
         this.step.set(2);
@@ -146,7 +147,7 @@ export class ForgotPasswordComponent {
       newPassword: this.newPassword(),
     };
 
-    this.http.post<any>('http://localhost:5000/api/auth/reset-password', payload).subscribe({
+    this.http.post<any>(`${environment.apiUrl}/api/auth/reset-password`, payload).subscribe({
       next: (res) => {
         this.isLoading.set(false);
         this.step.set(3);

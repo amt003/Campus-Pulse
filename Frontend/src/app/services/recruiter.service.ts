@@ -24,12 +24,14 @@ export interface RecruiterProfileResponse {
   data: RecruiterProfile;
 }
 
+import { environment } from '../../environments/environment';
+
 @Injectable({
   providedIn: 'root',
 })
 export class RecruiterService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:5000/api/recruiter';
+  private readonly apiUrl = `${environment.apiUrl}/api/recruiter`;
 
   private profileSubject = new BehaviorSubject<RecruiterProfile | null>(null);
   public profile$ = this.profileSubject.asObservable();

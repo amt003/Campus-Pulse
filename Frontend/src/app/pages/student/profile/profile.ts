@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StudentService, StudentProfile } from '../../../services/student.service';
+import { environment } from '../../../../environments/environment';
 import { IndiaLocationService } from '../../../services/india-location.service';
 import { FormControl } from '@angular/forms';
 import { meaningfulTextValidator } from '../../../validators/meaningful-text.validator';
@@ -522,7 +523,7 @@ export class StudentProfileComponent implements OnInit {
     const path = this.profile()?.resumePath;
     if (!path) return '#';
     if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    return `http://localhost:5000${path.startsWith('/') ? '' : '/'}${path}`;
+    return `${environment.apiUrl}${path.startsWith('/') ? '' : '/'}${path}`;
   }
 
   protected saveAllChanges(): void {

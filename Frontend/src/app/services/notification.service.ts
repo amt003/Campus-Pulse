@@ -20,13 +20,15 @@ export interface ToastItem {
   type: 'info' | 'success' | 'warning' | 'error';
 }
 
+import { environment } from '../../environments/environment';
+
 @Injectable({
   providedIn: 'root',
 })
 export class NotificationService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:5000/api/notifications';
-  private readonly socketUrl = 'http://localhost:5000';
+  private readonly apiUrl = `${environment.apiUrl}/api/notifications`;
+  private readonly socketUrl = environment.apiUrl;
   private socket: Socket | null = null;
 
   // Signals for state management

@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink, RouterModule } from '@angular/route
 import { DomSanitizer, SafeResourceUrl, SafeHtml } from '@angular/platform-browser';
 import { forkJoin } from 'rxjs';
 import { RecruiterService } from '../../../services/recruiter.service';
+import { environment } from '../../../../environments/environment';
 
 export interface StudentInfo {
   _id: string;
@@ -453,7 +454,7 @@ export class RecruiterApplicationsComponent implements OnInit {
 
   protected downloadOfferLetter(appId: string): void {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-    const downloadUrl = `http://localhost:5000/api/recruiter/offer/${appId}/pdf?token=${token}`;
+    const downloadUrl = `${environment.apiUrl}/api/recruiter/offer/${appId}/pdf?token=${token}`;
     window.open(downloadUrl, '_blank');
   }
 
@@ -969,7 +970,7 @@ export class RecruiterApplicationsComponent implements OnInit {
 
   protected getResumeUrl(path: string | undefined): SafeResourceUrl | null {
     if (!path) return null;
-    const fullUrl = `http://localhost:5000${path}`;
+    const fullUrl = `${environment.apiUrl}${path}`;
     return this.sanitizer.bypassSecurityTrustResourceUrl(fullUrl);
   }
 

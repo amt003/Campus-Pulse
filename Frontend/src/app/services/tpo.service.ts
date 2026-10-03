@@ -242,12 +242,14 @@ export interface DriveXRayData {
   applications: DriveXRayApplication[];
 }
 
+import { environment } from '../../environments/environment';
+
 @Injectable({
   providedIn: 'root',
 })
 export class TpoService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:5000/api/tpo';
+  private readonly apiUrl = `${environment.apiUrl}/api/tpo`;
 
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';

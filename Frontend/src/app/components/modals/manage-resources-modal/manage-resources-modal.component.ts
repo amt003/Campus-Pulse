@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 import { RecruiterService } from '../../../services/recruiter.service';
 import { ToastService } from '../../../services/toast.service';
 import { SmoothScrollService } from '../../../services/smooth-scroll.service';
@@ -168,7 +169,7 @@ export class ManageResourcesModalComponent implements OnInit, OnDestroy {
 
   protected downloadAttachment(fileId: string): void {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-    const downloadUrl = `http://localhost:5000/api/recruiter/drive/attachment/download/${fileId}?token=${token}`;
+    const downloadUrl = `${environment.apiUrl}/api/recruiter/drive/attachment/download/${fileId}?token=${token}`;
     window.open(downloadUrl, '_blank');
   }
 

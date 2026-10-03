@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { RecruiterService } from '../../../services/recruiter.service';
+import { environment } from '../../../../environments/environment';
 import { FormControl } from '@angular/forms';
 import { meaningfulTextValidator } from '../../../validators/meaningful-text.validator';
 
@@ -161,7 +162,7 @@ export class RecruiterProfileComponent implements OnInit {
           this.officialEmail.set(profile.officialEmail || '');
           this.website.set(profile.website || '');
           if (profile.companyLogo) {
-            this.currentLogoUrl.set(`http://localhost:5000${profile.companyLogo}`);
+            this.currentLogoUrl.set(`${environment.apiUrl}${profile.companyLogo}`);
           } else {
             this.currentLogoUrl.set(null);
           }
@@ -249,7 +250,7 @@ export class RecruiterProfileComponent implements OnInit {
         this.newPassword.set('');
         this.confirmPassword.set('');
         if (res.recruiter && res.recruiter.companyLogo) {
-          this.currentLogoUrl.set(`http://localhost:5000${res.recruiter.companyLogo}`);
+          this.currentLogoUrl.set(`${environment.apiUrl}${res.recruiter.companyLogo}`);
           this.logoPreviewUrl.set(null);
           this.selectedLogoFile = null;
         }

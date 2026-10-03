@@ -85,12 +85,14 @@ export interface Application {
   createdAt: string;
 }
 
+import { environment } from '../../environments/environment';
+
 @Injectable({
   providedIn: 'root',
 })
 export class StudentService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:5000/api/student';
+  private readonly apiUrl = `${environment.apiUrl}/api/student`;
 
   private getAuthHeaders(): HttpHeaders {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';

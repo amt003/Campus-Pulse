@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { TpoService, DriveXRayData, DriveXRayApplication } from '../../../services/tpo.service';
+import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../services/toast.service';
 import { SmoothScrollService } from '../../../services/smooth-scroll.service';
 
@@ -262,7 +263,7 @@ export class TpoDriveXrayComponent implements OnInit, OnDestroy {
     }
     const cleanPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
     const fullPath = cleanPath.startsWith('/uploads/') ? cleanPath : `/uploads/logos${cleanPath}`;
-    return `http://localhost:5000${fullPath}`;
+    return `${environment.apiUrl}${fullPath}`;
   }
 
   protected handleLogoError(): void {
