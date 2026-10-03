@@ -73,6 +73,10 @@ app.use("/api/tpo", tpoRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 // --- Test Route (To verify everything works) ---
+app.get("/", (req, res) => {
+  res.json({ message: "CampusPulse Backend API is running successfully!", status: "online" });
+});
+
 app.get("/api/test", (req, res) => {
   res.json({ message: "CampusPulse Backend is Running!" });
 });
