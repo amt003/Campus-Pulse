@@ -558,6 +558,9 @@ export interface CalendarSlot {
   location: string;
   meetingUrl?: string | null;
   driveId?: string | null;
+  status?: 'Active' | 'Upcoming' | 'Concluded' | string;
+  startTime?: Date | string;
+  endTime?: Date | string;
   studentCount: number;
   students: CalendarStudent[];
 }

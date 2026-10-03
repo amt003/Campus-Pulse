@@ -380,7 +380,7 @@ export class TpoDashboardComponent implements OnInit, OnDestroy {
     const currentYear = new Date().getFullYear();
     const r = Math.floor(100 + Math.random() * 900);
     const sample = [
-      { rollNumber: `CS26B${r}`, name: `Aarav Sharma`, email: `aarav.${r}@alphabet.edu`, cgpa: 9.1, branch: 'CSE', passoutYear: currentYear, activeBacklogs: 0 },
+      { rollNumber: `CS26B${r}`, name: `Aarav Sharma`, email: `aaravcs${currentYear}@alphabetcollege.edu.in`, cgpa: 9.1, branch: 'CSE', passoutYear: currentYear, activeBacklogs: 0 },
     ];
     this.importRawInput.set(JSON.stringify(sample, null, 2));
     this.previewStudents.set(sample);

@@ -47,8 +47,25 @@
         <!-- Identity info column -->
         <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 6px;">
           <h2 style="font-size: 22px; font-weight: 800; color: var(--primary); margin: 0;">{{ profile()!.userId.name }}</h2>
-          <p style="font-size: 15px; color: var(--text-secondary); margin: 0; font-weight: 600;">Roll Number: {{ profile()!.rollNumber }}</p>
-          <p style="font-size: 15px; color: var(--text-secondary); margin: 0; font-weight: 600;">Email: {{ profile()!.userId.email }}</p>
+          <p style="font-size: 14.5px; color: var(--text-secondary); margin: 0; font-weight: 600;">Roll Number: {{ profile()!.rollNumber }}</p>
+          <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 2px;">
+            <p style="font-size: 13.5px; color: var(--text-secondary); margin: 0; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+              <span class="material-symbols-outlined" style="font-size: 16px; color: var(--primary);">mail</span>
+              <span>{{ profile()!.userId.email }}</span>
+            </p>
+            @if (profile()?.contactNumber) {
+              <p style="font-size: 13.5px; color: var(--text-secondary); margin: 0; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                <span class="material-symbols-outlined" style="font-size: 16px; color: var(--primary);">call</span>
+                <span>{{ profile()!.contactNumber }}</span>
+              </p>
+            }
+          </div>
+          @if (combinedAddress) {
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0; font-weight: 500; display: inline-flex; align-items: center; gap: 4px;">
+              <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-secondary);">home</span>
+              <span>{{ combinedAddress }}</span>
+            </p>
+          }
           
           @if (profile()?.isProfileComplete) {
             <div style="margin-top: 6px;">
@@ -61,24 +78,210 @@
         </div>
       </div>
 
-      <!-- Section 2: Academic & Personal Details -->
+      <!-- Section 2: Personal & Contact Information -->
       <div style="display: flex; flex-direction: column; gap: 18px;">
-        <h3 style="font-size: 17px; font-weight: 800; color: var(--primary); margin: 0; border-bottom: 1.5px solid var(--border); padding-bottom: 8px;">Academic Details</h3>
+        <h3 style="font-size: 17px; font-weight: 800; color: var(--primary); margin: 0; border-bottom: 1.5px solid var(--border); padding-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+          <span class="material-symbols-outlined" style="font-size: 20px;">contact_page</span>
+          <span>Personal & Contact Information</span>
+        </h3>
+
+        <div class="profile-form-grid">
+          <div class="form-group-profile">
+            <label class="profile-field-label">Contact Number</label>
+            <div class="input-with-icon-wrapper">
+              <span class="material-symbols-outlined input-leading-icon">call</span>
+              <input type="tel" [ngModel]="profile()!.contactNumber" (ngModelChange)="onFieldChange('contactNumber', $event)" (blur)="contactNumberTouched.set(true)" name="profileContactNumber" class="profile-input input-with-icon"
+                placeholder="e.g. +91 9876543210"
+                [class.is-invalid]="(contactNumberTouched() || isSaveTriggered()) && contactNumberError()"
+                [class.is-valid]="(contactNumberTouched() || isSaveTriggered()) && !contactNumberError() && profile()!.contactNumber" />
+            </div>
+            @if ((contactNumberTouched() || isSaveTriggered()) && contactNumberError()) {
+              <span class="field-error-text">{{ contactNumberError() }}</span>
+            }
+          </div>
+
+          <div class="form-group-profile">
+            <label class="profile-field-label">Email Address (Registered)</label>
+            <div class="input-with-icon-wrapper">
+              <span class="material-symbols-outlined input-leading-icon">mail</span>
+              <input type="text" [value]="profile()!.userId.email" class="profile-input input-with-icon disabled-input" disabled readonly />
+            </div>
+          </div>
+
+          <!-- Residential Address: Structured fields -->
+          <div class="form-group-profile full-width-field">
+            <label class="profile-field-label" style="display: flex; align-items: center; gap: 6px;">
+              <span class="material-symbols-outlined" style="font-size: 16px; color: var(--primary);">home</span>
+              Residential Address
+            </label>
+            <div class="address-structured-grid">
+
+              <!-- House / Flat Name -->
+              <div class="form-group-profile addr-full">
+                <label class="profile-field-label addr-sublabel">House / Flat Name & Street</label>
+                <input
+                  type="text"
+                  class="profile-input"
+                  placeholder="e.g. Flat 3B, Green Valley Apartments, MG Road"
+                  [ngModel]="addrHouseName()"
+                  (ngModelChange)="addrHouseName.set($event)"
+                  (blur)="houseNameTouched.set(true)"
+                  name="addrHouseName"
+                  [class.is-invalid]="(houseNameTouched() || isSaveTriggered()) && houseNameError()"
+                  [class.is-valid]="(houseNameTouched() || isSaveTriggered()) && !houseNameError() && addrHouseName()"
+                />
+                @if ((houseNameTouched() || isSaveTriggered()) && houseNameError()) {
+                  <span class="field-error-text">{{ houseNameError() }}</span>
+                }
+              </div>
+
+              <!-- Country (Fixed: India) -->
+              <div class="form-group-profile">
+                <label class="profile-field-label addr-sublabel">Country</label>
+                <div class="input-with-icon-wrapper">
+                  <span class="material-symbols-outlined input-leading-icon" style="font-size: 17px;">flag</span>
+                  <input
+                    type="text"
+                    class="profile-input input-with-icon disabled-input"
+                    value="India"
+                    readonly
+                    disabled
+                  />
+                </div>
+              </div>
+
+              <!-- State Dropdown -->
+              <div class="form-group-profile">
+                <label class="profile-field-label addr-sublabel">State</label>
+                @if (isLoadingStates()) {
+                  <div class="addr-loading-row">
+                    <div class="spinner-xs"></div>
+                    <span>Loading states...</span>
+                  </div>
+                } @else {
+                  <select
+                    class="profile-input"
+                    style="background: white;"
+                    name="addrState"
+                    [ngModel]="addrState()"
+                    (ngModelChange)="onStateChange($event)"
+                    (blur)="stateTouched.set(true)"
+                    [class.is-invalid]="(stateTouched() || isSaveTriggered()) && stateError()"
+                    [class.is-valid]="(stateTouched() || isSaveTriggered()) && !stateError() && addrState()"
+                  >
+                    <option value="">-- Select State --</option>
+                    @for (state of availableStates(); track state) {
+                      <option [value]="state">{{ state }}</option>
+                    }
+                  </select>
+                }
+              </div>
+
+              <!-- District Dropdown (depends on State) -->
+              <div class="form-group-profile">
+                <label class="profile-field-label addr-sublabel">District</label>
+                @if (isLoadingDistricts()) {
+                  <div class="addr-loading-row">
+                    <div class="spinner-xs"></div>
+                    <span>Loading districts...</span>
+                  </div>
+                } @else {
+                  <select
+                    class="profile-input"
+                    style="background: white;"
+                    name="addrDistrict"
+                    [ngModel]="addrDistrict()"
+                    (ngModelChange)="addrDistrict.set($event)"
+                    (blur)="districtTouched.set(true)"
+                    [disabled]="!addrState()"
+                    [class.is-invalid]="(districtTouched() || isSaveTriggered()) && districtError()"
+                    [class.is-valid]="(districtTouched() || isSaveTriggered()) && !districtError() && addrDistrict()"
+                  >
+                    <option value="">{{ addrState() ? '-- Select District --' : '-- Select State first --' }}</option>
+                    @for (dist of availableDistricts(); track dist) {
+                      <option [value]="dist">{{ dist }}</option>
+                    }
+                  </select>
+                }
+                @if ((districtTouched() || isSaveTriggered()) && districtError()) {
+                  <span class="field-error-text">{{ districtError() }}</span>
+                }
+              </div>
+
+              <!-- PIN Code -->
+              <div class="form-group-profile">
+                <label class="profile-field-label addr-sublabel">PIN Code</label>
+                <div class="pincode-input-wrap">
+                  <input
+                    type="text"
+                    class="profile-input"
+                    placeholder="e.g. 682030"
+                    maxlength="6"
+                    [ngModel]="addrPinCode()"
+                    (ngModelChange)="onPinCodeChange($event)"
+                    (blur)="pinCodeTouched.set(true)"
+                    name="addrPinCode"
+                    [class.is-invalid]="(pinCodeTouched() || isSaveTriggered()) && pinCodeError()"
+                    [class.is-valid]="(pinCodeTouched() || isSaveTriggered()) && !pinCodeError() && addrPinCode() && !isCheckingPinCode()"
+                  />
+                  @if (isCheckingPinCode()) {
+                    <div class="pincode-spinner-wrap" title="Verifying PIN Code with India Post API...">
+                      <div class="spinner-xs"></div>
+                    </div>
+                  }
+                </div>
+                @if (isCheckingPinCode()) {
+                  <span class="pincode-status-checking">
+                    <span class="material-symbols-outlined spin-icon-xs">sync</span>
+                    Verifying PIN code with India Post database...
+                  </span>
+                } @else if ((pinCodeTouched() || isSaveTriggered()) && pinCodeError()) {
+                  <span class="field-error-text">{{ pinCodeError() }}</span>
+                } @else if (pinCodeVerifiedInfo(); as info) {
+                  <span class="pincode-status-verified">
+                    <span class="material-symbols-outlined" style="font-size: 14px;">verified</span>
+                    Verified India Post PIN Code @if (info.state || info.district) {({{ info.district ? info.district + ', ' : '' }}{{ info.state }})}
+                  </span>
+                }
+              </div>
+
+              <!-- Address Preview -->
+              @if (combinedAddress) {
+                <div class="addr-preview addr-full">
+                  <span class="material-symbols-outlined" style="font-size: 15px; color: var(--primary);">place</span>
+                  <span>{{ combinedAddress }}</span>
+                </div>
+              }
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
+
+      <!-- Section 3: Academic Details -->
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <h3 style="font-size: 17px; font-weight: 800; color: var(--primary); margin: 0; border-bottom: 1.5px solid var(--border); padding-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+          <span class="material-symbols-outlined" style="font-size: 20px;">school</span>
+          <span>Academic Details</span>
+        </h3>
         
         <div class="profile-form-grid">
           <div class="form-group-profile">
             <label class="profile-field-label">Current CGPA</label>
-            <input type="number" [(ngModel)]="profile()!.cgpa" name="profileCgpa" class="profile-input" step="0.1" min="0" max="10" required 
-              [class.is-invalid]="isSaveTriggered() && cgpaError()" [class.is-valid]="isSaveTriggered() && !cgpaError()" />
-            @if (isSaveTriggered() && cgpaError()) {
-              <span class="field-error-text">CGPA must be between 0 and 10</span>
+            <input type="number" [ngModel]="profile()!.cgpa" (ngModelChange)="onFieldChange('cgpa', $event)" (blur)="cgpaTouched.set(true)" name="profileCgpa" class="profile-input" step="0.1" min="0" max="10" required 
+              [class.is-invalid]="(cgpaTouched() || isSaveTriggered()) && cgpaError()" [class.is-valid]="(cgpaTouched() || isSaveTriggered()) && !cgpaError()" />
+            @if ((cgpaTouched() || isSaveTriggered()) && cgpaError()) {
+              <span class="field-error-text">{{ cgpaError() }}</span>
             }
           </div>
 
           <div class="form-group-profile">
             <label class="profile-field-label">Branch</label>
-            <select [(ngModel)]="profile()!.branch" name="profileBranch" class="profile-input" required
-              [class.is-invalid]="isSaveTriggered() && branchError()" [class.is-valid]="isSaveTriggered() && !branchError()" style="background: white;">
+            <select [ngModel]="profile()!.branch" (ngModelChange)="onFieldChange('branch', $event)" (blur)="branchTouched.set(true)" name="profileBranch" class="profile-input" required
+              [class.is-invalid]="(branchTouched() || isSaveTriggered()) && branchError()" [class.is-valid]="(branchTouched() || isSaveTriggered()) && !branchError()" style="background: white;">
               <option value="">Select Branch</option>
               @for (b of availableBranches(); track b) {
                 <option [value]="b">{{ b }}</option>
@@ -87,15 +290,15 @@
                 <option [value]="profile()!.branch">{{ profile()!.branch }}</option>
               }
             </select>
-            @if (isSaveTriggered() && branchError()) {
-              <span class="field-error-text">Please select a valid branch</span>
+            @if ((branchTouched() || isSaveTriggered()) && branchError()) {
+              <span class="field-error-text">{{ branchError() }}</span>
             }
           </div>
 
           <div class="form-group-profile">
             <label class="profile-field-label">Passout Year</label>
-            <select [(ngModel)]="profile()!.passoutYear" name="profileYear" class="profile-input" required
-              [class.is-invalid]="isSaveTriggered() && passoutYearError()" [class.is-valid]="isSaveTriggered() && !passoutYearError()" style="background: white;">
+            <select [ngModel]="profile()!.passoutYear" (ngModelChange)="onFieldChange('passoutYear', $event)" (blur)="passoutYearTouched.set(true)" name="profileYear" class="profile-input" required
+              [class.is-invalid]="(passoutYearTouched() || isSaveTriggered()) && passoutYearError()" [class.is-valid]="(passoutYearTouched() || isSaveTriggered()) && !passoutYearError()" style="background: white;">
               <option value="">Select Year</option>
               @for (yr of availablePassoutYears(); track yr) {
                 <option [value]="yr">{{ yr }}</option>
@@ -104,17 +307,17 @@
                 <option [value]="profile()!.passoutYear">{{ profile()!.passoutYear }}</option>
               }
             </select>
-            @if (isSaveTriggered() && passoutYearError()) {
-              <span class="field-error-text">Please select a passout year</span>
+            @if ((passoutYearTouched() || isSaveTriggered()) && passoutYearError()) {
+              <span class="field-error-text">{{ passoutYearError() }}</span>
             }
           </div>
 
           <div class="form-group-profile">
             <label class="profile-field-label">Active Backlogs</label>
-            <input type="number" [(ngModel)]="profile()!.activeBacklogs" name="profileBacklogs" class="profile-input" min="0" required
-              [class.is-invalid]="isSaveTriggered() && backlogsError()" [class.is-valid]="isSaveTriggered() && !backlogsError()" />
-            @if (isSaveTriggered() && backlogsError()) {
-              <span class="field-error-text">Backlogs cannot be negative</span>
+            <input type="number" [ngModel]="profile()!.activeBacklogs" (ngModelChange)="onFieldChange('activeBacklogs', $event)" (blur)="backlogsTouched.set(true)" name="profileBacklogs" class="profile-input" min="0" required
+              [class.is-invalid]="(backlogsTouched() || isSaveTriggered()) && backlogsError()" [class.is-valid]="(backlogsTouched() || isSaveTriggered()) && !backlogsError()" />
+            @if ((backlogsTouched() || isSaveTriggered()) && backlogsError()) {
+              <span class="field-error-text">{{ backlogsError() }}</span>
             }
           </div>
         </div>

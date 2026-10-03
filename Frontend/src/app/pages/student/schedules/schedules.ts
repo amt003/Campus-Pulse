@@ -26,6 +26,40 @@ export class StudentSchedulesComponent implements OnInit {
     this.loadSchedule();
   }
 
+  protected parseScheduleDates(scheduleDate: string | Date, timeSlot?: string): { start: Date; end: Date } {
+    const start = new Date(scheduleDate);
+    const end = new Date(scheduleDate);
+
+    if (timeSlot && timeSlot.includes('-')) {
+      try {
+        const [startTimeStr, endTimeStr] = timeSlot.split('-').map(t => t.trim());
+        const parseTime = (baseDate: Date, timeStr: string): Date => {
+          const d = new Date(baseDate);
+          const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+          if (match) {
+            let hours = parseInt(match[1], 10);
+            const minutes = parseInt(match[2], 10);
+            const ampm = match[3].toUpperCase();
+            if (ampm === 'PM' && hours < 12) hours += 12;
+            if (ampm === 'AM' && hours === 12) hours = 0;
+            d.setHours(hours, minutes, 0, 0);
+          }
+          return d;
+        };
+
+        const parsedStart = parseTime(start, startTimeStr);
+        const parsedEnd = parseTime(end, endTimeStr);
+        return { start: parsedStart, end: parsedEnd };
+      } catch (e) {
+        // Fallback default
+      }
+    }
+
+    start.setHours(10, 0, 0, 0);
+    end.setHours(11, 0, 0, 0);
+    return { start, end };
+  }
+
   protected loadSchedule(): void {
     this.isLoading.set(true);
     this.errorMessage.set('');
@@ -41,26 +75,41 @@ export class StudentSchedulesComponent implements OnInit {
 
           if (res.data) {
             const data = res.data;
+            const now = new Date();
             
             if (data.currently || data.finished) {
-              this.currentlyEvents.set(data.currently || []);
+              const rawCurr = data.currently || [];
+              const validCurr: any[] = [];
+              const extraFinished: any[] = [];
+
+              rawCurr.forEach((evt: any) => {
+                const { end } = this.parseScheduleDates(evt.date, evt.timeSlot);
+                if (now > end && evt.status !== 'Active') {
+                  evt.status = evt.status === 'Completed' ? 'Completed' : 'Missed';
+                  extraFinished.push(evt);
+                } else {
+                  validCurr.push(evt);
+                }
+              });
+
+              this.currentlyEvents.set(validCurr);
               this.upcomingEvents.set(data.upcoming || []);
-              this.finishedEvents.set(data.finished || data.past || []);
+              this.finishedEvents.set([...(data.finished || data.past || []), ...extraFinished]);
             } else {
               // Client-side categorization fallback
               const allUpcoming = data.upcoming || [];
               const allPast = data.past || [];
               
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-
               const curr: any[] = [];
               const up: any[] = [];
+              const pastList: any[] = [...allPast];
 
               allUpcoming.forEach((evt: any) => {
-                const d = new Date(evt.date);
-                d.setHours(0, 0, 0, 0);
-                if (d.getTime() === today.getTime()) {
+                const { start, end } = this.parseScheduleDates(evt.date, evt.timeSlot);
+                if (now > end) {
+                  evt.status = evt.status === 'Completed' ? 'Completed' : 'Missed';
+                  pastList.push(evt);
+                } else if (now >= start && now <= end) {
                   curr.push(evt);
                 } else {
                   up.push(evt);
@@ -69,7 +118,7 @@ export class StudentSchedulesComponent implements OnInit {
 
               this.currentlyEvents.set(curr);
               this.upcomingEvents.set(up);
-              this.finishedEvents.set(allPast);
+              this.finishedEvents.set(pastList);
             }
           }
         } else {

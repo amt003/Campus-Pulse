@@ -9,6 +9,7 @@ const aiService = require("../services/aiService");
 const socketService = require("../services/socketService");
 const { getStudentPlacementStatus } = require("../utils/studentStatus");
 const placementAnalyzerService = require("../services/placementAnalyzerService");
+const { parseTimeSlotWindow, evaluateScheduleStatus } = require("../utils/scheduleTimeHelper");
 
 const createStudentProfile = async (req, res) => {
   try {
@@ -27,6 +28,9 @@ const createStudentProfile = async (req, res) => {
 
     const {
       rollNumber,
+      contactNumber,
+      phone,
+      address,
       cgpa,
       branch,
       passoutYear,
@@ -40,9 +44,14 @@ const createStudentProfile = async (req, res) => {
       });
     }
 
+    const contact = (contactNumber || phone || "").toString().trim();
+    const studentAddress = (address || "").toString().trim();
+
     const studentProfile = await Student.create({
       userId: req.user._id,
       rollNumber,
+      contactNumber: contact,
+      address: studentAddress,
       cgpa,
       branch,
       passoutYear,
@@ -51,9 +60,18 @@ const createStudentProfile = async (req, res) => {
       isProfileComplete: true,
     });
 
+    if (contact) {
+      await User.findByIdAndUpdate(req.user._id, { phone: contact });
+    }
+
+    const populatedProfile = await Student.findById(studentProfile._id).populate(
+      "userId",
+      "name email role phone isActive"
+    );
+
     return res.status(201).json({
       message: "Student profile created successfully",
-      profile: studentProfile,
+      profile: populatedProfile || studentProfile,
     });
   } catch (error) {
     return res.status(500).json({
@@ -76,8 +94,13 @@ const getStudentProfile = async (req, res) => {
       });
     }
 
+    const profileObj = profile.toObject();
+    if (!profileObj.contactNumber && profileObj.userId && profileObj.userId.phone) {
+      profileObj.contactNumber = profileObj.userId.phone;
+    }
+
     return res.status(200).json({
-      profile,
+      profile: profileObj,
     });
   } catch (error) {
     return res.status(500).json({
@@ -99,6 +122,8 @@ const updateStudentProfile = async (req, res) => {
 
     const allowedFields = [
       "rollNumber",
+      "contactNumber",
+      "address",
       "cgpa",
       "branch",
       "passoutYear",
@@ -110,15 +135,24 @@ const updateStudentProfile = async (req, res) => {
 
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
-        profile[field] = req.body[field] === "null" || req.body[field] === "" ? null : req.body[field];
+        profile[field] = req.body[field] === "null" || req.body[field] === "" ? "" : req.body[field];
       }
     });
+
+    if (req.body.phone !== undefined && req.body.contactNumber === undefined) {
+      profile.contactNumber = req.body.phone === "null" || req.body.phone === "" ? "" : req.body.phone;
+    }
 
     if (req.file) {
       profile.profilePicPath = `/uploads/logos/${req.file.filename}`;
     }
 
     await profile.save();
+
+    const updatedPhone = req.body.contactNumber !== undefined ? req.body.contactNumber : req.body.phone;
+    if (updatedPhone !== undefined) {
+      await User.findByIdAndUpdate(req.user._id, { phone: updatedPhone });
+    }
 
     // Check if password change is requested
     if (req.body.password && req.body.password.trim()) {
@@ -129,9 +163,19 @@ const updateStudentProfile = async (req, res) => {
       }
     }
 
+    const populatedProfile = await Student.findById(profile._id).populate(
+      "userId",
+      "name email role phone isActive"
+    );
+
+    const profileObj = populatedProfile ? populatedProfile.toObject() : profile.toObject();
+    if (!profileObj.contactNumber && profileObj.userId && profileObj.userId.phone) {
+      profileObj.contactNumber = profileObj.userId.phone;
+    }
+
     return res.status(200).json({
       message: "Student profile updated successfully",
-      profile,
+      profile: profileObj,
     });
   } catch (error) {
     return res.status(500).json({
@@ -525,6 +569,7 @@ const getApplicationById = async (req, res) => {
       applicationId: application._id,
     }).sort({ date: 1 });
 
+    const now = new Date();
     const schedules = await Promise.all(
       rawSchedules.map(async (sch) => {
         let isDone = sch.status === "Completed";
@@ -542,7 +587,17 @@ const getApplicationById = async (req, res) => {
             await Schedule.findByIdAndUpdate(sch._id, { status: "Completed" });
           }
         }
-        return sch.toObject();
+
+        const schObj = sch.toObject();
+        if (schObj.status !== "Completed" && schObj.status !== "Cancelled") {
+          const { startTime, endTime } = parseTimeSlotWindow(sch.date, sch.timeSlot);
+          if (endTime && now > endTime) {
+            schObj.status = "Missed";
+          } else if (startTime && endTime && now >= startTime && now <= endTime) {
+            schObj.status = "Active";
+          }
+        }
+        return schObj;
       })
     );
 
@@ -571,6 +626,7 @@ const getStudentSchedule = async (req, res) => {
 
     const placementStatus = await getStudentPlacementStatus(student._id);
     const isPlaced = student.isPlaced || placementStatus.isPlaced;
+    const now = new Date();
 
     const rawSchedules = await Schedule.find({ studentId: student._id })
       .populate({
@@ -613,6 +669,15 @@ const getStudentSchedule = async (req, res) => {
           }
         }
 
+        const { startTime, endTime } = parseTimeSlotWindow(sch.date, sch.timeSlot);
+        if (schStatus !== "Completed" && schStatus !== "Cancelled") {
+          if (endTime && now > endTime) {
+            schStatus = "Missed";
+          } else if (startTime && endTime && now >= startTime && now <= endTime) {
+            schStatus = "Active";
+          }
+        }
+
         return {
           scheduleId: sch._id,
           _id: sch._id,
@@ -623,6 +688,8 @@ const getStudentSchedule = async (req, res) => {
           meetingUrl: sch.meetingUrl,
           status: schStatus,
           isFrozen,
+          startTime,
+          endTime,
           drive: {
             title: sch.driveId ? sch.driveId.title : "Placement Drive",
             companyName,
@@ -633,25 +700,27 @@ const getStudentSchedule = async (req, res) => {
       })
     );
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     const currently = [];
     const upcoming = [];
     const finished = [];
 
     for (const item of formattedSchedules) {
-      const schDate = new Date(item.date);
-      schDate.setHours(0, 0, 0, 0);
-
-      if (item.status === "Completed" || schDate.getTime() < today.getTime()) {
+      if (item.status === "Completed" || item.status === "Cancelled" || item.status === "Missed") {
         finished.push(item);
-      } else if (schDate.getTime() === today.getTime()) {
+      } else if (item.status === "Active") {
+        currently.push(item);
+      } else if (item.endTime && now > item.endTime) {
+        item.status = "Missed";
+        finished.push(item);
+      } else if (item.startTime && item.endTime && now >= item.startTime && now <= item.endTime) {
+        item.status = "Active";
         currently.push(item);
       } else {
+        item.status = "Upcoming";
         upcoming.push(item);
       }
     }
+
 
     return res.status(200).json({
       success: true,

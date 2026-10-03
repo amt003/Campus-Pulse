@@ -35,7 +35,3 @@ Thumbs.db
 # IDE Specific
 .vscode/
 .idea/
-
-# Test Outputs
-test-results/
-playwright-report/

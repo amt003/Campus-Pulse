@@ -283,15 +283,15 @@ export class StudentDashboardComponent implements OnInit {
                 allSchedules = allSchedules.concat(mapped);
               });
 
-              // Filter out finished / completed schedules or past date schedules for the Upcoming widget
+              // Filter out finished / completed schedules or past date / time-slot schedules for the Upcoming widget
+              const now = new Date();
               const activeUpcomingSchedules = allSchedules.filter((s: any) => {
-                const schDate = new Date(s.date);
-                schDate.setHours(0, 0, 0, 0);
-                if (schDate.getTime() < today.getTime()) return false;
+                const { end } = this.parseScheduleDates(s.date, s.timeSlot);
+                if (now.getTime() > end.getTime()) return false;
 
                 const matchingApp = apps.find(a => a._id === s.applicationId);
                 if (matchingApp && this.isScheduleCompleted(s, matchingApp)) return false;
-                if (s.status === 'Completed' || s.status === 'Cancelled') return false;
+                if (s.status === 'Completed' || s.status === 'Cancelled' || s.status === 'Missed') return false;
 
                 return true;
               });

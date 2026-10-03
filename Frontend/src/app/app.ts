@@ -2,12 +2,11 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ToastContainerComponent } from './components/toast/toast-container.component';
 import { InstallPromptComponent } from './components/install-prompt/install-prompt.component';
-import { FullPageLoaderComponent } from './components/loaders/full-page-loader/full-page-loader.component';
 import { SmoothScrollService } from './services/smooth-scroll.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastContainerComponent, InstallPromptComponent, FullPageLoaderComponent],
+  imports: [RouterOutlet, ToastContainerComponent, InstallPromptComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

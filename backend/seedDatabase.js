@@ -17,7 +17,7 @@ async function seedDatabase() {
 
     console.log("Clearing existing data for a fresh real seed...");
     await Promise.all([
-      User.deleteMany({ email: { $ne: "tpo@alphabet.edu" } }),
+      User.deleteMany({ email: { $nin: ["tpo@alphabet.edu", "tpo@alphabetcollege.edu.in"] } }),
       Student.deleteMany({}),
       Recruiter.deleteMany({}),
       JobDrive.deleteMany({}),
@@ -109,7 +109,8 @@ async function seedDatabase() {
       for (let i = 0; i < b.count; i++) {
         const isPlacedStudent = i < countToPlace;
         const rollNumber = `${b.name}24B${String(rollCounter++).padStart(3, "0")}`;
-        const email = `student.${rollNumber.toLowerCase()}@alphabet.edu`;
+        const branchCode = b.name.toLowerCase() === 'mechanical' ? 'me' : b.name.toLowerCase();
+        const email = `student${branchCode}${String(i + 1).padStart(3, "0")}2024@alphabetcollege.edu.in`;
 
         const user = await User.create({
           name: `Student ${rollNumber}`,

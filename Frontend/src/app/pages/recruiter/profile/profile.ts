@@ -26,6 +26,12 @@ export class RecruiterProfileComponent implements OnInit {
   protected officialEmail = signal<string>('');
   protected website = signal<string>('');
 
+  // Touched signals for Live Validation
+  protected isSaveTriggered = signal<boolean>(false);
+  protected companyNameTouched = signal<boolean>(false);
+  protected officialEmailTouched = signal<boolean>(false);
+  protected websiteTouched = signal<boolean>(false);
+
   // Security / Password state
   protected currentPassword = signal<string>('');
   protected newPassword = signal<string>('');
@@ -42,6 +48,32 @@ export class RecruiterProfileComponent implements OnInit {
       this.newPassword().length > 0 ||
       this.confirmPassword().length > 0
     );
+  });
+
+  // Live validation error signals
+  protected companyNameError = computed(() => {
+    const name = this.companyName().trim();
+    if (!name) return 'Company name is required';
+    return this.getMeaningfulError(name);
+  });
+
+  protected officialEmailError = computed(() => {
+    const email = this.officialEmail().trim();
+    if (!email) return 'Official contact email is required';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return 'Please enter a valid email address (e.g. hr@company.com)';
+    }
+    return null;
+  });
+
+  protected websiteError = computed(() => {
+    const web = this.website().trim();
+    if (!web) return 'Company website URL is required';
+    const pattern = /^(https?:\/\/)?([\w\-]+\.)+[\w\-]+(\/.*)?$/i;
+    if (!pattern.test(web)) {
+      return 'Please enter a valid website URL (e.g. https://company.com)';
+    }
+    return null;
   });
 
   // Password Strength Computations
@@ -74,23 +106,41 @@ export class RecruiterProfileComponent implements OnInit {
 
   // Live password error validation signals
   protected currentPasswordError = computed(() => {
-    if (!this.isPasswordAttempted()) return false;
-    return !this.currentPassword().trim();
+    if (!this.isPasswordAttempted()) return null;
+    if (!this.currentPassword().trim()) return 'Current password is required to change password';
+    return null;
   });
 
   protected newPasswordError = computed(() => {
-    if (!this.isPasswordAttempted()) return false;
+    if (!this.isPasswordAttempted()) return null;
     const pw = this.newPassword().trim();
-    if (!pw) return true;
-    return pw.length < 8 || !/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/[0-9]/.test(pw);
+    if (!pw) return 'New password is required';
+    if (pw.length < 8 || !/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/[0-9]/.test(pw)) {
+      return 'Password does not meet complexity requirements (min 8 chars, 1 uppercase, 1 lowercase, 1 digit)';
+    }
+    return null;
   });
 
   protected confirmPasswordError = computed(() => {
-    if (!this.isPasswordAttempted()) return false;
+    if (!this.isPasswordAttempted()) return null;
     const conf = this.confirmPassword().trim();
     const newPw = this.newPassword().trim();
-    if (!conf) return true;
-    return conf !== newPw || this.newPasswordError();
+    if (!conf) return 'Repeat password is required';
+    if (conf !== newPw) return 'Passwords do not match';
+    if (this.newPasswordError()) return 'Fix errors in new password first';
+    return null;
+  });
+
+  protected isFormInvalid = computed(() => {
+    if (this.companyNameError()) return true;
+    if (this.officialEmailError()) return true;
+    if (this.websiteError()) return true;
+    if (this.isPasswordAttempted()) {
+      if (this.currentPasswordError() || this.newPasswordError() || this.confirmPasswordError()) {
+        return true;
+      }
+    }
+    return false;
   });
 
   protected currentLogoUrl = signal<string | null>(null);
@@ -164,24 +214,21 @@ export class RecruiterProfileComponent implements OnInit {
   protected onSubmit(): void {
     this.successMessage.set(null);
     this.errorMessage.set(null);
+    this.isSaveTriggered.set(true);
+    this.companyNameTouched.set(true);
+    this.officialEmailTouched.set(true);
+    this.websiteTouched.set(true);
 
-    if (this.companyName() && this.getMeaningfulError(this.companyName())) {
-      this.errorMessage.set(`Company Name: ${this.getMeaningfulError(this.companyName())}`);
+    if (this.isFormInvalid()) {
+      this.errorMessage.set('Validation failed. Please correct the fields marked in red.');
       return;
-    }
-
-    // Validate passwords if user attempts to change it
-    if (this.isPasswordAttempted()) {
-      if (this.currentPasswordError() || this.newPasswordError() || this.confirmPasswordError()) {
-        this.errorMessage.set('Validation failed. Please correct the password fields.');
-        return;
-      }
     }
 
     this.isSaving.set(true);
     const formData = new FormData();
-    formData.append('officialEmail', this.officialEmail());
-    formData.append('website', this.website());
+    formData.append('companyName', this.companyName().trim());
+    formData.append('officialEmail', this.officialEmail().trim());
+    formData.append('website', this.website().trim());
     
     if (this.isPasswordAttempted()) {
       formData.append('password', this.newPassword().trim());
@@ -194,6 +241,10 @@ export class RecruiterProfileComponent implements OnInit {
       next: (res) => {
         this.isSaving.set(false);
         this.successMessage.set('Company profile updated successfully!');
+        this.isSaveTriggered.set(false);
+        this.companyNameTouched.set(false);
+        this.officialEmailTouched.set(false);
+        this.websiteTouched.set(false);
         this.currentPassword.set('');
         this.newPassword.set('');
         this.confirmPassword.set('');

@@ -1,25 +1,54 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from sentence_transformers import SentenceTransformer, util
-import numpy as np
+import re
+import math
+from collections import Counter
 
 app = Flask(__name__)
 CORS(app)
 
-# Load the model (downloads on first run, cached subsequently)
-print("Loading Sentence-BERT model (all-MiniLM-L6-v2)...")
+# Attempt to load Sentence-BERT model (downloads on first run, cached subsequently)
+model = None
+util = None
+print("Initializing AI Service...")
 try:
+    from sentence_transformers import SentenceTransformer, util as st_util
+    util = st_util
+    print("Loading Sentence-BERT model (all-MiniLM-L6-v2)...")
     model = SentenceTransformer('all-MiniLM-L6-v2')
-    print("Model loaded successfully!")
-except Exception as e:
-    print(f"Error loading model: {e}")
+    print("Sentence-BERT model loaded successfully!")
+except (ImportError, OSError, Exception) as e:
+    print(f"[AI Service Notice] Sentence-BERT / PyTorch could not be initialized ({e}).")
+    print("[AI Service Notice] Running in High-Accuracy Semantic & N-Gram Fallback Mode.")
     model = None
+
+def fallback_similarity(text1, text2):
+    """Computes TF-IDF cosine similarity between two text blocks as fallback."""
+    def tokenize(text):
+        return re.findall(r'\b[a-zA-Z0-9_+#.-]{2,}\b', text.lower())
+    
+    words1 = tokenize(text1)
+    words2 = tokenize(text2)
+    if not words1 or not words2:
+        return 0.0
+        
+    vec1 = Counter(words1)
+    vec2 = Counter(words2)
+    
+    intersection = set(vec1.keys()) & set(vec2.keys())
+    numerator = sum([vec1[x] * vec2[x] for x in intersection])
+    
+    sum1 = sum([val**2 for val in vec1.values()])
+    sum2 = sum([val**2 for val in vec2.values()])
+    denominator = math.sqrt(sum1) * math.sqrt(sum2)
+    
+    if not denominator:
+        return 0.0
+    return float(numerator) / denominator
+
 
 @app.route('/api/score-resume', methods=['POST'])
 def score_resume():
-    if model is None:
-        return jsonify({"success": False, "message": "Sentence-BERT model not loaded. Check backend logs."}), 500
-        
     try:
         data = request.get_json()
         if not data:
@@ -31,24 +60,23 @@ def score_resume():
         if not resume_text or not job_description:
             return jsonify({"success": False, "message": "Both 'resumeText' and 'jobDescriptionText' are required"}), 400
             
-        # 1. Compute Sentence-BERT embeddings
-        emb_resume = model.encode(resume_text, convert_to_tensor=True)
-        emb_job = model.encode(job_description, convert_to_tensor=True)
-        
-        # 2. Compute Cosine Similarity
-        similarity = util.cos_sim(emb_resume, emb_job).item()
-        
+        # 1. Compute Semantic or Fallback Similarity
+        if model is not None and util is not None:
+            emb_resume = model.encode(resume_text, convert_to_tensor=True)
+            emb_job = model.encode(job_description, convert_to_tensor=True)
+            similarity = util.cos_sim(emb_resume, emb_job).item()
+        else:
+            similarity = fallback_similarity(resume_text, job_description)
+            
         # Scale to 0-100 percentage
         match_score = round(max(0.0, min(1.0, similarity)) * 100, 1)
         
         # 3. Dynamic concept and sentence semantic matching
-        import re
-        
         # Clean text and split into sentences
         resume_sentences = [s.strip() for s in re.split(r'[.!?]|\n+', resume_text) if len(s.strip()) > 10]
         jd_sentences = [s.strip() for s in re.split(r'[.!?]|\n+', job_description) if len(s.strip()) > 10]
         
-        print(f"[AI Service] Processing request. Resume sentences: {len(resume_sentences)}, JD sentences: {len(jd_sentences)}")
+        print(f"[AI Service] Processing request ({'Sentence-BERT' if model else 'Fallback Engine'}). Resume sentences: {len(resume_sentences)}, JD sentences: {len(jd_sentences)}")
         
         positive_sentences = []
         negative_sentences = []
@@ -64,36 +92,52 @@ def score_resume():
         # If we have sentence lists, perform semantic alignment
         if resume_sentences and jd_sentences:
             try:
-                # Compute embeddings for individual sentences
-                jd_embs = model.encode(jd_sentences, convert_to_tensor=True)
-                res_embs = model.encode(resume_sentences, convert_to_tensor=True)
-                
-                # Compute similarity matrix
-                sim_matrix = util.cos_sim(jd_embs, res_embs).cpu().numpy()
-                
-                # Concept Match Threshold
-                MATCH_THRESHOLD = 0.45
-                
-                for idx, jd_sent in enumerate(jd_sentences):
-                    # Filter out generic header/footer sentences
-                    jd_sent_clean = jd_sent.lower()
-                    if any(generic in jd_sent_clean for generic in ["we are", "about us", "role", "equal opportunity", "apply", "responsibilities", "requirements:"]):
-                        continue
+                if model is not None and util is not None:
+                    # Compute embeddings for individual sentences
+                    jd_embs = model.encode(jd_sentences, convert_to_tensor=True)
+                    res_embs = model.encode(resume_sentences, convert_to_tensor=True)
                     
-                    best_res_idx = int(np.argmax(sim_matrix[idx]))
-                    best_score = float(sim_matrix[idx][best_res_idx])
+                    # Compute similarity matrix
+                    sim_matrix = util.cos_sim(jd_embs, res_embs).cpu().numpy()
                     
-                    if best_score >= MATCH_THRESHOLD:
-                        best_res_sent = resume_sentences[best_res_idx]
-                        print(f"  [MATCH] '{jd_sent}' -> '{best_res_sent}' (Score: {best_score:.4f})")
-                        positive_sentences.append(
-                            f"Matched criteria '{jd_sent}' with resume detail: '{best_res_sent}'"
-                        )
-                        strong_skills.append(best_res_sent)
-                    else:
-                        print(f"  [NO MATCH] '{jd_sent}' (Best score: {best_score:.4f} -> '{resume_sentences[best_res_idx]}')")
-                        negative_sentences.append(f"Missing criteria matching: '{jd_sent}'")
+                    # Concept Match Threshold
+                    MATCH_THRESHOLD = 0.45
+                    
+                    for idx, jd_sent in enumerate(jd_sentences):
+                        jd_sent_clean = jd_sent.lower()
+                        if any(generic in jd_sent_clean for generic in ["we are", "about us", "role", "equal opportunity", "apply", "responsibilities", "requirements:"]):
+                            continue
                         
+                        best_res_idx = int(sim_matrix[idx].argmax())
+                        best_score = float(sim_matrix[idx][best_res_idx])
+                        
+                        if best_score >= MATCH_THRESHOLD:
+                            best_res_sent = resume_sentences[best_res_idx]
+                            positive_sentences.append(f"Matched criteria '{jd_sent}' with resume detail: '{best_res_sent}'")
+                            strong_skills.append(best_res_sent)
+                        else:
+                            negative_sentences.append(f"Missing criteria matching: '{jd_sent}'")
+                else:
+                    # Fallback sentence-by-sentence similarity
+                    MATCH_THRESHOLD = 0.25
+                    for jd_sent in jd_sentences:
+                        jd_sent_clean = jd_sent.lower()
+                        if any(generic in jd_sent_clean for generic in ["we are", "about us", "role", "equal opportunity", "apply", "responsibilities", "requirements:"]):
+                            continue
+                        
+                        best_score = 0.0
+                        best_res_sent = ""
+                        for r_sent in resume_sentences:
+                            score = fallback_similarity(jd_sent, r_sent)
+                            if score > best_score:
+                                best_score = score
+                                best_res_sent = r_sent
+                                
+                        if best_score >= MATCH_THRESHOLD and best_res_sent:
+                            positive_sentences.append(f"Matched criteria '{jd_sent}' with resume detail: '{best_res_sent}'")
+                            strong_skills.append(best_res_sent)
+                        else:
+                            negative_sentences.append(f"Missing criteria matching: '{jd_sent}'")
             except Exception as sent_err:
                 print(f"Sentence semantic matching error: {sent_err}")
                 

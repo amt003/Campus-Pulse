@@ -84,33 +84,76 @@
         <form (ngSubmit)="onSubmit()" #profileForm="ngForm" class="profile-form">
           <div class="form-grid">
             
+            <!-- Company Name -->
             <div class="form-group col-span-2">
-              <label for="officialEmail">Official Contact Email</label>
+              <label for="companyName">Company Name *</label>
+              <div class="input-wrapper">
+                <span class="material-symbols-outlined input-icon">domain</span>
+                <input 
+                  type="text" 
+                  id="companyName" 
+                  name="companyName" 
+                  [ngModel]="companyName()" 
+                  (ngModelChange)="companyName.set($event); companyNameTouched.set(true)"
+                  (blur)="companyNameTouched.set(true)"
+                  placeholder="e.g. Google India" 
+                  class="profile-input"
+                  [class.is-invalid]="(companyNameTouched() || isSaveTriggered()) && companyNameError()"
+                  [class.is-valid]="(companyNameTouched() || isSaveTriggered()) && !companyNameError() && companyName()"
+                  required
+                />
+              </div>
+              @if ((companyNameTouched() || isSaveTriggered()) && companyNameError()) {
+                <span class="field-error-text">{{ companyNameError() }}</span>
+              }
+            </div>
+
+            <!-- Official Contact Email -->
+            <div class="form-group col-span-2">
+              <label for="officialEmail">Official Contact Email *</label>
               <div class="input-wrapper">
                 <span class="material-symbols-outlined input-icon">mail</span>
                 <input 
                   type="email" 
                   id="officialEmail" 
                   name="officialEmail" 
-                  [(ngModel)]="officialEmail" 
+                  [ngModel]="officialEmail()" 
+                  (ngModelChange)="officialEmail.set($event); officialEmailTouched.set(true)"
+                  (blur)="officialEmailTouched.set(true)"
                   placeholder="hr@company.com" 
+                  class="profile-input"
+                  [class.is-invalid]="(officialEmailTouched() || isSaveTriggered()) && officialEmailError()"
+                  [class.is-valid]="(officialEmailTouched() || isSaveTriggered()) && !officialEmailError() && officialEmail()"
                   required
                 />
               </div>
+              @if ((officialEmailTouched() || isSaveTriggered()) && officialEmailError()) {
+                <span class="field-error-text">{{ officialEmailError() }}</span>
+              }
             </div>
 
+            <!-- Company Website URL -->
             <div class="form-group col-span-2">
-              <label for="website">Company Website URL</label>
+              <label for="website">Company Website URL *</label>
               <div class="input-wrapper">
                 <span class="material-symbols-outlined input-icon">language</span>
                 <input 
                   type="url" 
                   id="website" 
                   name="website" 
-                  [(ngModel)]="website" 
+                  [ngModel]="website()" 
+                  (ngModelChange)="website.set($event); websiteTouched.set(true)"
+                  (blur)="websiteTouched.set(true)"
                   placeholder="https://company.com"
+                  class="profile-input"
+                  [class.is-invalid]="(websiteTouched() || isSaveTriggered()) && websiteError()"
+                  [class.is-valid]="(websiteTouched() || isSaveTriggered()) && !websiteError() && website()"
+                  required
                 />
               </div>
+              @if ((websiteTouched() || isSaveTriggered()) && websiteError()) {
+                <span class="field-error-text">{{ websiteError() }}</span>
+              }
             </div>
 
             <div class="form-divider col-span-2">

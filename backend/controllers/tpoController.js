@@ -10,6 +10,7 @@ const socketService = require("../services/socketService");
 const sendEmail = require("../utils/sendEmail");
 const emailTemplates = require("../utils/emailTemplates");
 const placementAnalyzerService = require("../services/placementAnalyzerService");
+const { parseTimeSlotWindow, evaluateScheduleStatus } = require("../utils/scheduleTimeHelper");
 
 // 0. GET /api/tpo/students — Full students list with filters & pagination
 const getStudentsList = async (req, res) => {
@@ -519,12 +520,15 @@ const bulkImportStudents = async (req, res) => {
 
     for (const [index, item] of studentList.entries()) {
       try {
-        const { rollNumber, name, email, phone, cgpa, branch, passoutYear, activeBacklogs } = item;
+        const { rollNumber, name, email, phone, contactNumber, address, cgpa, branch, passoutYear, activeBacklogs } = item;
 
         if (!name || !email || !rollNumber || cgpa === undefined || !branch || !passoutYear) {
           errors.push({ index, email: email || rollNumber, error: "Missing required fields (rollNumber, name, email, cgpa, branch, passoutYear)" });
           continue;
         }
+
+        const phoneVal = (contactNumber || phone || "").toString().trim();
+        const addressVal = (address || "").toString().trim();
 
         // Check 1: Duplicate by email
         let user = await User.findOne({ email: email.toString().toLowerCase().trim() });
@@ -546,7 +550,7 @@ const bulkImportStudents = async (req, res) => {
           email: email.toString().toLowerCase().trim(),
           password: rollNumber.toString().trim(), // Default password is their roll number
           role: "Student",
-          phone: phone ? phone.toString().trim() : "",
+          phone: phoneVal,
           isActive: true,
         });
 
@@ -554,6 +558,8 @@ const bulkImportStudents = async (req, res) => {
         const student = await Student.create({
           userId: user._id,
           rollNumber: rollNumber.toString().trim(),
+          contactNumber: phoneVal,
+          address: addressVal,
           cgpa: Number(cgpa),
           branch: branch.toString().trim(),
           passoutYear: Number(passoutYear),
@@ -1202,9 +1208,9 @@ const getStudentAuditDetails = async (req, res) => {
       };
     });
 
-    const studentPhone = student.userId?.phone && student.userId.phone !== "N/A" && student.userId.phone.trim() !== "" 
+    const studentPhone = student.contactNumber || (student.userId?.phone && student.userId.phone !== "N/A" && student.userId.phone.trim() !== "" 
       ? student.userId.phone 
-      : null;
+      : null);
 
     return res.status(200).json({
       success: true,
@@ -1214,6 +1220,8 @@ const getStudentAuditDetails = async (req, res) => {
         name: student.userId?.name || "N/A",
         email: student.userId?.email || "N/A",
         phone: studentPhone,
+        contactNumber: studentPhone,
+        address: student.address || "N/A",
         branch: student.branch,
         cgpa: student.cgpa,
         passoutYear: student.passoutYear,
@@ -1765,6 +1773,14 @@ const getAllSchedules = async (req, res) => {
       const slotKey = `${item.timeSlot}___${companyName}___${driveTitle}___${item.eventType}___${item.location || 'Online'}`;
 
       if (!dateGroup.slotsMap.has(slotKey)) {
+        const { startTime, endTime } = parseTimeSlotWindow(dateObj, item.timeSlot);
+        let slotStatus = "Upcoming";
+        if (endTime && now > endTime) {
+          slotStatus = "Concluded";
+        } else if (startTime && endTime && now >= startTime && now <= endTime) {
+          slotStatus = "Active";
+        }
+
         dateGroup.slotsMap.set(slotKey, {
           timeSlot: item.timeSlot,
           companyName,
@@ -1773,6 +1789,9 @@ const getAllSchedules = async (req, res) => {
           location: item.location || "Online",
           meetingUrl: item.meetingUrl || null,
           driveId: item.driveId?._id || null,
+          status: slotStatus,
+          startTime,
+          endTime,
           studentCount: 0,
           students: []
         });

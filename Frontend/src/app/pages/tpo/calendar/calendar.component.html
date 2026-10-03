@@ -240,9 +240,20 @@
                     <span>{{ slot.timeSlot }}</span>
                   </div>
 
-                  <span class="round-badge" [ngClass]="getRoundBadgeClass(slot.eventType)">
-                    {{ getRoundTypeLabel(slot.eventType) }}
-                  </span>
+                  <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                    @if (slot.status === 'Active') {
+                      <span class="round-badge" style="background: #E8F8F5; color: #117A65; border: 1px solid #A3E4D7; font-weight: 800; font-size: 11px;">
+                        ● LIVE NOW
+                      </span>
+                    } @else if (slot.status === 'Concluded') {
+                      <span class="round-badge" style="background: #F2F4F4; color: #7F8C8D; border: 1px solid #D5D8DC; font-weight: 700; font-size: 11px;">
+                        CONCLUDED
+                      </span>
+                    }
+                    <span class="round-badge" [ngClass]="getRoundBadgeClass(slot.eventType)">
+                      {{ getRoundTypeLabel(slot.eventType) }}
+                    </span>
+                  </div>
                 </div>
 
                 <!-- Card Body: Company & Drive Role -->

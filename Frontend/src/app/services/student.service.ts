@@ -12,6 +12,8 @@ export interface StudentProfile {
     isActive: boolean;
   };
   rollNumber: string;
+  contactNumber?: string;
+  address?: string;
   cgpa: number;
   branch: string;
   passoutYear: number;

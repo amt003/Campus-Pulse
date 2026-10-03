@@ -14,6 +14,16 @@ const studentSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
+    contactNumber: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    address: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     cgpa: {
       type: Number,
       required: [true, "CGPA is required"],

@@ -51,7 +51,11 @@ import { SmoothScrollService } from '../../../services/smooth-scroll.service';
                 </div>
                 <div class="student-meta">
                   <h3 class="meta-name">{{ data.student?.name }}</h3>
-                  <p class="meta-sub">{{ data.student?.email }}<ng-container *ngIf="data.student?.phone"> &bull; {{ data.student?.phone }}</ng-container></p>
+                  <p class="meta-sub">{{ data.student?.email }}<ng-container *ngIf="data.student?.contactNumber || data.student?.phone"> &bull; {{ data.student?.contactNumber || data.student?.phone }}</ng-container></p>
+                  <p class="meta-sub" *ngIf="data.student?.address && data.student?.address !== 'N/A'" style="margin-top: 3px; font-size: 12px; color: #718096; display: flex; align-items: center; gap: 4px;">
+                    <span class="material-symbols-outlined" style="font-size: 14px;">home</span>
+                    <span>{{ data.student?.address }}</span>
+                  </p>
                 </div>
                 <div class="status-pill-wrap">
                   <span class="badge-overall-status" [class]="getOverallStatusClass(data.overallStatus)">
