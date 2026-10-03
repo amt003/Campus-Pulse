@@ -41,8 +41,9 @@ const scoreResume = async (resumePath, jobDescription) => {
     }
 
     // 3. Make POST request to Flask Sentence-BERT Microservice
-    console.log(`[AI Service] Sending resume text to Sentence-BERT microservice on port 5001...`);
-    const flaskResponse = await axios.post("http://localhost:5001/api/score-resume", {
+    const aiEndpoint = process.env.AI_SERVICE_URL || "http://localhost:5001/api/score-resume";
+    console.log(`[AI Service] Sending resume text to Sentence-BERT microservice at ${aiEndpoint}...`);
+    const flaskResponse = await axios.post(aiEndpoint, {
       resumeText: resumeText,
       jobDescriptionText: jobDescription
     }, {
