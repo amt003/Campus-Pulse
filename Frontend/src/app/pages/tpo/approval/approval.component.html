@@ -4,10 +4,7 @@
   <main class="approval-container">
 
     @if (isLoading()) {
-      <div class="loading-box">
-        <div class="spinner"></div>
-        <p>Performing WHOIS verification check…</p>
-      </div>
+      <app-loader message="Recruiter Approvals" submessage="Performing domain & WHOIS security verification checks..."></app-loader>
     }
 
     @if (!isLoading()) {

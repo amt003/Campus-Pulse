@@ -1,11 +1,7 @@
 <div class="result-page-root">
   <!-- Loading State -->
   @if (isLoading()) {
-    <div class="loading-container">
-      <div class="spinner-large"></div>
-      <h3>Evaluating Assessment Results...</h3>
-      <p>Gathering performance data, section metrics, and proctoring logs.</p>
-    </div>
+    <app-loader message="Assessment Results" submessage="Gathering performance data, section metrics, and proctoring logs..."></app-loader>
   } @else if (errorMessage()) {
     <!-- Error State -->
     <div class="error-container">

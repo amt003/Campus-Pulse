@@ -96,8 +96,14 @@ export class LoginPage implements OnInit, AfterViewInit, OnDestroy {
       }
     }
 
-    // 3. Check for reapproval success message query param
+    // 3. Check for query parameters (role selection & reapproval status)
     this.route.queryParams.subscribe((params) => {
+      if (params['role']) {
+        const roleParam = String(params['role']).toLowerCase();
+        if (roleParam === 'student' || roleParam === 'recruiter' || roleParam === 'tpo') {
+          this.selectedRole.set(roleParam as UserRole);
+        }
+      }
       if (params['reapprovalSuccess'] === 'true') {
         this.successMessage.set('Your company profile update and re-approval request have been submitted successfully. The TPO will review it shortly.');
         this.selectedRole.set('recruiter');

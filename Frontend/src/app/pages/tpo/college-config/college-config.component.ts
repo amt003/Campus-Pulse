@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TpoService } from '../../../services/tpo.service';
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-tpo-college-config',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoaderComponent],
   template: `
     <div class="config-root">
       <main class="config-container">
@@ -139,10 +141,7 @@ import { TpoService } from '../../../services/tpo.service';
         </div>
 
         <ng-template #loadingTpl>
-          <div class="loading-box">
-            <div class="spinner"></div>
-            <p>Loading college configuration…</p>
-          </div>
+          <app-loader message="College Configuration" submessage="Loading dynamic academic branches, degree programs, and passout batches..."></app-loader>
         </ng-template>
 
       </main>

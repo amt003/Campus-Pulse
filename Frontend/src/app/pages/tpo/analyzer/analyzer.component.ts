@@ -135,10 +135,12 @@ interface IndividualReadiness {
   lastComputedAt: string;
 }
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-tpo-analyzer',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoaderComponent],
   templateUrl: './analyzer.component.html',
   styleUrl: './analyzer.component.css',
 })

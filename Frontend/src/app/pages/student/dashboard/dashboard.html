@@ -6,6 +6,9 @@
   </div>
 }
 
+@if (isLoading()) {
+  <app-loader message="Student Dashboard" submessage="Loading student profile, job drives, and interview schedules..."></app-loader>
+} @else {
 <!-- Welcome Banner -->
 <div class="welcome-banner-screenshot" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 16px; padding: 32px; color: white; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(26, 82, 118, 0.15);">
   <div>
@@ -513,4 +516,5 @@
     </div>
   </div>
 </div>
+}
 }

@@ -138,10 +138,7 @@
     <!-- Questions Table Card -->
     <div class="table-card">
       @if (isLoading()) {
-        <div class="loading-state">
-          <div class="spinner"></div>
-          <p>Loading Question Bank...</p>
-        </div>
+        <app-loader message="Question Bank" submessage="Retrieving active categorized test questions..."></app-loader>
       } @else if (filteredQuestions().length === 0) {
         <div class="empty-state">
           <span class="material-symbols-outlined empty-icon">quiz</span>
@@ -462,10 +459,7 @@
       <!-- Drafts Table Card -->
       <div class="table-card">
         @if (isLoadingDrafts()) {
-          <div class="loading-state">
-            <div class="spinner"></div>
-            <p>Loading pending draft questions...</p>
-          </div>
+          <app-loader message="Draft Questions" submessage="Loading pending AI-generated draft questions for review..." size="sm"></app-loader>
         } @else if (draftQuestions().length === 0) {
           <div class="empty-state">
             <span class="material-symbols-outlined empty-icon empty-draft-icon">inventory_2</span>

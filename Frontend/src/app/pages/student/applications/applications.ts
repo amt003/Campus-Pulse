@@ -4,10 +4,12 @@ import { StudentService, Application } from '../../../services/student.service';
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../services/toast.service';
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-student-applications',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoaderComponent],
   templateUrl: './applications.html',
   styleUrl: './applications.css'
 })

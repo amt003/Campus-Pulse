@@ -30,10 +30,12 @@ export interface OfferTemplateData {
   topSkill?: string;
 }
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-offer-generator',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LoaderComponent],
   templateUrl: './offer-generator.component.html',
   styleUrl: './offer-generator.component.css'
 })

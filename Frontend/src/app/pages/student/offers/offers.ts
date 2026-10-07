@@ -6,10 +6,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { StudentService } from '../../../services/student.service';
 import { ToastService } from '../../../services/toast.service';
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-student-offers',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LoaderComponent],
   templateUrl: './offers.html',
   styleUrl: './offers.css'
 })

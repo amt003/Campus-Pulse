@@ -1,10 +1,7 @@
 <div class="applications-container-main">
 
   @if (isLoading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading your applications...</p>
-    </div>
+    <app-loader message="Applications" submessage="Retrieving your submitted applications and hiring pipeline..."></app-loader>
   } @else {
 
     <!-- ==========================================

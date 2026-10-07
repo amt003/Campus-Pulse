@@ -518,6 +518,20 @@ img {
   display: none;
 }
 
+.hero-video {
+  width: 100%;
+  max-width: 580px;
+  height: auto;
+  max-height: 480px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 20px 48px rgba(0, 59, 90, 0.16), 0 0 0 1px rgba(0, 100, 151, 0.08);
+  position: relative;
+  z-index: 10;
+  display: block;
+}
+
 .hero-visual img {
   width: 100%;
   height: auto;

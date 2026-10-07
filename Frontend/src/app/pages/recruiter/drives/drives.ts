@@ -6,10 +6,12 @@ import { RecruiterService } from '../../../services/recruiter.service';
 import { ToastService } from '../../../services/toast.service';
 import { ManageResourcesModalComponent } from '../../../components/modals/manage-resources-modal/manage-resources-modal.component';
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-recruiter-drives',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ManageResourcesModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ManageResourcesModalComponent, LoaderComponent],
   templateUrl: './drives.html',
   styleUrl: './drives.css'
 })

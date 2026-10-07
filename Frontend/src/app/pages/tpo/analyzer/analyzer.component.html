@@ -76,18 +76,7 @@
 
       <!-- Loading State -->
       @if (isDeptLoading()) {
-        <div class="skeleton-grid">
-          <div class="skeleton-row-four">
-            <div class="skeleton-card" style="height: 120px;"></div>
-            <div class="skeleton-card" style="height: 120px;"></div>
-            <div class="skeleton-card" style="height: 120px;"></div>
-            <div class="skeleton-card" style="height: 120px;"></div>
-          </div>
-          <div class="skeleton-subgrid">
-            <div class="skeleton-card" style="height: 320px;"></div>
-            <div class="skeleton-card" style="height: 320px;"></div>
-          </div>
-        </div>
+        <app-loader message="Department Analytics" submessage="Computing department readiness indices, drop-off funnels, and benchmark metrics..."></app-loader>
       }
 
       <!-- Main Department Analytics -->
@@ -428,6 +417,11 @@
           <span class="material-symbols-outlined">error</span>
           <span>{{ studentErrorMsg() }}</span>
         </div>
+      }
+
+      <!-- Loading Student PRA State -->
+      @if (isStudentLoading()) {
+        <app-loader message="Student Readiness Inspection" submessage="Analyzing candidate competencies, stage drop-offs, and skill gaps..."></app-loader>
       }
 
       <!-- Initial Guidance when no student searched yet -->

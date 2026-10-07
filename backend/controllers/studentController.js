@@ -209,7 +209,7 @@ const uploadResume = async (req, res) => {
     try {
       const activeApplications = await Application.find({
         studentId: profile._id,
-        status: { $in: ["Applied", "Under Review", "Aptitude Scheduled"] },
+        status: { $nin: ["Rejected", "Offer Declined"] },
       }).populate("driveId");
 
       for (const app of activeApplications) {

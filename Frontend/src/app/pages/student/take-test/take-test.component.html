@@ -1,10 +1,6 @@
 <div class="test-container" [class.fullscreen-active]="isFullscreenActive()">
   @if (isLoading()) {
-    <div class="test-loading-state">
-      <div class="spinner-large"></div>
-      <h2>Preparing Assessment Environment...</h2>
-      <p>Synchronizing with proctoring engine and loading assessment questions.</p>
-    </div>
+    <app-loader message="Assessment Environment" submessage="Synchronizing with proctoring engine and loading assessment questions..."></app-loader>
   } @else {
     <!-- ===================================================================== -->
     <!-- TOP HEADER BAR                                                        -->

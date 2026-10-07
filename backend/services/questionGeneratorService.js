@@ -123,18 +123,19 @@ const FALLBACK_QUESTION_TEMPLATES = {
   ],
 };
 
+const CANDIDATE_MODELS = [
+  "gemini-3.5-flash",
+  "gemini-flash-latest",
+  "gemini-3.8-flash",
+  "gemini-2.5-flash-lite",
+];
+
 /**
- * Calls Gemini 1.5 Flash to generate questions in strict JSON format.
+ * Calls Gemini to generate questions in strict JSON format.
+ * Tries available candidate models in order.
  */
 const callGeminiAPI = async ({ count, category, difficulty, apiKey }) => {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: {
-      responseMimeType: "application/json",
-      temperature: 0.7,
-    },
-  });
 
   const prompt = `You are an expert exam question generator for campus recruitment tests.
 Generate exactly ${count} multiple choice questions.
@@ -156,27 +157,45 @@ Constraints:
 - "questionText" must be unambiguous and clear.
 - Return ONLY the JSON array, no commentary, markdown or extra text.`;
 
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  let text = response.text().trim();
+  let lastError = null;
 
-  // Strip code fences if present
-  text = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
+  for (const modelName of CANDIDATE_MODELS) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
 
-  let parsed = JSON.parse(text);
-  if (!Array.isArray(parsed) && parsed.questions && Array.isArray(parsed.questions)) {
-    parsed = parsed.questions;
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let text = response.text().trim();
+
+      // Strip code fences if present
+      text = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
+
+      let parsed = JSON.parse(text);
+      if (!Array.isArray(parsed) && parsed.questions && Array.isArray(parsed.questions)) {
+        parsed = parsed.questions;
+      }
+
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        console.log(`[QuestionGenerator] Generated ${parsed.length} questions successfully using ${modelName}`);
+        return parsed;
+      }
+    } catch (err) {
+      lastError = err;
+      console.warn(`[QuestionGenerator] Model ${modelName} call failed (${err.message}). Trying next model...`);
+    }
   }
 
-  if (!Array.isArray(parsed)) {
-    throw new Error("Gemini response is not a valid JSON array");
-  }
-
-  return parsed;
+  throw lastError || new Error("All Gemini candidate models failed to generate questions");
 };
 
 /**
- * Generate questions using Gemini 1.5 Flash with fallback support.
+ * Generate questions using Gemini with fallback support.
  * Saves questions as draft with source 'ai_generated'.
  *
  * @param {Object} params
@@ -219,15 +238,30 @@ const generateQuestions = async ({
         apiKey,
       });
     } catch (apiError) {
-      console.error("[QuestionGenerator] Gemini API call failed:", apiError.message);
-      throw new Error(`Gemini AI question generation failed: ${apiError.message}`);
+      console.warn(
+        `[QuestionGenerator] Gemini API failed (${apiError.message}). Falling back to curated question bank.`
+      );
+      // Graceful fallback to curated bank so the recruiter never gets a 500 error
+      const pool =
+        FALLBACK_QUESTION_TEMPLATES[matchedCategory] ||
+        FALLBACK_QUESTION_TEMPLATES.Quantitative;
+      for (let i = 0; i < numQuestions; i++) {
+        const template = pool[i % pool.length];
+        rawQuestions.push({
+          questionText: `${template.questionText} (${matchedDifficulty} Q${i + 1})`,
+          options: [...template.options],
+          correctOption: template.correctOption,
+        });
+      }
     }
   } else {
     // Graceful offline fallback: Use curated questions if GEMINI_API_KEY is not configured
     console.warn(
       "[QuestionGenerator] GEMINI_API_KEY not configured. Generating draft questions using offline curated AI bank."
     );
-    const pool = FALLBACK_QUESTION_TEMPLATES[matchedCategory] || FALLBACK_QUESTION_TEMPLATES.Quantitative;
+    const pool =
+      FALLBACK_QUESTION_TEMPLATES[matchedCategory] ||
+      FALLBACK_QUESTION_TEMPLATES.Quantitative;
     for (let i = 0; i < numQuestions; i++) {
       const template = pool[i % pool.length];
       rawQuestions.push({

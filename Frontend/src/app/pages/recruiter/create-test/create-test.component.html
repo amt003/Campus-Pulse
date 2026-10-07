@@ -518,10 +518,7 @@
 
         <!-- Questions Table -->
         @if (isLoadingQuestions()) {
-          <div class="loading-state">
-            <div class="spinner"></div>
-            <p>Loading question bank...</p>
-          </div>
+          <app-loader message="Question Bank" submessage="Retrieving active questions for assessment composition..."></app-loader>
         } @else if (filteredModeQuestions().length === 0) {
           <div class="empty-state">
             <span class="material-symbols-outlined empty-icon">quiz</span>

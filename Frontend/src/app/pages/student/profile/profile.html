@@ -13,10 +13,7 @@
   </div>
 
   @if (isLoading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading your profile details...</p>
-    </div>
+    <app-loader message="Profile Details" submessage="Fetching your credentials, verified resume, and placement skills..."></app-loader>
   } @else if (profile()) {
     <div class="profile-card">
       

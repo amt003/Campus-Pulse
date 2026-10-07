@@ -18,10 +18,7 @@
       </div>
 
       @if (isLoading()) {
-        <div class="loading-state">
-          <div class="spinner"></div>
-          <p>Loading offer letter details...</p>
-        </div>
+        <app-loader message="Offer Details" submessage="Fetching company offer letter and response status..."></app-loader>
       } @else if (errorMessage()) {
         <div class="error-banner">
           <span class="material-symbols-outlined">error</span>
@@ -150,10 +147,7 @@
       </div>
 
       @if (isLoading()) {
-        <div class="loading-state">
-          <div class="spinner"></div>
-          <p>Loading your job offers...</p>
-        </div>
+        <app-loader message="Job Offers" submessage="Fetching received placement offers and letters..."></app-loader>
       } @else {
         @if (allOffers().length === 0) {
           <div class="empty-state-card">

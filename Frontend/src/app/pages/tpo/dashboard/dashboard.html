@@ -5,6 +5,10 @@
        ============================================= -->
   <main class="dashboard-container">
 
+    @if (isLoading()) {
+      <app-loader message="Executive Placement Dashboard" submessage="Consolidating real-time KPI metrics, placement funnel, and recruiter intelligence..."></app-loader>
+    } @else {
+
     <!-- 1. Executive Placement Season Banner -->
     @if (seasonConfig()) {
       <div class="season-banner-card">
@@ -545,6 +549,7 @@
       }
     </section>
 
+    }
   </main>
 
   <!-- =============================================

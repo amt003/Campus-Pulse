@@ -39,10 +39,12 @@ export interface QuestionAccuracyStat {
   accuracyPercentage: number;
 }
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-recruiter-test-results',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, LoaderComponent],
   templateUrl: './test-results.component.html',
   styleUrl: './test-results.component.css',
 })

@@ -68,6 +68,19 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
     }
   }
 
+  protected onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    let val = input.value.trim();
+    if (!val) {
+      this.phoneNumber = '';
+      return;
+    }
+    const hasPlus = val.startsWith('+');
+    const digits = val.replace(/\D/g, '').slice(0, 12);
+    this.phoneNumber = hasPlus ? '+' + digits : digits ? '+' + digits : '';
+    input.value = this.phoneNumber;
+  }
+
   private particleInterval?: ReturnType<typeof setInterval>;
 
   // ── Password strength (Dynamic Getter) ───────────────────────────────────────
@@ -103,8 +116,7 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
       !this.getMeaningfulTextError(this.contactPerson) &&
       this.coverNote.trim().length >= 20 &&
       !this.getMeaningfulTextError(this.coverNote) &&
-      this.phoneNumber.trim().startsWith('+') &&
-      this.phoneNumber.trim().length >= 12 &&
+      /^\+\d{12}$/.test(this.phoneNumber.trim()) &&
       this.password.length >= 8 &&
       this.password === this.confirmPassword &&
       this.agreeTerms
@@ -119,7 +131,7 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
       { label: 'Valid official website URL', met: this.websiteValid },
       { label: 'Meaningful contact person name entered', met: this.contactPerson.trim().length > 1 && !this.getMeaningfulTextError(this.contactPerson) },
       { label: 'Meaningful Cover Note written (min 20 chars)', met: this.coverNote.trim().length >= 20 && !this.getMeaningfulTextError(this.coverNote) },
-      { label: 'Phone number with + country code (min 12 chars e.g. +919876543210)', met: this.phoneNumber.trim().startsWith('+') && this.phoneNumber.trim().length >= 12 },
+      { label: 'Phone number with + country code (12 digits e.g. +919876543210)', met: /^\+\d{12}$/.test(this.phoneNumber.trim()) },
       { label: 'Password is at least 8 characters', met: this.password.length >= 8 },
       { label: 'Passwords match', met: this.password.length > 0 && this.password === this.confirmPassword },
       { label: 'Terms & conditions accepted', met: this.agreeTerms },
@@ -139,7 +151,7 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
   protected get phoneValid(): boolean {
     if (!this.phoneNumber.trim()) return true;
     const p = this.phoneNumber.trim();
-    return p.startsWith('+') && p.length >= 12 && /^\+[0-9\s-]{11,18}$/.test(p);
+    return /^\+\d{12}$/.test(p);
   }
 
   protected get passwordHasMinLength(): boolean {
@@ -233,8 +245,8 @@ export class RegisterPage implements AfterViewInit, OnDestroy {
       this.scrollToTop();
       return;
     }
-    if (!this.phoneNumber.trim().startsWith('+') || this.phoneNumber.trim().length < 12) {
-      this.errorMessage = 'Please enter a valid Phone Number starting with + and country code (min 12 chars e.g. +919876543210).';
+    if (!/^\+\d{12}$/.test(this.phoneNumber.trim())) {
+      this.errorMessage = 'Please enter a valid Phone Number starting with + and country code (exactly 12 digits e.g. +919876543210).';
       this.scrollToTop();
       return;
     }

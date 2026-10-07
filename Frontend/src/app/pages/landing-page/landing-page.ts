@@ -4,6 +4,7 @@ import {
   ElementRef,
   HostListener,
   OnDestroy,
+  ViewChild,
   inject,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -20,6 +21,8 @@ export class LandingPage implements AfterViewInit, OnDestroy {
   private readonly elRef = inject(ElementRef);
   private readonly smoothScroll = inject(SmoothScrollService);
 
+  @ViewChild('heroVideo') heroVideo?: ElementRef<HTMLVideoElement>;
+
   protected headerScrolled = false;
   protected mobileMenuOpen = false;
   protected activeSection = '';
@@ -35,6 +38,25 @@ export class LandingPage implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.initReveal();
     this.initScrollSpy();
+    this.initVideoAutoplay();
+  }
+
+  private initVideoAutoplay(): void {
+    const video = this.heroVideo?.nativeElement || this.elRef.nativeElement.querySelector('video');
+    if (video) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
+      video.loop = true;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Retry playing on user interaction or load
+          video.muted = true;
+          video.play().catch(() => {});
+        });
+      }
+    }
   }
 
   private initReveal(): void {

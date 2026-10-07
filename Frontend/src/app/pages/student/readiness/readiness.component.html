@@ -48,16 +48,10 @@
   }
 
   <!-- ============================================================
-       3. Loading Skeleton State
+       3. Loading State
        ============================================================ -->
   @if (isLoading()) {
-    <div class="skeleton-grid">
-      <div class="skeleton-card hero-skeleton"></div>
-      <div class="skeleton-subgrid">
-        <div class="skeleton-card sub-skeleton"></div>
-        <div class="skeleton-card sub-skeleton"></div>
-      </div>
-    </div>
+    <app-loader message="Placement Readiness Analytics" submessage="Evaluating AI readiness score, interview benchmarks, and skill radars..."></app-loader>
   }
 
   <!-- ============================================================

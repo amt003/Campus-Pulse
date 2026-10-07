@@ -24,10 +24,12 @@ export interface StudentTestResultData {
   sectionWiseBreakdown: SectionBreakdown[];
 }
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-student-test-result',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LoaderComponent],
   templateUrl: './test-result.component.html',
   styleUrl: './test-result.component.css',
 })

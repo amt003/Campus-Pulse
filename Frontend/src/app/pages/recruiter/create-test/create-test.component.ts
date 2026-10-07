@@ -24,10 +24,12 @@ export interface DriveOption {
   hasAptitudeTest?: boolean;
 }
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-create-test',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LoaderComponent],
   templateUrl: './create-test.component.html',
   styleUrl: './create-test.component.css',
 })

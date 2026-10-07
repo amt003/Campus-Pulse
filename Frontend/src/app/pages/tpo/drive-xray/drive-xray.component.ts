@@ -7,10 +7,12 @@ import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../services/toast.service';
 import { SmoothScrollService } from '../../../services/smooth-scroll.service';
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-tpo-drive-xray',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LoaderComponent],
   templateUrl: './drive-xray.component.html',
   styleUrl: './drive-xray.component.css'
 })

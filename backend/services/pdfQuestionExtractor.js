@@ -181,7 +181,7 @@ const parseQuestionsFromPdf = async ({ buffer, defaultCategory = "Quantitative",
     try {
       console.log("[PDFExtractor] Attempting AI-assisted extraction via Gemini...");
       const genAI = new GoogleGenerativeAI(resolvedApiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const candidateModels = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.8-flash"];
 
       const prompt = `You are an AI that extracts Multiple Choice Questions from documents.
 Extract all multiple-choice questions from the following text accurately.
@@ -199,42 +199,52 @@ Rules:
 Input Document Text:
 ${rawText.slice(0, 15000)}`;
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      let textResponse = response.text().trim();
+      let textResponse = null;
+      for (const mName of candidateModels) {
+        try {
+          const model = genAI.getGenerativeModel({ model: mName });
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          textResponse = response.text().trim();
+          if (textResponse) break;
+        } catch (mErr) {
+          console.warn(`[PDFExtractor] Model ${mName} failed: ${mErr.message}`);
+        }
+      }
 
-      // Clean markdown code fence if returned
-      textResponse = textResponse.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
+      if (textResponse) {
+        // Clean markdown code fence if returned
+        textResponse = textResponse.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
 
-      const parsedArray = JSON.parse(textResponse);
-      if (Array.isArray(parsedArray) && parsedArray.length > 0) {
-        const validated = parsedArray.map((q) => {
-          let opts = Array.isArray(q.options) ? q.options.map((o) => String(o).trim()) : [];
-          while (opts.length < 4) {
-            opts.push(`Option ${String.fromCharCode(65 + opts.length)}`);
-          }
-          if (opts.length > 4) opts = opts.slice(0, 4);
+        if (Array.isArray(parsedArray) && parsedArray.length > 0) {
+          const validated = parsedArray.map((q) => {
+            let opts = Array.isArray(q.options) ? q.options.map((o) => String(o).trim()) : [];
+            while (opts.length < 4) {
+              opts.push(`Option ${String.fromCharCode(65 + opts.length)}`);
+            }
+            if (opts.length > 4) opts = opts.slice(0, 4);
 
-          let correctIdx = 0;
-          if (typeof q.correctOption === "number" && q.correctOption >= 0 && q.correctOption <= 3) {
-            correctIdx = q.correctOption;
-          }
+            let correctIdx = 0;
+            if (typeof q.correctOption === "number" && q.correctOption >= 0 && q.correctOption <= 3) {
+              correctIdx = q.correctOption;
+            }
 
-          const validCats = ["Quantitative", "Logical", "Verbal", "Technical"];
-          const validDiffs = ["Easy", "Medium", "Hard"];
+            const validCats = ["Quantitative", "Logical", "Verbal", "Technical"];
+            const validDiffs = ["Easy", "Medium", "Hard"];
 
-          return {
-            questionText: String(q.questionText || "Question").trim(),
-            options: opts,
-            correctOption: correctIdx,
-            category: validCats.includes(q.category) ? q.category : defaultCategory || "Quantitative",
-            difficulty: validDiffs.includes(q.difficulty) ? q.difficulty : defaultDifficulty || "Medium",
-            source: "pdf_upload",
-          };
-        });
+            return {
+              questionText: String(q.questionText || "Question").trim(),
+              options: opts,
+              correctOption: correctIdx,
+              category: validCats.includes(q.category) ? q.category : defaultCategory || "Quantitative",
+              difficulty: validDiffs.includes(q.difficulty) ? q.difficulty : defaultDifficulty || "Medium",
+              source: "pdf_upload",
+            };
+          });
 
-        console.log(`[PDFExtractor] Gemini extracted ${validated.length} questions successfully.`);
-        return validated;
+          console.log(`[PDFExtractor] Gemini extracted ${validated.length} questions successfully.`);
+          return validated;
+        }
       }
     } catch (aiError) {
       console.warn("[PDFExtractor] Gemini parsing failed or encountered error, falling back to rule-based parser:", aiError.message);

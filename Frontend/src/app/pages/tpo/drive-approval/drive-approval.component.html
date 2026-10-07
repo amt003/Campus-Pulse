@@ -37,10 +37,7 @@
   <!-- Main Table Card -->
   <div class="table-card">
     @if (isLoading()) {
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading pending drive approvals...</p>
-      </div>
+      <app-loader message="Pending Drive Approvals" submessage="Fetching submitted campus placement drives requiring authorization..."></app-loader>
     } @else if (filteredDrives.length === 0) {
       <div class="empty-state">
         <span class="material-symbols-outlined empty-icon">check_circle</span>

@@ -4,10 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { RecruiterService } from '../../../services/recruiter.service';
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-profile-on-hold',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LoaderComponent],
   templateUrl: './profile-on-hold.component.html',
   styleUrl: './profile-on-hold.component.css'
 })

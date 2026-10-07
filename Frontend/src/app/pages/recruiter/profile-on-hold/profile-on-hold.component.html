@@ -44,10 +44,7 @@
 
       <!-- Loading State -->
       @if (isLoading()) {
-        <div class="loading-state">
-          <div class="spinner"></div>
-          <p>Fetching your profile details...</p>
-        </div>
+        <app-loader message="Company Profile" submessage="Retrieving your profile details and TPO review feedback..."></app-loader>
       }
 
       <!-- Form -->

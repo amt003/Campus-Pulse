@@ -6,10 +6,12 @@ import { RecruiterService } from '../../../services/recruiter.service';
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../services/toast.service';
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-recruiter-all-applications',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LoaderComponent],
   templateUrl: './all-applications.html',
   styleUrl: './all-applications.css'
 })

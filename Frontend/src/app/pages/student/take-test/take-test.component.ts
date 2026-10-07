@@ -21,10 +21,12 @@ export interface TestQuestion {
   options: string[];
 }
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-take-test',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LoaderComponent],
   templateUrl: './take-test.component.html',
   styleUrl: './take-test.component.css',
 })

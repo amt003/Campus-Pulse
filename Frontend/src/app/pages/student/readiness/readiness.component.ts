@@ -106,10 +106,12 @@ interface ReadinessData {
   lastComputedAt: string;
 }
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-student-readiness',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoaderComponent],
   templateUrl: './readiness.component.html',
   styleUrl: './readiness.component.css',
 })

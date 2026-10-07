@@ -55,10 +55,7 @@
 
   <!-- Drives Grid -->
   @if (isLoading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading job drives...</p>
-    </div>
+    <app-loader message="Job Drives" submessage="Retrieving active and past campus placement drive positions..."></app-loader>
   } @else if (filteredDrives().length === 0) {
     <div class="empty-state">
       <span class="material-symbols-outlined empty-icon">work_off</span>

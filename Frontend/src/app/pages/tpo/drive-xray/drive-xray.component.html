@@ -1,10 +1,7 @@
 <div class="xray-page-root">
   <!-- Loading State -->
   @if (isLoading()) {
-    <div class="loading-full-wrap">
-      <div class="spinner-large"></div>
-      <p class="loading-label">Analyzing drive applications & X-Ray pipeline...</p>
-    </div>
+    <app-loader message="Drive Applications & X-Ray Pipeline" submessage="Analyzing applicant stages, interview pipelines, and hiring metrics..."></app-loader>
   } @else if (!xrayData()) {
     <div class="empty-state-wrap">
       <span class="material-symbols-outlined empty-state-icon">error_outline</span>

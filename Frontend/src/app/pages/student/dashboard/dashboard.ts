@@ -8,10 +8,12 @@ import { SmoothScrollService } from '../../../services/smooth-scroll.service';
 import { NetworkService } from '../../../services/network.service';
 import { RouterModule } from '@angular/router';
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-student-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LoaderComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })

@@ -37,14 +37,7 @@
   </header>
 
   @if (isLoading()) {
-    <div class="loading-state">
-      <div class="loading-orbital">
-        <div class="orbital-ring ring-1"></div>
-        <div class="orbital-ring ring-2"></div>
-        <span class="material-symbols-outlined loading-icon">description</span>
-      </div>
-      <p class="loading-text">Generating offer data for candidate...</p>
-    </div>
+    <app-loader message="Candidate Offer Data" submessage="Generating candidate offer details, salary breakdown, and document templates..."></app-loader>
   } @else if (templateData()) {
 
     <!-- Main Content Grid -->

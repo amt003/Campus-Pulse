@@ -9,11 +9,12 @@ import {
 } from '../../../services/tpo.service';
 
 import { StudentAuditPanelComponent } from '../../../components/tpo/student-audit-panel/student-audit-panel.component';
+import { LoaderComponent } from '../../../components/loader/loader.component';
 
 @Component({
   selector: 'app-tpo-students',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, StudentAuditPanelComponent],
+  imports: [CommonModule, FormsModule, RouterLink, StudentAuditPanelComponent, LoaderComponent],
   templateUrl: './students.component.html',
   styleUrl: './students.component.css',
 })

@@ -15,10 +15,12 @@ export interface AttachmentItem {
   uploadedAt: string;
 }
 
+import { LoaderComponent } from '../../loader/loader.component';
+
 @Component({
   selector: 'app-manage-resources-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoaderComponent],
   templateUrl: './manage-resources-modal.component.html',
   styleUrl: './manage-resources-modal.component.css'
 })

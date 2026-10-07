@@ -7,10 +7,12 @@ import { environment } from '../../../../environments/environment';
 import { FormControl } from '@angular/forms';
 import { meaningfulTextValidator } from '../../../validators/meaningful-text.validator';
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-recruiter-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoaderComponent],
   templateUrl: './profile.html',
   styleUrl: './profile.css'
 })

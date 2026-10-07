@@ -50,10 +50,7 @@
   <!-- Applications Table Card -->
   <div class="table-card">
     @if (isLoading()) {
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading applications master list...</p>
-      </div>
+      <app-loader message="Applications Master List" submessage="Fetching candidates across all active job drives..."></app-loader>
     } @else if (filteredApplications().length === 0) {
       <div class="empty-state">
         <span class="material-symbols-outlined empty-icon">assignment_late</span>

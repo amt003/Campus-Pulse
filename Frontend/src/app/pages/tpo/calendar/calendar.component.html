@@ -201,10 +201,7 @@
        5. Main Timeline Content
        ============================================= -->
   @if (isLoading()) {
-    <div class="state-container">
-      <div class="spinner-large"></div>
-      <p class="state-text">Assembling consolidated Master Calendar timeline...</p>
-    </div>
+    <app-loader message="Master Calendar Timeline" submessage="Assembling consolidated Aptitude, GD, and Interview schedule slots..."></app-loader>
   } @else if (filteredGroupedSchedules().length === 0) {
     <div class="state-container empty">
       <span class="material-symbols-outlined empty-icon">event_busy</span>

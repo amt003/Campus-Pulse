@@ -1,11 +1,7 @@
 <div class="test-results-root">
   <!-- Loading State -->
   @if (isLoading()) {
-    <div class="state-container">
-      <div class="spinner-large"></div>
-      <h3>Loading Assessment Analytics...</h3>
-      <p>Aggregating candidate attempts, computing question accuracy curves, and evaluating proctoring logs.</p>
-    </div>
+    <app-loader message="Assessment Analytics" submessage="Aggregating candidate attempts, computing question accuracy curves, and evaluating proctoring logs..."></app-loader>
   } @else if (errorMessage()) {
     <!-- Error State -->
     <div class="state-container error-state">

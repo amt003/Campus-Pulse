@@ -31,10 +31,7 @@
          Loading State
          ============================================= -->
     @if (isLoading()) {
-      <div class="loading-box">
-        <div class="loader-spinner"></div>
-        <p>Loading placement season settings...</p>
-      </div>
+      <app-loader message="Placement Season Settings" submessage="Retrieving active placement season configuration and dates..."></app-loader>
     } @else {
 
       <!-- =============================================

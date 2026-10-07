@@ -13,10 +13,12 @@ import {
 import { ToastService } from '../../../services/toast.service';
 import { SmoothScrollService } from '../../../services/smooth-scroll.service';
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-tpo-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LoaderComponent],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.css'
 })

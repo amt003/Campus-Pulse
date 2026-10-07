@@ -47,10 +47,12 @@ function buildAddressString(houseName: string, district: string, state: string, 
   return combined;
 }
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-student-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoaderComponent],
   templateUrl: './profile.html',
   styleUrl: './profile.css'
 })

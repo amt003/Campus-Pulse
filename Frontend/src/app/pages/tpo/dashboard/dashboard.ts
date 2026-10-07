@@ -18,10 +18,12 @@ import {
   PendingRecruiter,
 } from '../../../services/tpo.service';
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-tpo-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LoaderComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })

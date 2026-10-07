@@ -30,10 +30,12 @@ export interface DriveItem {
   hasGD?: boolean;
 }
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-recruiter-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ManageResourcesModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ManageResourcesModalComponent, LoaderComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })

@@ -1,0 +1,155 @@
+<div
+  class="campus-pulse-loader-container"
+  [ngClass]="['layout-' + layout, 'size-' + size]"
+  [style.minHeight]="minHeight || null"
+  role="status"
+  aria-live="polite"
+  [attr.aria-label]="'Loading ' + formattedMessage"
+>
+  <div class="loader-content-wrap">
+    <!-- Pulse Orbit Animated Symbol -->
+    <div class="symbol-wrapper">
+      <svg
+        class="pulse-orbit-svg"
+        viewBox="0 0 160 160"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <defs>
+          <!-- Core Gradient -->
+          <radialGradient id="pulseCoreGrad" cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#00a3ff" />
+            <stop offset="45%" stop-color="#0080c0" />
+            <stop offset="85%" stop-color="#006497" />
+            <stop offset="100%" stop-color="#003b5a" />
+          </radialGradient>
+
+          <!-- Core Glow Filter -->
+          <filter id="coreGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+
+          <!-- Soft Comet Trail Gradient for Outer Dot -->
+          <linearGradient id="cometGradNavy" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#003b5a" stop-opacity="0" />
+            <stop offset="100%" stop-color="#003b5a" stop-opacity="0.8" />
+          </linearGradient>
+
+          <linearGradient id="cometGradCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#0080c0" stop-opacity="0" />
+            <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.9" />
+          </linearGradient>
+        </defs>
+
+        <!-- 1. Sonar Ripple Waves (pulsing outward from center) -->
+        <circle class="ripple ripple-1" cx="80" cy="80" r="32" />
+        <circle class="ripple ripple-2" cx="80" cy="80" r="32" />
+        <circle class="ripple ripple-3" cx="80" cy="80" r="32" />
+
+        <!-- 2. Outer Orbit Ring (rotates clockwise) -->
+        <g class="orbit-group orbit-outer">
+          <!-- Outer circular track -->
+          <circle
+            class="orbit-track track-outer"
+            cx="80"
+            cy="80"
+            r="64"
+          />
+
+          <!-- Subtle Graduation Cap Motif on Outer Orbit (top right) -->
+          <g class="campus-cap-motif" transform="translate(118, 28) scale(0.65)">
+            <!-- Cap Diamond -->
+            <polygon
+              points="14,0 28,7 14,14 0,7"
+              class="cap-polygon"
+            />
+            <!-- Cap Underside Arc -->
+            <path
+              d="M 5 9.5 Q 14 16 23 9.5"
+              fill="none"
+              class="cap-arc"
+            />
+            <!-- Tassel -->
+            <line x1="28" y1="7" x2="31" y2="15" class="cap-tassel" />
+            <circle cx="31" cy="16" r="1.5" class="cap-tassel-tip" />
+          </g>
+
+          <!-- Outer Orbit Particle 1 (Navy Dot with Comet Tail) -->
+          <circle class="orbit-particle particle-navy" cx="144" cy="80" r="3.6" />
+
+          <!-- Outer Orbit Particle 2 (Secondary Cyan Dot) -->
+          <circle class="orbit-particle particle-cyan" cx="16" cy="80" r="2.8" />
+        </g>
+
+        <!-- 3. Inner Orbit Ring (counter-rotates smoothly) -->
+        <g class="orbit-group orbit-inner">
+          <!-- Inner circular track -->
+          <circle
+            class="orbit-track track-inner"
+            cx="80"
+            cy="80"
+            r="46"
+          />
+
+          <!-- Inner Orbit Particle (Vibrant Blue Dot) -->
+          <circle class="orbit-particle particle-blue" cx="80" cy="34" r="3.2" />
+
+          <!-- Inner Counter Particle (Soft Mint/Cyan Dot) -->
+          <circle class="orbit-particle particle-glow" cx="80" cy="126" r="2.4" />
+        </g>
+
+        <!-- 4. Luminous Central Pulse Core -->
+        <g class="pulse-core-group">
+          <!-- Core Back Glow -->
+          <circle
+            class="core-halo"
+            cx="80"
+            cy="80"
+            r="26"
+            filter="url(#coreGlow)"
+          />
+
+          <!-- Core Orb -->
+          <circle
+            class="core-orb"
+            cx="80"
+            cy="80"
+            r="24"
+            fill="url(#pulseCoreGrad)"
+          />
+
+          <!-- White ECG Heartbeat / Pulse Line inside Core -->
+          <path
+            class="heartbeat-line"
+            d="M 66 80 L 72 80 L 75.5 72 L 78.5 87 L 82 74 L 84.5 83 L 87 80 L 94 80"
+          />
+        </g>
+      </svg>
+    </div>
+
+    <!-- Typography: "Loading <message>..." -->
+    <div class="loader-text-wrapper">
+      <h3 class="loader-primary-text">
+        <span>Loading {{ formattedMessage }}</span>
+        <span class="animated-ellipsis">
+          <span class="dot d1">.</span><span class="dot d2">.</span><span class="dot d3">.</span>
+        </span>
+      </h3>
+
+      @if (submessage) {
+        <p class="loader-submessage">{{ submessage }}</p>
+      }
+
+      <!-- Three Rhythm Dots Bar (Navy - Blue - Cyan) -->
+      <div class="status-dots-bar" aria-hidden="true">
+        <span class="pulse-dot dot-primary"></span>
+        <span class="pulse-dot dot-secondary"></span>
+        <span class="pulse-dot dot-accent"></span>
+      </div>
+    </div>
+  </div>
+</div>

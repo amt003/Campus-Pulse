@@ -85,10 +85,7 @@
   <!-- Offers Table -->
   <div class="table-card">
     @if (isLoading()) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading offer letters data...</p>
-    </div>
+      <app-loader message="Offer Letters" submessage="Retrieving candidate offer letters, acceptance statuses, and documentation..."></app-loader>
     } @else if (filteredOffers().length === 0) {
     <div class="empty-state">
       <span class="material-symbols-outlined empty-icon">mark_email_unread</span>

@@ -5,10 +5,12 @@ import { forkJoin } from 'rxjs';
 import { TpoService, PendingRecruiter } from '../../../services/tpo.service';
 import { SmoothScrollService } from '../../../services/smooth-scroll.service';
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-tpo-approval',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoaderComponent],
   templateUrl: './approval.component.html',
   styleUrl: './approval.component.css',
 })

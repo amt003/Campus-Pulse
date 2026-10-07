@@ -84,21 +84,28 @@
         </p>
 
         <div class="hero-cta">
-          <button class="btn-hero-primary" routerLink="/register">
-            Recruiter Registration
+          <button class="btn-hero-primary" routerLink="/login">
+            Start Your Journey Now !!
           </button>
-          <button class="btn-hero-outline">
-            TPO Login
-          </button>
+  
         </div>
       </div>
 
       <!-- Visual Column -->
       <div class="hero-visual">
-        <div class="hero-visual-bg"></div>
-        <img
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoJjdnJeMMZaG_3JgPlMwu7cDHP6gACEjUnv-YIPI4b5_81O6QHdRFHs5rSJMnGE2I1ZrDEDkYB1MJQA-bF2iHgZW3Olaa9VPQfYr8oxaxuIaLUrP9cOutM3iBOJJvc7KeSj2ZKzpdZSdQsNHLdnUTJeSjEflS3yGUb9Gl2LMB7vocmceqnQLacvCYm7lEE8T1whR3PrOJMBh5oZdz9bUreHVkHg0KgN9Nmv0QUlFQVt_X7T1YzPHo1YnModr573kVdMyzBWWHFIsJWSE"
-          alt="AI Campus Illustration" />
+        <video
+          #heroVideo
+          class="hero-video"
+          src="/assets/videos/campus-placement.mp4"
+          autoplay
+          [muted]="true"
+          muted
+          loop
+          playsinline
+          preload="auto">
+          <source src="/assets/videos/campus-placement.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
       </div>
     </div>
 
@@ -248,7 +255,7 @@
               use this portal to register, they benefit from real-time tracking and
               AI-driven profile optimization.
             </p>
-            <a href="#" class="role-link">
+            <a routerLink="/login" [queryParams]="{ role: 'student' }" class="role-link">
               Explore Student Portal
               <span class="material-symbols-outlined">arrow_forward</span>
             </a>
@@ -269,7 +276,7 @@
               Cut shortlisting time by 70%. Identify top talent using semantic search
               and manage end-to-end logistics seamlessly.
             </p>
-            <a href="#" class="role-link">
+            <a routerLink="/login" [queryParams]="{ role: 'recruiter' }" class="role-link">
               Hiring Solutions
               <span class="material-symbols-outlined">arrow_forward</span>
             </a>
@@ -290,7 +297,7 @@
               Full transparency into every placement drive. Monitor engagement, export
               compliance reports, and manage campus visits.
             </p>
-            <a href="#" class="role-link">
+            <a routerLink="/login" [queryParams]="{ role: 'tpo' }" class="role-link">
               Admin Dashboard
               <span class="material-symbols-outlined">arrow_forward</span>
             </a>
@@ -313,9 +320,6 @@
       <div class="cta-buttons">
         <button class="btn-cta-white" routerLink="/register">
           Recruiter Registration
-        </button>
-        <button class="btn-cta-glass">
-          TPO Login
         </button>
       </div>
     </div>

@@ -5,10 +5,12 @@ import { RouterModule } from '@angular/router';
 import { TpoService, SeasonConfig } from '../../../services/tpo.service';
 import { ToastService } from '../../../services/toast.service';
 
+import { LoaderComponent } from '../../../components/loader/loader.component';
+
 @Component({
   selector: 'app-tpo-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LoaderComponent],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
 })

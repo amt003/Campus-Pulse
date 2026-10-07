@@ -264,13 +264,13 @@
             <div class="field-wrap">
               <span class="field-icon material-symbols-outlined">phone</span>
               <input id="reg-phone" name="phoneNumber" type="tel" class="field-input"
-                [class.field-error]="phoneNumber && !phoneValid" [(ngModel)]="phoneNumber" placeholder="+91 98765 43210"
-                autocomplete="tel" required />
+                [class.field-error]="phoneNumber && !phoneValid" [(ngModel)]="phoneNumber" (input)="onPhoneInput($event)"
+                placeholder="+919876543210" maxlength="13" autocomplete="tel" required />
             </div>
             @if (phoneNumber && !phoneValid) {
             <p class="field-error-msg">
               <span class="material-symbols-outlined">error</span>
-              Please enter a valid phone number starting with + and country code (e.g. +919876543210)
+              Please enter a valid phone number starting with + and country code (exactly 12 digits e.g. +919876543210)
             </p>
             }
           </div>

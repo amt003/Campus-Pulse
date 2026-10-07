@@ -64,10 +64,7 @@
         <h4 class="section-title">Uploaded Resources ({{ attachments().length }})</h4>
 
         @if (isLoading()) {
-          <div class="loading-state">
-            <span class="spinner-blue"></span>
-            <span>Loading resources...</span>
-          </div>
+          <app-loader message="Drive Resources" size="sm" submessage="Fetching attached placement materials and prep documents..."></app-loader>
         } @else if (attachments().length === 0) {
           <div class="empty-state">
             <span class="material-symbols-outlined empty-icon">folder_open</span>

@@ -91,10 +91,7 @@
 
   <!-- Loading State -->
   @if (isLoading()) {
-    <div class="state-container">
-      <div class="spinner"></div>
-      <p class="state-text">Loading recruitment drives...</p>
-    </div>
+    <app-loader message="Recruitment Drives" submessage="Loading all campus placement drives and company pipelines..."></app-loader>
   } @else if (filteredDrives.length === 0) {
     <!-- Empty State -->
     <div class="state-container empty">
