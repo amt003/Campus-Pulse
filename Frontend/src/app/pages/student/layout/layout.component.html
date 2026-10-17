@@ -116,43 +116,48 @@
 
   <!-- Sidebar & Main Content Wrapper -->
   <div class="app-layout-body">
+    <!-- Mobile Backdrop -->
+    @if (profile() && profile()!.isProfileComplete && !isSidebarCollapsed()) {
+      <div class="sidebar-backdrop" (click)="toggleSidebar()"></div>
+    }
+
     @if (profile() && profile()!.isProfileComplete) {
-      <aside class="student-sidebar" [class.collapsed]="isSidebarCollapsed()" data-lenis-prevent>
-        <a class="sidebar-link" routerLink="/student/dashboard" routerLinkActive="active-link">
+      <aside class="student-sidebar" [class.collapsed]="isSidebarCollapsed()" [class.mobile-open]="!isSidebarCollapsed()" data-lenis-prevent>
+        <a class="sidebar-link" routerLink="/student/dashboard" routerLinkActive="active-link" (click)="closeSidebarOnMobile()">
           <span class="material-symbols-outlined">explore</span>
           <span>Dashboard</span>
         </a>
-        <a class="sidebar-link" routerLink="/student/readiness" routerLinkActive="active-link" id="nav-student-readiness">
+        <a class="sidebar-link" routerLink="/student/readiness" routerLinkActive="active-link" id="nav-student-readiness" (click)="closeSidebarOnMobile()">
           <span class="material-symbols-outlined">insights</span>
           <span>My Readiness</span>
         </a>
-        <a class="sidebar-link" routerLink="/student/applications" routerLinkActive="active-link">
+        <a class="sidebar-link" routerLink="/student/applications" routerLinkActive="active-link" (click)="closeSidebarOnMobile()">
           <span class="material-symbols-outlined">assignment</span>
           <span>Applications</span>
         </a>
-        <a class="sidebar-link" routerLink="/student/schedules" routerLinkActive="active-link">
+        <a class="sidebar-link" routerLink="/student/schedules" routerLinkActive="active-link" (click)="closeSidebarOnMobile()">
           <span class="material-symbols-outlined">event</span>
           <span>Schedules</span>
         </a>
-        <a class="sidebar-link" routerLink="/student/offers" routerLinkActive="active-link">
+        <a class="sidebar-link" routerLink="/student/offers" routerLinkActive="active-link" (click)="closeSidebarOnMobile()">
           <span class="material-symbols-outlined">workspace_premium</span>
           <span>Offers</span>
         </a>
-        <a class="sidebar-link" (click)="openAptitudeTestsModal()" style="cursor: pointer;" id="nav-student-aptitude-tests">
+        <a class="sidebar-link" (click)="openAptitudeTestsModal(); closeSidebarOnMobile()" style="cursor: pointer;" id="nav-student-aptitude-tests">
           <span class="material-symbols-outlined">quiz</span>
           <span>Aptitude Tests</span>
           @if (activeTestsCount() > 0) {
             <span class="sidebar-unread-badge" style="margin-left: auto; background: var(--secondary); color: white; font-size: 10px; font-weight: 800; border-radius: 10px; padding: 1px 6px;">{{ activeTestsCount() }}</span>
           }
         </a>
-        <a class="sidebar-link" routerLink="/student/notifications" routerLinkActive="active-link" id="nav-student-notifications">
+        <a class="sidebar-link" routerLink="/student/notifications" routerLinkActive="active-link" id="nav-student-notifications" (click)="closeSidebarOnMobile()">
           <span class="material-symbols-outlined">notifications</span>
           <span>Notifications</span>
           @if (unreadCount() > 0) {
             <span class="sidebar-unread-badge" style="margin-left: auto; background: var(--danger); color: white; font-size: 10px; font-weight: 800; border-radius: 10px; padding: 1px 6px;">{{ unreadCount() }}</span>
           }
         </a>
-        <a class="sidebar-link" routerLink="/student/profile" routerLinkActive="active-link">
+        <a class="sidebar-link" routerLink="/student/profile" routerLinkActive="active-link" (click)="closeSidebarOnMobile()">
           <span class="material-symbols-outlined">person</span>
           <span>Profile</span>
         </a>

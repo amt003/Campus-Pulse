@@ -134,8 +134,26 @@
 /* Drives Grid */
 .drives-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
+}
+
+@media (max-width: 640px) {
+  .controls-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+  }
+  .search-input-wrap {
+    min-width: 100%;
+    width: 100%;
+  }
+  .filter-tabs {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 4px;
+  }
 }
 
 .drive-card {

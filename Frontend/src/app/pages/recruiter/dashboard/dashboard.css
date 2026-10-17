@@ -1277,5 +1277,52 @@
   transform: translateX(24px);
 }
 
+/* Responsive Dashboard Layouts */
+.stats-overview-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.drives-cards-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+.pipeline-split-grid {
+  grid-template-columns: 1.8fr 1fr;
+}
+
+.candidate-review-grid {
+  grid-template-columns: 1.2fr 1fr;
+  height: calc(100% - 150px);
+  overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+  .stats-overview-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .drives-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .pipeline-split-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .candidate-review-grid {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    overflow-y: auto !important;
+    max-height: 80vh !important;
+  }
+}
+
+@media (max-width: 540px) {
+  .stats-overview-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
 
 

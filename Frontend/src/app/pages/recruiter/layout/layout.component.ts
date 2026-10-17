@@ -22,7 +22,7 @@ export class RecruiterLayoutComponent implements OnInit, OnDestroy {
   protected isLogoFailed = signal<boolean>(false);
   protected isApproved = signal<boolean>(false);
   protected isNotificationsOpen = signal<boolean>(false);
-  protected isSidebarCollapsed = signal<boolean>(false);
+  protected isSidebarCollapsed = signal<boolean>(typeof window !== 'undefined' && window.innerWidth <= 768);
 
   protected getLogoUrl(logoPath?: string | null): string | null {
     if (!logoPath) return null;
@@ -35,6 +35,12 @@ export class RecruiterLayoutComponent implements OnInit, OnDestroy {
 
   protected toggleSidebar(): void {
     this.isSidebarCollapsed.update(val => !val);
+  }
+
+  protected closeSidebarOnMobile(): void {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      this.isSidebarCollapsed.set(true);
+    }
   }
 
   // Expose notification signals

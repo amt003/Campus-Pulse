@@ -19,7 +19,7 @@ export class StudentLayoutComponent implements OnInit, OnDestroy {
 
   protected profile = signal<StudentProfile | null>(null);
   protected isAvatarFailed = signal<boolean>(false);
-  protected isSidebarCollapsed = signal<boolean>(false);
+  protected isSidebarCollapsed = signal<boolean>(typeof window !== 'undefined' && window.innerWidth <= 768);
   protected isNotificationsOpen = signal<boolean>(false);
   protected isTestsModalOpen = signal<boolean>(false);
   protected upcomingTests = signal<any[]>([]);
@@ -106,6 +106,12 @@ export class StudentLayoutComponent implements OnInit, OnDestroy {
 
   protected toggleSidebar(): void {
     this.isSidebarCollapsed.set(!this.isSidebarCollapsed());
+  }
+
+  protected closeSidebarOnMobile(): void {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      this.isSidebarCollapsed.set(true);
+    }
   }
 
   protected loadProfile(): void {

@@ -1085,3 +1085,22 @@ a {
 .btn-edit-profile .material-symbols-outlined {
   font-size: 18px;
 }
+
+/* Responsive Login Layout */
+@media (max-width: 900px) {
+  .login-root {
+    grid-template-columns: 1fr;
+  }
+  .login-panel-left {
+    display: none;
+  }
+  .login-panel-right {
+    padding: 32px 18px;
+    align-items: center;
+  }
+  .login-card {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+

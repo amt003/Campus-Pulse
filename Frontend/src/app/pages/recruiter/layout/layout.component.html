@@ -114,39 +114,44 @@
 
   <!-- Sidebar & Main Content Wrapper -->
   <div class="app-layout-body">
-    <aside class="recruiter-sidebar" [class.collapsed]="isSidebarCollapsed()" data-lenis-prevent>
-      <a class="sidebar-link" routerLink="/recruiter/dashboard" routerLinkActive="active-link">
+    <!-- Mobile Backdrop -->
+    @if (!isSidebarCollapsed()) {
+      <div class="sidebar-backdrop" (click)="toggleSidebar()"></div>
+    }
+
+    <aside class="recruiter-sidebar" [class.collapsed]="isSidebarCollapsed()" [class.mobile-open]="!isSidebarCollapsed()" data-lenis-prevent>
+      <a class="sidebar-link" routerLink="/recruiter/dashboard" routerLinkActive="active-link" (click)="closeSidebarOnMobile()">
         <span class="material-symbols-outlined">explore</span>
         <span>Dashboard</span>
       </a>
-      <a class="sidebar-link" routerLink="/recruiter/drives" routerLinkActive="active-link">
+      <a class="sidebar-link" routerLink="/recruiter/drives" routerLinkActive="active-link" (click)="closeSidebarOnMobile()">
         <span class="material-symbols-outlined">work</span>
         <span>Job Drives</span>
       </a>
-      <a class="sidebar-link" routerLink="/recruiter/question-bank" routerLinkActive="active-link" id="nav-recruiter-question-bank">
+      <a class="sidebar-link" routerLink="/recruiter/question-bank" routerLinkActive="active-link" id="nav-recruiter-question-bank" (click)="closeSidebarOnMobile()">
         <span class="material-symbols-outlined">quiz</span>
         <span>Question Bank</span>
       </a>
-      <a class="sidebar-link" routerLink="/recruiter/create-test" routerLinkActive="active-link" id="nav-recruiter-create-test">
+      <a class="sidebar-link" routerLink="/recruiter/create-test" routerLinkActive="active-link" id="nav-recruiter-create-test" (click)="closeSidebarOnMobile()">
         <span class="material-symbols-outlined">assignment_add</span>
         <span>Create Test</span>
       </a>
-      <a class="sidebar-link" routerLink="/recruiter/all-applications" routerLinkActive="active-link">
+      <a class="sidebar-link" routerLink="/recruiter/all-applications" routerLinkActive="active-link" (click)="closeSidebarOnMobile()">
         <span class="material-symbols-outlined">assignment</span>
         <span>Applications</span>
       </a>
-      <a class="sidebar-link" routerLink="/recruiter/offers" routerLinkActive="active-link">
+      <a class="sidebar-link" routerLink="/recruiter/offers" routerLinkActive="active-link" (click)="closeSidebarOnMobile()">
         <span class="material-symbols-outlined">workspace_premium</span>
         <span>Offer Letters</span>
       </a>
-      <a class="sidebar-link" routerLink="/recruiter/notifications" routerLinkActive="active-link" id="nav-recruiter-notifications">
+      <a class="sidebar-link" routerLink="/recruiter/notifications" routerLinkActive="active-link" id="nav-recruiter-notifications" (click)="closeSidebarOnMobile()">
         <span class="material-symbols-outlined">notifications</span>
         <span>Notifications</span>
         @if (unreadCount() > 0) {
           <span class="sidebar-unread-badge" style="margin-left: auto; background: var(--danger); color: white; font-size: 10px; font-weight: 800; border-radius: 10px; padding: 1px 6px;">{{ unreadCount() }}</span>
         }
       </a>
-      <a class="sidebar-link" routerLink="/recruiter/profile" routerLinkActive="active-link">
+      <a class="sidebar-link" routerLink="/recruiter/profile" routerLinkActive="active-link" (click)="closeSidebarOnMobile()">
         <span class="material-symbols-outlined">business</span>
         <span>Company Profile</span>
       </a>
