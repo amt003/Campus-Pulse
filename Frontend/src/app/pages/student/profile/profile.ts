@@ -67,6 +67,7 @@ export class StudentProfileComponent implements OnInit {
   // Photo state
   protected selectedPhotoFile: File | null = null;
   protected photoPreviewUrl = signal<string | null>(null);
+  protected isAvatarFailed = signal<boolean>(false);
 
   // Security / Password state
   protected currentPassword = signal<string>('');
@@ -468,6 +469,7 @@ export class StudentProfileComponent implements OnInit {
         return;
       }
       this.selectedPhotoFile = file;
+      this.isAvatarFailed.set(false);
       const reader = new FileReader();
       reader.onload = () => {
         this.photoPreviewUrl.set(reader.result as string);

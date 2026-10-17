@@ -841,8 +841,8 @@
                       <td>
                         <div style="display: flex; align-items: center; gap: 10px;">
                           <div class="company-logo-circle" style="width: 32px; height: 32px; flex-shrink: 0; background: var(--primary);">
-                            @if (app.studentId?.profilePicPath) {
-                              <img [src]="getMediaUrl(app.studentId.profilePicPath)" alt="Avatar" class="company-mini-logo" />
+                            @if (app.studentId?.profilePicPath && !isApplicantAvatarFailed(app._id)) {
+                              <img [src]="getMediaUrl(app.studentId.profilePicPath)" alt="Avatar" class="company-mini-logo" (error)="handleApplicantAvatarError(app._id)" />
                             } @else {
                               <span class="material-symbols-outlined default-logo-icon" style="font-size: 18px; display: flex; align-items: center; justify-content: center; height: 100%;">person</span>
                             }
@@ -898,8 +898,8 @@
                 </div>
 
                 <div class="company-logo-circle" style="width: 48px; height: 48px; flex-shrink: 0; background: var(--primary);">
-                  @if (selectedApplication()!.studentId?.profilePicPath) {
-                    <img [src]="getMediaUrl(selectedApplication()!.studentId!.profilePicPath)" alt="Profile" class="company-mini-logo" />
+                  @if (selectedApplication()!.studentId?.profilePicPath && !isApplicantAvatarFailed(selectedApplication()!._id)) {
+                    <img [src]="getMediaUrl(selectedApplication()!.studentId!.profilePicPath)" alt="Profile" class="company-mini-logo" (error)="handleApplicantAvatarError(selectedApplication()!._id)" />
                   } @else {
                     <span class="material-symbols-outlined default-logo-icon" style="font-size: 24px; display: flex; align-items: center; justify-content: center; height: 100%;">person</span>
                   }

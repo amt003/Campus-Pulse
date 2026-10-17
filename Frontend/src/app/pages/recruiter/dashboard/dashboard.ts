@@ -58,6 +58,15 @@ export class RecruiterDashboardComponent implements OnInit {
 
   protected isLoading = signal<boolean>(true);
   protected profile = signal<RecruiterProfile | null>(null);
+  protected failedApplicantAvatars = new Set<string>();
+
+  protected isApplicantAvatarFailed(id: string): boolean {
+    return this.failedApplicantAvatars.has(id);
+  }
+
+  protected handleApplicantAvatarError(id: string): void {
+    this.failedApplicantAvatars.add(id);
+  }
   protected drives = signal<DriveItem[]>([]);
   protected tests = signal<any[]>([]);
   protected isRefreshing = signal<boolean>(false);

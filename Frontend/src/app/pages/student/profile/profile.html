@@ -24,8 +24,8 @@
           <div class="avatar-wrapper" (click)="photoFileInput.click()">
             @if (photoPreviewUrl()) {
               <img [src]="photoPreviewUrl()" alt="Preview" class="avatar-image" />
-            } @else if (profile()?.profilePicPath) {
-              <img [src]="getAvatarUrl()" alt="Profile" class="avatar-image" />
+            } @else if (profile()?.profilePicPath && !isAvatarFailed()) {
+              <img [src]="getAvatarUrl()" alt="Profile" class="avatar-image" (error)="isAvatarFailed.set(true)" />
             } @else {
               <span class="avatar-initials">
                 {{ profile()!.userId.name.substring(0,1) }}{{ profile()!.userId.name.includes(' ') ? profile()!.userId.name.split(' ')[1].substring(0,1) : '' }}
