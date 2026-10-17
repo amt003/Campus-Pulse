@@ -144,7 +144,7 @@ const updateStudentProfile = async (req, res) => {
     }
 
     if (req.file) {
-      profile.profilePicPath = `/uploads/logos/${req.file.filename}`;
+      profile.profilePicPath = req.file.cloudinaryUrl || `/uploads/logos/${req.file.filename}`;
     }
 
     await profile.save();
@@ -201,7 +201,7 @@ const uploadResume = async (req, res) => {
       });
     }
 
-    profile.resumePath = `/uploads/resumes/${req.file.filename}`;
+    profile.resumePath = req.file.cloudinaryUrl || `/uploads/resumes/${req.file.filename}`;
     profile.isProfileComplete = true;
     await profile.save();
 

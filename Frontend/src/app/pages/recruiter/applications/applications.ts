@@ -972,8 +972,16 @@ export class RecruiterApplicationsComponent implements OnInit {
 
   protected getResumeUrl(path: string | undefined): SafeResourceUrl | null {
     if (!path) return null;
-    const fullUrl = `${environment.apiUrl}${path}`;
+    const fullUrl = path.startsWith('http://') || path.startsWith('https://')
+      ? path
+      : `${environment.apiUrl}${path.startsWith('/') ? '' : '/'}${path}`;
     return this.sanitizer.bypassSecurityTrustResourceUrl(fullUrl);
+  }
+
+  protected getDirectResumeUrl(path: string | undefined): string {
+    if (!path) return '#';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return `${environment.apiUrl}${path.startsWith('/') ? '' : '/'}${path}`;
   }
 
   // --- Scheduling Actions ---

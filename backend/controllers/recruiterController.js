@@ -425,8 +425,10 @@ const getRecruiterDrives = async (req, res) => {
     const drivesWithCount = await Promise.all(
       drives.map(async (drive) => {
         const count = await Application.countDocuments({ driveId: drive._id });
+        const driveObj = drive.toObject();
         return {
-          ...drive.toObject(),
+          ...driveObj,
+          rejectionReason: driveObj.tpoFeedback,
           applicationsCount: count,
         };
       })
@@ -459,9 +461,13 @@ const getJobDriveById = async (req, res) => {
       });
     }
 
+    const driveObj = drive.toObject();
     return res.status(200).json({
       success: true,
-      drive,
+      drive: {
+        ...driveObj,
+        rejectionReason: driveObj.tpoFeedback,
+      },
     });
   } catch (error) {
     return res.status(500).json({
@@ -1164,7 +1170,7 @@ const updateRecruiterProfile = async (req, res) => {
     }
 
     if (req.file) {
-      recruiter.companyLogo = `/uploads/logos/${req.file.filename}`;
+      recruiter.companyLogo = req.file.cloudinaryUrl || `/uploads/logos/${req.file.filename}`;
     }
 
     if (password && password.trim()) {
@@ -1222,17 +1228,24 @@ const getResumeText = async (req, res) => {
 
     const fs = require("fs");
     const path = require("path");
+    const axios = require("axios");
     const { PDFParse } = require("pdf-parse");
 
-    const absolutePath = path.join(__dirname, "..", student.resumePath);
-    if (!fs.existsSync(absolutePath)) {
-      return res.status(404).json({
-        success: false,
-        message: "Resume file not found on server disk",
-      });
+    let dataBuffer;
+    if (student.resumePath.startsWith("http://") || student.resumePath.startsWith("https://")) {
+      const response = await axios.get(student.resumePath, { responseType: "arraybuffer" });
+      dataBuffer = response.data;
+    } else {
+      const absolutePath = path.join(__dirname, "..", student.resumePath);
+      if (!fs.existsSync(absolutePath)) {
+        return res.status(404).json({
+          success: false,
+          message: "Resume file not found on server disk",
+        });
+      }
+      dataBuffer = fs.readFileSync(absolutePath);
     }
 
-    const dataBuffer = fs.readFileSync(absolutePath);
     const parser = new PDFParse({ data: dataBuffer });
     const pdfData = await parser.getText();
     const resumeText = pdfData.text || "";
@@ -1672,7 +1685,7 @@ const uploadOfferLetter = async (req, res) => {
 
     application.offer.status = "Sent";
     application.offer.fileId = req.file.filename;
-    application.offer.filePath = `/uploads/offers/${req.file.filename}`;
+    application.offer.filePath = req.file.cloudinaryUrl || `/uploads/offers/${req.file.filename}`;
     application.offer.fileName = req.file.originalname;
     application.offer.uploadedDate = now;
     application.offer.expiryDate = expiry;

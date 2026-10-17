@@ -97,6 +97,38 @@ const uploadOffer = multer({
   },
 });
 
+const { isCloudinaryConfigured, uploadToCloudinary } = require("../config/cloudinary");
+
+/**
+ * Express middleware that checks if Cloudinary is configured.
+ * If configured, it streams the uploaded file to Cloudinary and sets req.file.cloudinaryUrl.
+ * If not configured or if an error occurs, it smoothly retains the local file.
+ */
+const processCloudinaryUpload = (folder = "campuspulse/uploads", resourceType = "auto") => {
+  return async (req, res, next) => {
+    if (!req.file || !isCloudinaryConfigured()) {
+      return next();
+    }
+
+    try {
+      const result = await uploadToCloudinary(req.file.path, {
+        folder,
+        resource_type: resourceType,
+      });
+
+      if (result && result.secure_url) {
+        req.file.cloudinaryUrl = result.secure_url;
+      }
+      next();
+    } catch (err) {
+      console.warn(`[Cloudinary Warning] Cloud upload failed: ${err.message}. Retaining local file fallback.`);
+      next();
+    }
+  };
+};
+
 module.exports = upload;
+module.exports.upload = upload;
 module.exports.uploadImage = uploadImage;
 module.exports.uploadOffer = uploadOffer;
+module.exports.processCloudinaryUpload = processCloudinaryUpload;

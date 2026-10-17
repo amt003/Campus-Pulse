@@ -25,7 +25,7 @@
             @if (photoPreviewUrl()) {
               <img [src]="photoPreviewUrl()" alt="Preview" class="avatar-image" />
             } @else if (profile()?.profilePicPath) {
-              <img [src]="'http://localhost:5000' + profile()!.profilePicPath" alt="Profile" class="avatar-image" />
+              <img [src]="getAvatarUrl()" alt="Profile" class="avatar-image" />
             } @else {
               <span class="avatar-initials">
                 {{ profile()!.userId.name.substring(0,1) }}{{ profile()!.userId.name.includes(' ') ? profile()!.userId.name.split(' ')[1].substring(0,1) : '' }}

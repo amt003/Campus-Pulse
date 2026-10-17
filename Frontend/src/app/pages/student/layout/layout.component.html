@@ -97,8 +97,8 @@
       @if (profile()) {
       <div class="company-badge">
         <div class="company-logo-circle">
-          @if (profile()?.profilePicPath) {
-          <img [src]="'http://localhost:5000' + profile()!.profilePicPath" alt="Profile" class="company-mini-logo" />
+          @if (profile()?.profilePicPath && !isAvatarFailed()) {
+          <img [src]="getAvatarUrl(profile()!.profilePicPath)" alt="Profile" class="company-mini-logo" (error)="isAvatarFailed.set(true)" />
           } @else {
           <span class="material-symbols-outlined default-logo-icon">person</span>
           }

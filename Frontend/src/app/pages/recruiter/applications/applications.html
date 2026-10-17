@@ -1413,7 +1413,7 @@
                         <span class="material-symbols-outlined" style="font-size: 15px;">visibility</span>
                         <span>View Document</span>
                       </button>
-                      <a [href]="'http://localhost:5000' + student?.resumePath" target="_blank" download class="btn-bulk-schedule" style="background: var(--primary); color: white; border: none; text-decoration: none;">
+                      <a [href]="getDirectResumeUrl(student?.resumePath)" target="_blank" download class="btn-bulk-schedule" style="background: var(--primary); color: white; border: none; text-decoration: none;">
                         <span class="material-symbols-outlined" style="font-size: 15px;">download</span>
                         <span>Download PDF</span>
                       </a>

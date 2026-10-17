@@ -39,7 +39,8 @@
         "http://localhost:5000/api/student/applications",
         "http://localhost:5000/api/student/schedule",
         "http://localhost:5000/api/student/profile",
-        "http://localhost:5000/api/student/**"
+        "http://localhost:5000/api/student/**",
+        "https://campus-pulse-eonm.onrender.com/api/student/**"
       ],
       "cacheConfig": {
         "strategy": "freshness",
@@ -52,7 +53,8 @@
       "name": "api-static-content",
       "urls": [
         "/api/tpo/college-config",
-        "http://localhost:5000/api/tpo/college-config"
+        "http://localhost:5000/api/tpo/college-config",
+        "https://campus-pulse-eonm.onrender.com/api/tpo/college-config"
       ],
       "cacheConfig": {
         "strategy": "performance",

@@ -265,6 +265,12 @@
                         <span class="material-symbols-outlined" style="font-size: 16px; color: var(--primary);">attachment</span>
                         <span>Manage Resources</span>
                       </a>
+                      @if (d.status === 'Rejected') {
+                        <a (click)="openRejectionReasonModal(d, $event)" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; color: #dc2626; text-decoration: none; cursor: pointer; font-size: 12.5px; font-weight: 650; text-align: left; transition: background 0.15s; width: 100%; box-sizing: border-box;">
+                          <span class="material-symbols-outlined" style="font-size: 16px; color: #dc2626;">cancel</span>
+                          <span>Rejection Reason</span>
+                        </a>
+                      }
                     </div>
                   }
                 </div>
@@ -287,6 +293,29 @@
                     <button (click)="resubmitDrive(d._id)" style="background: #d97706; border: none; color: #ffffff; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
                       <span class="material-symbols-outlined" style="font-size: 14px;">send</span>
                       <span>Resubmit for Approval</span>
+                    </button>
+                  </div>
+                </div>
+              }
+
+              <!-- Rejected Drive Banner -->
+              @if (d.status === 'Rejected') {
+                <div style="background: #fef2f2; border-top: 1px solid #fecaca; border-bottom: 1px solid #fecaca; padding: 12px 16px; font-size: 12.5px; color: #991b1b;" (click)="$event.stopPropagation()">
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span class="material-symbols-outlined" style="font-size: 20px; color: #dc2626;">cancel</span>
+                      <div>
+                        <strong style="color: #991b1b; display: block;">Drive Rejected by TPO</strong>
+                        <span style="color: #7f1d1d; font-size: 11.5px;">Click to view the detailed explanation from TPO</span>
+                      </div>
+                    </div>
+                    <button 
+                      type="button" 
+                      (click)="openRejectionReasonModal(d, $event)"
+                      style="background: #dc2626; border: none; color: white; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s;"
+                    >
+                      <span class="material-symbols-outlined" style="font-size: 15px;">info</span>
+                      <span>Rejection Reason</span>
                     </button>
                   </div>
                 </div>
@@ -319,7 +348,7 @@
               </div>
 
               <!-- Card Footer -->
-              <div style="padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; background: #FAFBFB; margin-top: auto;">
+              <div style="padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; background: #FAFBFB; margin-top: auto; flex-wrap: wrap; gap: 8px;">
                 <!-- Stacked circular avatars -->
                 <div style="display: flex; align-items: center;">
                   <div style="width: 26px; height: 26px; border-radius: 50%; background: #BDC3C7; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: white;">A</div>
@@ -813,7 +842,7 @@
                         <div style="display: flex; align-items: center; gap: 10px;">
                           <div class="company-logo-circle" style="width: 32px; height: 32px; flex-shrink: 0; background: var(--primary);">
                             @if (app.studentId?.profilePicPath) {
-                              <img [src]="'http://localhost:5000' + app.studentId.profilePicPath" alt="Avatar" class="company-mini-logo" />
+                              <img [src]="getMediaUrl(app.studentId.profilePicPath)" alt="Avatar" class="company-mini-logo" />
                             } @else {
                               <span class="material-symbols-outlined default-logo-icon" style="font-size: 18px; display: flex; align-items: center; justify-content: center; height: 100%;">person</span>
                             }
@@ -870,7 +899,7 @@
 
                 <div class="company-logo-circle" style="width: 48px; height: 48px; flex-shrink: 0; background: var(--primary);">
                   @if (selectedApplication()!.studentId?.profilePicPath) {
-                    <img [src]="'http://localhost:5000' + selectedApplication()!.studentId!.profilePicPath" alt="Profile" class="company-mini-logo" />
+                    <img [src]="getMediaUrl(selectedApplication()!.studentId!.profilePicPath)" alt="Profile" class="company-mini-logo" />
                   } @else {
                     <span class="material-symbols-outlined default-logo-icon" style="font-size: 24px; display: flex; align-items: center; justify-content: center; height: 100%;">person</span>
                   }
@@ -911,7 +940,7 @@
               <!-- Resume Download/View Action -->
               @if (selectedApplication()!.studentId?.resumePath) {
                 <div style="margin-bottom: 20px;">
-                  <a [href]="'http://localhost:5000' + selectedApplication()!.studentId?.resumePath" target="_blank" 
+                  <a [href]="getMediaUrl(selectedApplication()!.studentId?.resumePath)" target="_blank" 
                      class="btn-refresh-status" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 38px; text-decoration: none; margin: 0; background: white; border: 1.5px solid var(--border); font-size: 12px; font-weight: 700;">
                     <span class="material-symbols-outlined" style="font-size: 18px;">download_file</span>
                     <span>Download Candidate Resume (PDF)</span>
@@ -962,5 +991,13 @@
       [driveTitle]="selectedDriveForResources()!.title"
       (onClose)="closeResourceManager()"
     ></app-manage-resources-modal>
+  }
+
+  <!-- Rejection Reason Modal -->
+  @if (isRejectionModalOpen() && selectedDriveForRejection()) {
+    <app-rejection-reason-modal
+      [drive]="selectedDriveForRejection()"
+      (onClose)="closeRejectionReasonModal()"
+    ></app-rejection-reason-modal>
   }
 </div>

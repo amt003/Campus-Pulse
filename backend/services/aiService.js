@@ -13,20 +13,32 @@ const { PDFParse } = require("pdf-parse");
  */
 const scoreResume = async (resumePath, jobDescription) => {
   try {
-    // 1. Resolve absolute path to PDF
-    const absolutePath = path.join(__dirname, "..", resumePath);
-    
-    if (!fs.existsSync(absolutePath)) {
-      console.warn(`[AI Service] Resume file not found at path: ${absolutePath}`);
-      return {
-        matchScore: 65.0,
-        feedback: ["Warning: Resume file not found on disk. Falling back to default baseline score."],
-        success: false
-      };
+    // 1. Resolve buffer from local path or remote URL
+    let dataBuffer;
+    if (resumePath.startsWith("http://") || resumePath.startsWith("https://")) {
+      try {
+        const response = await axios.get(resumePath, { responseType: "arraybuffer" });
+        dataBuffer = response.data;
+      } catch (fetchErr) {
+        console.warn(`[AI Service] Failed to fetch remote resume: ${fetchErr.message}`);
+        return {
+          matchScore: 65.0,
+          feedback: ["Warning: Remote resume file could not be downloaded. Falling back to default baseline score."],
+          success: false
+        };
+      }
+    } else {
+      const absolutePath = path.join(__dirname, "..", resumePath);
+      if (!fs.existsSync(absolutePath)) {
+        console.warn(`[AI Service] Resume file not found at path: ${absolutePath}`);
+        return {
+          matchScore: 65.0,
+          feedback: ["Warning: Resume file not found on disk. Falling back to default baseline score."],
+          success: false
+        };
+      }
+      dataBuffer = fs.readFileSync(absolutePath);
     }
-
-    // 2. Read and parse the PDF
-    const dataBuffer = fs.readFileSync(absolutePath);
     const parser = new PDFParse({ data: dataBuffer });
     const pdfData = await parser.getText();
     const resumeText = pdfData.text || "";

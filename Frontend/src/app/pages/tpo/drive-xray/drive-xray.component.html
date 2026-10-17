@@ -231,7 +231,7 @@
                       <div class="student-avatar">
                         @if (app.student.profilePicPath && !isStudentAvatarFailed(app.applicationId)) {
                           <img
-                            [src]="'http://localhost:5000' + app.student.profilePicPath"
+                            [src]="getMediaUrl(app.student.profilePicPath)"
                             [alt]="app.student.name"
                             (error)="handleStudentAvatarError(app.applicationId)"
                           />
@@ -365,7 +365,7 @@
 
                       @if (app.student.resumePath) {
                         <a
-                          [href]="'http://localhost:5000' + app.student.resumePath"
+                          [href]="getMediaUrl(app.student.resumePath)"
                           target="_blank"
                           class="btn-icon-action resume"
                           title="View Resume PDF"

@@ -528,6 +528,13 @@ export class StudentProfileComponent implements OnInit {
     return `${environment.apiUrl}${path.startsWith('/') ? '' : '/'}${path}`;
   }
 
+  protected getAvatarUrl(): string {
+    const path = this.profile()?.profilePicPath;
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return `${environment.apiUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+  }
+
   protected saveAllChanges(): void {
     this.isSaveTriggered.set(true);
     this.contactNumberTouched.set(true);

@@ -97,7 +97,7 @@
       <div class="company-badge">
         <div class="company-logo-circle">
           @if (companyLogo() && !isLogoFailed()) {
-            <img [src]="'http://localhost:5000' + companyLogo()" alt="Logo" class="company-mini-logo" (error)="isLogoFailed.set(true)" />
+            <img [src]="getLogoUrl(companyLogo())" alt="Logo" class="company-mini-logo" (error)="isLogoFailed.set(true)" />
           } @else {
             <span class="material-symbols-outlined default-logo-icon">domain</span>
           }

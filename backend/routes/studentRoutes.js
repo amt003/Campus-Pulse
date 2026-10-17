@@ -34,14 +34,23 @@ const router = express.Router();
 router.use(protect, authorizeRoles("Student"));
 router.get("/season-config", getSeasonConfig);
 router.get("/drive/attachment/download/:fileId", downloadDriveAttachment);
-
 // Placement Readiness Analyzer (PRA) Route
 router.get("/my-readiness", getMyReadiness);
 
 router.post("/profile", createStudentProfile);
 router.get("/profile", getStudentProfile);
-router.put("/profile", upload.uploadImage.single("profilePic"), updateStudentProfile);
-router.post("/resume", upload.single("resume"), uploadResume);
+router.put(
+  "/profile",
+  upload.uploadImage.single("profilePic"),
+  upload.processCloudinaryUpload("campuspulse/profiles", "image"),
+  updateStudentProfile
+);
+router.post(
+  "/resume",
+  upload.single("resume"),
+  upload.processCloudinaryUpload("campuspulse/resumes", "auto"),
+  uploadResume
+);
 router.get("/drives", getEligibleDrives);
 router.post("/apply/:driveId", applyToDrive);
 router.get("/applications", getStudentApplications);

@@ -12,6 +12,7 @@ import { FormControl } from '@angular/forms';
 import { RecruiterService, RecruiterProfile } from '../../../services/recruiter.service';
 import { meaningfulTextValidator } from '../../../validators/meaningful-text.validator';
 import { ManageResourcesModalComponent } from '../../../components/modals/manage-resources-modal/manage-resources-modal.component';
+import { RejectionReasonModalComponent } from '../../../components/modals/rejection-reason-modal/rejection-reason-modal.component';
 
 export interface DriveItem {
   _id: string;
@@ -19,6 +20,7 @@ export interface DriveItem {
   description?: string;
   status: 'Draft' | 'Pending' | 'Open' | 'Closed' | 'Rejected' | 'OnHold' | 'Expired';
   tpoFeedback?: string;
+  rejectionReason?: string;
   resubmittedCount?: number;
   applicationsCount: number;
   applicationDeadline: string;
@@ -31,11 +33,12 @@ export interface DriveItem {
 }
 
 import { LoaderComponent } from '../../../components/loader/loader.component';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-recruiter-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ManageResourcesModalComponent, LoaderComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ManageResourcesModalComponent, RejectionReasonModalComponent, LoaderComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -43,6 +46,15 @@ export class RecruiterDashboardComponent implements OnInit {
   private readonly recruiterService = inject(RecruiterService);
   private readonly router = inject(Router);
   protected Math = Math;
+
+  protected getMediaUrl(path?: string | null): string {
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+      return path;
+    }
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${environment.apiUrl}${cleanPath}`;
+  }
 
   protected isLoading = signal<boolean>(true);
   protected profile = signal<RecruiterProfile | null>(null);
@@ -97,6 +109,10 @@ export class RecruiterDashboardComponent implements OnInit {
   // Create/Edit Drive Modal / Form state
   protected isCreateModalOpen = signal<boolean>(false);
   
+  // Rejection Reason Modal state
+  protected isRejectionModalOpen = signal<boolean>(false);
+  protected selectedDriveForRejection = signal<any | null>(null);
+
   // Applicant List Modal state
   protected isApplicationsModalOpen = signal<boolean>(false);
   protected selectedDriveTitle = signal<string>('');
@@ -310,6 +326,20 @@ export class RecruiterDashboardComponent implements OnInit {
   protected closeCreateModal(): void {
     this.isCreateModalOpen.set(false);
     this.editingDriveId.set(null);
+  }
+
+  protected openRejectionReasonModal(drive: any, event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.selectedDriveForRejection.set(drive);
+    this.isRejectionModalOpen.set(true);
+    this.activeDropdown.set(null);
+  }
+
+  protected closeRejectionReasonModal(): void {
+    this.isRejectionModalOpen.set(false);
+    this.selectedDriveForRejection.set(null);
   }
 
   private resetForm(): void {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { StudentService, StudentProfile } from '../../../services/student.service';
 import { NotificationService } from '../../../services/notification.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-student-layout',
@@ -17,11 +18,21 @@ export class StudentLayoutComponent implements OnInit, OnDestroy {
   private readonly notificationService = inject(NotificationService);
 
   protected profile = signal<StudentProfile | null>(null);
+  protected isAvatarFailed = signal<boolean>(false);
   protected isSidebarCollapsed = signal<boolean>(false);
   protected isNotificationsOpen = signal<boolean>(false);
   protected isTestsModalOpen = signal<boolean>(false);
   protected upcomingTests = signal<any[]>([]);
   protected isLoadingTests = signal<boolean>(false);
+
+  protected getAvatarUrl(path?: string | null): string | null {
+    if (!path) return null;
+    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+      return path;
+    }
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${environment.apiUrl}${cleanPath}`;
+  }
 
   // Expose notification signals
   protected readonly unreadCount = this.notificationService.unreadCount;

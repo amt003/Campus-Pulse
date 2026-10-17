@@ -1,0 +1,97 @@
+<div
+  class="modal-backdrop"
+  data-lenis-prevent
+  (click)="onClose.emit()"
+  (wheel)="$event.stopPropagation()"
+  (touchmove)="$event.stopPropagation()"
+>
+  <div
+    class="modal-card"
+    data-lenis-prevent
+    (click)="$event.stopPropagation()"
+    (wheel)="$event.stopPropagation()"
+    (touchmove)="$event.stopPropagation()"
+  >
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <div class="header-left">
+        <div class="header-icon-box">
+          <span class="material-symbols-outlined">gpp_bad</span>
+        </div>
+        <div>
+          <div class="header-title-badge-row">
+            <h3 class="modal-title">Placement Drive Rejected</h3>
+            <span class="status-badge-rejected">Rejected</span>
+          </div>
+          <p class="modal-subtitle">Official decision & feedback from the Training & Placement Officer (TPO)</p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="onClose.emit()" title="Close dialog">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body" data-lenis-prevent>
+      <!-- Drive Overview Snippet -->
+      <div class="drive-snippet-card">
+        <div class="snippet-header">
+          <span class="snippet-role">{{ drive?.title || 'Placement Drive' }}</span>
+          @if (drive?.ctc) {
+            <span class="snippet-ctc">{{ getCTCInLpa(drive.ctc) }}</span>
+          }
+        </div>
+        @if (drive?.description) {
+          <p class="snippet-desc">{{ drive.description }}</p>
+        }
+        <div class="snippet-meta">
+          <div class="meta-item">
+            <span class="material-symbols-outlined">calendar_today</span>
+            <span>Deadline: {{ (drive?.applicationDeadline | date:'mediumDate') || 'N/A' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="material-symbols-outlined">school</span>
+            <span>Min CGPA: {{ drive?.minCGPA || '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rejection Reason Highlight Box -->
+      <div class="reason-section">
+        <div class="section-title-row">
+          <span class="material-symbols-outlined section-icon">rate_review</span>
+          <h4 class="section-title">Reason for Rejection</h4>
+        </div>
+        
+        <div class="reason-content-box">
+          <div class="quote-stripe"></div>
+          <div class="reason-text-area">
+            <p class="reason-text">{{ rejectionReason }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Information & Next Steps Box -->
+      <div class="info-guidance-card">
+        <div class="guidance-icon-box">
+          <span class="material-symbols-outlined">info</span>
+        </div>
+        <div class="guidance-content">
+          <h5>What should you do next?</h5>
+          <p>
+            Because this drive was rejected, it is not published to students and cannot receive candidate applications.
+            Please review the comments above, adjust job requirements or compensation criteria as requested, or
+            contact the TPO administration directly for guidance before publishing a new recruitment drive.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer">
+      <button type="button" class="btn-footer-close" (click)="onClose.emit()">
+        <span>Close</span>
+      </button>
+    </div>
+  </div>
+</div>

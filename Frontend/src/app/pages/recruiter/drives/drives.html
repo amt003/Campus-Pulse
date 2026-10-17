@@ -88,6 +88,27 @@
           <h3 class="drive-role">{{ drive.title }}</h3>
           <p class="drive-desc">{{ drive.description }}</p>
 
+          <!-- Rejection Banner if Rejected -->
+          @if (drive.status === 'Rejected') {
+            <div class="card-rejection-banner" (click)="$event.stopPropagation()">
+              <div class="rejection-banner-left">
+                <span class="material-symbols-outlined rejection-banner-icon">cancel</span>
+                <div class="rejection-banner-info">
+                  <span class="rejection-banner-title">Rejected by TPO</span>
+                  <span class="rejection-banner-sub">Drive declined during review</span>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                class="btn-rejection-reason" 
+                (click)="openRejectionReasonModal(drive, $event)"
+              >
+                <span class="material-symbols-outlined">info</span>
+                <span>Rejection Reason</span>
+              </button>
+            </div>
+          }
+
           <!-- Metrics Row -->
           <div class="metrics-row">
             <div class="metric">
@@ -118,7 +139,7 @@
               <span>Resources</span>
             </button>
 
-            @if (!isDriveClosed(drive)) {
+            @if (!isDriveClosed(drive) && drive.status !== 'Rejected') {
               <button class="btn-card-action btn-close-drive" (click)="openCloseDriveModal(drive, $event)" title="Close Application Window">
                 <span class="material-symbols-outlined">lock</span>
               </button>
@@ -127,6 +148,14 @@
         </div>
       }
     </div>
+  }
+
+  <!-- Rejection Reason Modal -->
+  @if (isRejectionModalOpen() && selectedDriveForRejection()) {
+    <app-rejection-reason-modal
+      [drive]="selectedDriveForRejection()"
+      (onClose)="closeRejectionReasonModal()"
+    />
   }
 
   <!-- Manage Resources Modal -->

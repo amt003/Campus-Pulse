@@ -55,7 +55,7 @@ const {
   getRecruiterTests,
 } = require("../controllers/aptitudeTestController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
-const { uploadImage, uploadOffer } = require("../middleware/uploadMiddleware");
+const { uploadImage, uploadOffer, processCloudinaryUpload } = require("../middleware/uploadMiddleware");
 const multer = require("multer");
 const memoryUpload = multer({
   storage: multer.memoryStorage(),
@@ -71,7 +71,12 @@ router.use(protect, authorizeRoles("Recruiter"));
 router.get("/season-config", getSeasonConfig);
 router.get("/profile", getRecruiterProfile);
 router.get("/analytics", getRecruiterAnalytics);
-router.put("/profile", uploadImage.single("logo"), updateRecruiterProfile);
+router.put(
+  "/profile",
+  uploadImage.single("logo"),
+  processCloudinaryUpload("campuspulse/logos", "image"),
+  updateRecruiterProfile
+);
 router.post("/request-reapproval", requestReapproval);
 router.post("/drive", createJobDrive);
 router.post("/drive/:driveId/resubmit", resubmitDriveForApproval);
@@ -89,7 +94,12 @@ router.post("/drive/:driveId/bulk-aptitude", bulkUploadAptitudeScores);
 router.put("/application/:applicationId/status", updateApplicationStatus);
 router.get("/application/:applicationId/resume-text", getResumeText);
 router.get("/application/:applicationId/offer-template", getOfferTemplateData);
-router.post("/application/:applicationId/offer", uploadOffer.single("offerLetter"), uploadOfferLetter);
+router.post(
+  "/application/:applicationId/offer",
+  uploadOffer.single("offerLetter"),
+  processCloudinaryUpload("campuspulse/offers", "auto"),
+  uploadOfferLetter
+);
 router.put("/result/aptitude", declareAptitudeResults);
 router.put("/result/gd", declareGDResults);
 router.put("/result/interview", declareInterviewResults);

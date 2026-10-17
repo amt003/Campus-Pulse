@@ -5,13 +5,14 @@ import { Router, RouterModule } from '@angular/router';
 import { RecruiterService } from '../../../services/recruiter.service';
 import { ToastService } from '../../../services/toast.service';
 import { ManageResourcesModalComponent } from '../../../components/modals/manage-resources-modal/manage-resources-modal.component';
+import { RejectionReasonModalComponent } from '../../../components/modals/rejection-reason-modal/rejection-reason-modal.component';
 
 import { LoaderComponent } from '../../../components/loader/loader.component';
 
 @Component({
   selector: 'app-recruiter-drives',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ManageResourcesModalComponent, LoaderComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ManageResourcesModalComponent, RejectionReasonModalComponent, LoaderComponent],
   templateUrl: './drives.html',
   styleUrl: './drives.css'
 })
@@ -34,6 +35,10 @@ export class RecruiterDrivesComponent implements OnInit {
   protected selectedDriveToClose = signal<any | null>(null);
   protected closeReason = signal<string>('');
   protected isClosing = signal<boolean>(false);
+
+  // Rejection Reason Modal state
+  protected isRejectionModalOpen = signal<boolean>(false);
+  protected selectedDriveForRejection = signal<any | null>(null);
 
   ngOnInit(): void {
     this.fetchDrives();
@@ -133,5 +138,18 @@ export class RecruiterDrivesComponent implements OnInit {
 
   protected viewApplicants(driveId: string): void {
     this.router.navigate(['/recruiter/applications', driveId]);
+  }
+
+  protected openRejectionReasonModal(drive: any, event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.selectedDriveForRejection.set(drive);
+    this.isRejectionModalOpen.set(true);
+  }
+
+  protected closeRejectionReasonModal(): void {
+    this.isRejectionModalOpen.set(false);
+    this.selectedDriveForRejection.set(null);
   }
 }

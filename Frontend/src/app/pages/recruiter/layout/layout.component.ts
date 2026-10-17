@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { RecruiterService } from '../../../services/recruiter.service';
 import { NotificationService } from '../../../services/notification.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-recruiter-layout',
@@ -22,6 +23,15 @@ export class RecruiterLayoutComponent implements OnInit, OnDestroy {
   protected isApproved = signal<boolean>(false);
   protected isNotificationsOpen = signal<boolean>(false);
   protected isSidebarCollapsed = signal<boolean>(false);
+
+  protected getLogoUrl(logoPath?: string | null): string | null {
+    if (!logoPath) return null;
+    if (logoPath.startsWith('http://') || logoPath.startsWith('https://') || logoPath.startsWith('data:')) {
+      return logoPath;
+    }
+    const cleanPath = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
+    return `${environment.apiUrl}${cleanPath}`;
+  }
 
   protected toggleSidebar(): void {
     this.isSidebarCollapsed.update(val => !val);
