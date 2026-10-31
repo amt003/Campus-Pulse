@@ -10,7 +10,7 @@
 
 ---
 
-## 📑 Table of Contents
+##  Table of Contents
 
 - [Key Features & Role Portals](#-key-features--role-portals)
   - [1. Student Portal](#1-student-portal)
@@ -285,7 +285,7 @@ Visit **`http://localhost:4200`** in your browser.
 
 ---
 
-## 🚀 Live Demo
+##  Live Demo
 - Frontend: https://campus-pulse-pearl-alpha.vercel.app/
 - Backend API: https://campuspulse-backend.onrender.com
 
@@ -346,6 +346,6 @@ Visit **`http://localhost:4200`** in your browser.
 
 
 
-## 📄Acknowledgments
+## Acknowledgments
 
 This project is developed as an academic and institutional placement automation solution
