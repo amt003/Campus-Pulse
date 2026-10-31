@@ -293,17 +293,15 @@ Visit **`http://localhost:4200`** in your browser.
 
 ## Screenshots
 
-<img width="1023" height="558" alt="image" src="https://github.com/user-attachments/assets/8e115763-5aee-4165-be7b-c1f6262f99e0" />
 <br><br>
 <div align="center">
   <h1> Student Dashboard </h1>
 </div>
 <br><br>
+<img width="1023" height="558" alt="image" src="https://github.com/user-attachments/assets/8e115763-5aee-4165-be7b-c1f6262f99e0" />
 
 
 
-<img width="567" height="554" alt="image" src="https://github.com/user-attachments/assets/afbcf037-da35-46ae-98c8-1bbdd6fc9bf4" />
-<img width="552" height="440" alt="image" src="https://github.com/user-attachments/assets/eb9fa539-dd80-455c-8bef-17d0dc98d0b0" />
 
 <br><br>
 <div align="center">
@@ -311,41 +309,40 @@ Visit **`http://localhost:4200`** in your browser.
 </div>
 <br><br>
 
+<img width="567" height="554" alt="image" src="https://github.com/user-attachments/assets/afbcf037-da35-46ae-98c8-1bbdd6fc9bf4" />
+<img width="552" height="440" alt="image" src="https://github.com/user-attachments/assets/eb9fa539-dd80-455c-8bef-17d0dc98d0b0" />
 
 
 
-
-<img width="1599" height="712" alt="image" src="https://github.com/user-attachments/assets/db284a2b-090b-4e77-a923-031f5168c5e0" />
 
 <br><br>
 <div align="center">
   <h1> Recruiter Applications (AI-ranked) </h1>
 </div>
 <br><br>
+<img width="1599" height="712" alt="image" src="https://github.com/user-attachments/assets/db284a2b-090b-4e77-a923-031f5168c5e0" />
 
 
-
-<img width="1021" height="551" alt="image" src="https://github.com/user-attachments/assets/a5c69db2-faf2-4124-83ec-9ae1fff69f28" />
 
 
 <br><br>
 <div align="center">
   <h1> TPO Dashboard </h1>
 </div>
-
 <br><br>
 
+<img width="1021" height="551" alt="image" src="https://github.com/user-attachments/assets/a5c69db2-faf2-4124-83ec-9ae1fff69f28" />
 
 
 
-<img width="1019" height="476" alt="image" src="https://github.com/user-attachments/assets/403139e8-c045-4f88-8d3d-fe63e216234b" />
+
 <br><br>
 <div align="center">
   <h1> Placement Readiness Analyzer </h1>
 </div>
-
 <br><br>
 
+<img width="1019" height="476" alt="image" src="https://github.com/user-attachments/assets/403139e8-c045-4f88-8d3d-fe63e216234b" />
 
 
 
