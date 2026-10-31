@@ -31,7 +31,33 @@
 
 ---
 
-## 🌟 Key Features & Role Portals
+##  What It Does
+
+- Students apply to eligible drives, get AI-ranked matches, 
+  view explainable feedback on their resume, and track every 
+  stage from Applied → Placed.
+- Recruiters post drives, view AI-ranked applicants, schedule 
+  conflict-free interviews, run in-house MCQ tests, and upload 
+  offer letters.
+- TPOs approve recruiters and drives, monitor readiness analytics, 
+  and audit placements.
+
+---
+
+##  AI Features
+
+- **Semantic Resume Matching** — Sentence-BERT (all-MiniLM-L6-v2) 
+  with cosine similarity
+- **Explainable AI Feedback** — Sentence-level positive/negative 
+  contributors
+- **Placement Readiness Analyzer** — 6-factor weighted scoring 
+  with exponential decay + Bayesian smoothing
+- **AI Question Generation** — Gemini API-powered MCQ generator
+- **Conflict-Free Scheduling** — MongoDB compound index algorithm
+
+---
+
+##  Key Features & Role Portals
 
 ### 1. Student Portal
 
@@ -58,7 +84,7 @@
 
 ---
 
-## 🧠 System Architecture & AI Pipeline
+##  System Architecture & AI Pipeline
 
 ```
                        ┌─────────────────────────────────────┐
@@ -234,7 +260,7 @@ Visit **`http://localhost:4200`** in your browser.
 
 ---
 
-## 🔐 Environment Variables
+##  Environment Variables
 
 | Variable           | Description                               | Required | Default                 |
 | ------------------ | ----------------------------------------- | :------: | ----------------------- |
@@ -248,14 +274,62 @@ Visit **`http://localhost:4200`** in your browser.
 
 ---
 
-## 🌿 Git Workflow & Branches
+##  Git Workflow & Branches
 
-| Branch             | Description                                                  | Status         |
-| ------------------ | ------------------------------------------------------------ | -------------- |
-| **`develop`**      | Active feature development, continuous integration & updates | Active         |
-| **`mini-project`** | Evaluated, stable project submission baseline                | Stable Release |
+| Branch | Purpose | Deploys To | Status |
+| :--- | :--- | :--- | :--- |
+| **`main`** | Production-ready, fully tested code. Auto-deploys on every merge. |  **Live production** (Vercel + Render) | **Production** |
+| **`develop`** | Active integration branch. Features are merged here first for testing. |  Integration only | **Active** |
+| **`feature/*`** | Isolated development for individual features. Branched from `develop`. |  Local testing only | **Temporary** |
+| **`mini-project`** | Archived Academic submission baseline. |  Not deployed | **Archived** |
 
 ---
+
+## 🚀 Live Demo
+- Frontend: https://campus-pulse-pearl-alpha.vercel.app/
+- Backend API: https://campuspulse-backend.onrender.com
+
+---
+
+## Screenshots
+
+<img width="1023" height="558" alt="image" src="https://github.com/user-attachments/assets/8e115763-5aee-4165-be7b-c1f6262f99e0" />
+
+**Student Dashboard**
+
+
+
+
+<img width="567" height="554" alt="image" src="https://github.com/user-attachments/assets/afbcf037-da35-46ae-98c8-1bbdd6fc9bf4" />
+<img width="552" height="440" alt="image" src="https://github.com/user-attachments/assets/eb9fa539-dd80-455c-8bef-17d0dc98d0b0" />
+
+**XAI Feedback**
+
+
+
+
+<img width="1599" height="712" alt="image" src="https://github.com/user-attachments/assets/db284a2b-090b-4e77-a923-031f5168c5e0" />
+
+**Recruiter Applications (AI-ranked)**
+
+
+
+<img width="1021" height="551" alt="image" src="https://github.com/user-attachments/assets/a5c69db2-faf2-4124-83ec-9ae1fff69f28" />
+
+**TPO Dashboard**
+
+
+
+
+
+<img width="1019" height="476" alt="image" src="https://github.com/user-attachments/assets/403139e8-c045-4f88-8d3d-fe63e216234b" />
+
+**Placement Readiness Analyzer**
+
+
+
+
+
 
 ## 📄Acknowledgments
 
